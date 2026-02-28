@@ -8,6 +8,9 @@ import Clientes from "./pages/Clientes";
 import Orcamentos from "./pages/Orcamentos";
 import Pedidos from "./pages/Pedidos";
 import Produtos from "./pages/Produtos";
+import Precos from "./pages/Precos";
+import Relatorios from "./pages/Relatorios";
+import Mapa from "./pages/Mapa";
 import NotFound from "./pages/NotFound";
 import { PlaceholderPage } from "./components/PlaceholderPage";
 
@@ -28,9 +31,9 @@ const App = () => (
           <Route path="/plano-de-corte" element={<PlaceholderPage title="Plano de Corte" description="Otimize o corte dos vidros e perfis com planos automatizados." />} />
           <Route path="/agenda" element={<PlaceholderPage title="Agenda" description="Agende instalações, visitas técnicas e compromissos da equipe." />} />
           <Route path="/produtos" element={<Produtos />} />
-          <Route path="/precos" element={<PlaceholderPage title="Preço dos Itens" description="Configure preços de vidros, perfis, ferragens e acessórios." />} />
-          <Route path="/relatorios" element={<PlaceholderPage title="Relatórios" description="Visualize relatórios de vendas, orçamentos e desempenho da equipe." />} />
-          <Route path="/mapa" element={<PlaceholderPage title="Mapa" description="Visualize a localização dos clientes e pedidos no mapa." />} />
+          <Route path="/precos" element={<Precos />} />
+          <Route path="/relatorios" element={<Relatorios />} />
+          <Route path="/mapa" element={<Mapa />} />
           <Route path="/administradores" element={<PlaceholderPage title="Administradores" description="Gerencie os administradores do sistema e suas permissões." />} />
           <Route path="/funcionarios" element={<PlaceholderPage title="Funcionários" description="Cadastre e gerencie os funcionários da empresa." />} />
           <Route path="*" element={<NotFound />} />
