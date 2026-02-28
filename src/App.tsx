@@ -8,6 +8,7 @@ import Clientes from "./pages/Clientes";
 import Orcamentos from "./pages/Orcamentos";
 import Pedidos from "./pages/Pedidos";
 import Produtos from "./pages/Produtos";
+import PlanoDeCorte from "./pages/PlanoDeCorte";
 import Precos from "./pages/Precos";
 import Relatorios from "./pages/Relatorios";
 import Mapa from "./pages/Mapa";
@@ -28,7 +29,7 @@ const App = () => (
           <Route path="/orcamentos" element={<Orcamentos />} />
           <Route path="/servicos" element={<PlaceholderPage title="Serviços" description="Gerencie os serviços da sua vidraçaria, incluindo instalação, manutenção e reparos." />} />
           <Route path="/pedidos" element={<Pedidos />} />
-          <Route path="/plano-de-corte" element={<PlaceholderPage title="Plano de Corte" description="Otimize o corte dos vidros e perfis com planos automatizados." />} />
+          <Route path="/plano-de-corte" element={<PlanoDeCorte />} />
           <Route path="/agenda" element={<PlaceholderPage title="Agenda" description="Agende instalações, visitas técnicas e compromissos da equipe." />} />
           <Route path="/produtos" element={<Produtos />} />
           <Route path="/precos" element={<Precos />} />

@@ -1,0 +1,236 @@
+import { AppLayout } from "@/components/AppLayout";
+import { useState } from "react";
+import { Scissors, Plus, Search, CheckCircle, Clock, AlertTriangle, Maximize2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+interface Peca {
+  id: number;
+  largura: number;
+  altura: number;
+  qtd: number;
+  material: string;
+}
+
+interface Plano {
+  id: number;
+  nome: string;
+  data: string;
+  status: "concluido" | "andamento" | "pendente";
+  chapa: { largura: number; altura: number };
+  pecas: Peca[];
+  aproveitamento: number;
+}
+
+const planos: Plano[] = [
+  {
+    id: 1, nome: "Pedido #1042 - Box Banheiro", data: "27/02/2026", status: "concluido",
+    chapa: { largura: 2200, altura: 1100 },
+    pecas: [
+      { id: 1, largura: 800, altura: 1900, qtd: 2, material: "Temperado 8mm Incolor" },
+      { id: 2, largura: 400, altura: 1900, qtd: 1, material: "Temperado 8mm Incolor" },
+    ],
+    aproveitamento: 87.3,
+  },
+  {
+    id: 2, nome: "Pedido #1038 - Janela 4 folhas", data: "26/02/2026", status: "andamento",
+    chapa: { largura: 2500, altura: 1300 },
+    pecas: [
+      { id: 1, largura: 600, altura: 1200, qtd: 4, material: "Temperado 6mm Incolor" },
+      { id: 2, largura: 300, altura: 200, qtd: 2, material: "Temperado 6mm Incolor" },
+    ],
+    aproveitamento: 72.8,
+  },
+  {
+    id: 3, nome: "Pedido #1035 - Porta Pivotante", data: "25/02/2026", status: "pendente",
+    chapa: { largura: 2200, altura: 1100 },
+    pecas: [
+      { id: 1, largura: 1000, altura: 2100, qtd: 1, material: "Laminado 10mm Incolor" },
+      { id: 2, largura: 200, altura: 2100, qtd: 2, material: "Laminado 10mm Incolor" },
+    ],
+    aproveitamento: 64.1,
+  },
+  {
+    id: 4, nome: "Pedido #1030 - Fachada Loja", data: "24/02/2026", status: "concluido",
+    chapa: { largura: 3210, altura: 2200 },
+    pecas: [
+      { id: 1, largura: 1500, altura: 2100, qtd: 2, material: "Laminado 8mm Verde" },
+      { id: 2, largura: 1000, altura: 500, qtd: 3, material: "Laminado 8mm Verde" },
+    ],
+    aproveitamento: 91.5,
+  },
+];
+
+const statusConfig = {
+  concluido: { label: "Concluído", icon: CheckCircle, cls: "bg-[hsl(142,72%,42%)] text-white" },
+  andamento: { label: "Em andamento", icon: Clock, cls: "bg-[hsl(38,92%,50%)] text-white" },
+  pendente: { label: "Pendente", icon: AlertTriangle, cls: "bg-muted text-muted-foreground" },
+};
+
+const COLORS = [
+  "hsl(207, 90%, 70%)", "hsl(142, 60%, 65%)", "hsl(38, 80%, 65%)",
+  "hsl(280, 60%, 70%)", "hsl(0, 60%, 70%)", "hsl(180, 50%, 60%)",
+];
+
+function CuttingDiagram({ plano }: { plano: Plano }) {
+  const scale = 280 / Math.max(plano.chapa.largura, plano.chapa.altura);
+  const w = plano.chapa.largura * scale;
+  const h = plano.chapa.altura * scale;
+
+  // Simple placement algorithm
+  const rects: { x: number; y: number; w: number; h: number; color: string; label: string }[] = [];
+  let cx = 4, cy = 4;
+  let rowH = 0;
+  plano.pecas.forEach((p, pi) => {
+    for (let q = 0; q < p.qtd; q++) {
+      const pw = p.largura * scale;
+      const ph = p.altura * scale;
+      if (cx + pw > w - 4) { cx = 4; cy += rowH + 3; rowH = 0; }
+      rects.push({ x: cx, y: cy, w: pw, h: ph, color: COLORS[pi % COLORS.length], label: `${p.largura}x${p.altura}` });
+      cx += pw + 3;
+      rowH = Math.max(rowH, ph);
+    }
+  });
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full border border-border rounded-lg bg-muted/30" style={{ maxHeight: 220 }}>
+      <rect x={0} y={0} width={w} height={h} fill="hsl(210, 20%, 96%)" stroke="hsl(214, 20%, 80%)" strokeWidth={1.5} rx={4} />
+      {rects.map((r, i) => (
+        <g key={i}>
+          <rect x={r.x} y={r.y} width={r.w} height={r.h} fill={r.color} fillOpacity={0.35} stroke={r.color} strokeWidth={1.2} rx={2} />
+          <text x={r.x + r.w / 2} y={r.y + r.h / 2} textAnchor="middle" dominantBaseline="central" fontSize={Math.min(10, r.w / 6)} fill="hsl(215, 25%, 25%)" fontWeight={600}>
+            {r.label}
+          </text>
+        </g>
+      ))}
+      {/* Waste area label */}
+      <text x={w - 6} y={h - 6} textAnchor="end" fontSize={8} fill="hsl(215, 15%, 55%)">
+        {plano.chapa.largura}x{plano.chapa.altura}mm
+      </text>
+    </svg>
+  );
+}
+
+const PlanoDeCorte = () => {
+  const [search, setSearch] = useState("");
+  const [selectedPlano, setSelectedPlano] = useState<Plano | null>(null);
+
+  const filtered = planos.filter((p) => p.nome.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <AppLayout>
+      <div className="space-y-6 max-w-7xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Plano de Corte</h1>
+            <p className="text-sm text-muted-foreground">Otimize o corte dos vidros e perfis com planos automatizados</p>
+          </div>
+          <Button className="gap-2"><Plus className="h-4 w-4" /> Novo plano</Button>
+        </div>
+
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text" placeholder="Buscar plano..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
+          />
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-card border border-border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">{planos.length}</p>
+            <p className="text-xs text-muted-foreground">Planos criados</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">{planos.filter(p => p.status === "concluido").length}</p>
+            <p className="text-xs text-muted-foreground">Concluídos</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-primary">{(planos.reduce((a, p) => a + p.aproveitamento, 0) / planos.length).toFixed(1)}%</p>
+            <p className="text-xs text-muted-foreground">Aproveitamento médio</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">{planos.reduce((a, p) => a + p.pecas.reduce((b, pc) => b + pc.qtd, 0), 0)}</p>
+            <p className="text-xs text-muted-foreground">Peças totais</p>
+          </div>
+        </div>
+
+        {selectedPlano ? (
+          <div className="space-y-4">
+            <Button variant="ghost" onClick={() => setSelectedPlano(null)} className="gap-2 text-muted-foreground">
+              ← Voltar para lista
+            </Button>
+            <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-foreground">{selectedPlano.nome}</h2>
+                  <p className="text-xs text-muted-foreground">{selectedPlano.data} • Chapa {selectedPlano.chapa.largura}x{selectedPlano.chapa.altura}mm</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-primary">{selectedPlano.aproveitamento}% aproveitamento</span>
+                  <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full ${statusConfig[selectedPlano.status].cls}`}>
+                    {statusConfig[selectedPlano.status].label}
+                  </span>
+                </div>
+              </div>
+
+              <CuttingDiagram plano={selectedPlano} />
+
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Peças</h3>
+                <div className="space-y-2">
+                  {selectedPlano.pecas.map((p, i) => (
+                    <div key={p.id} className="flex items-center justify-between bg-muted/50 rounded-lg px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-3 w-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{p.largura} x {p.altura} mm</p>
+                          <p className="text-xs text-muted-foreground">{p.material}</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">x{p.qtd}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filtered.map((plano) => {
+              const St = statusConfig[plano.status];
+              return (
+                <button
+                  key={plano.id}
+                  onClick={() => setSelectedPlano(plano)}
+                  className="bg-card border border-border rounded-xl p-5 text-left hover:shadow-md hover:border-primary/30 transition-all"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Scissors className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">{plano.nome}</span>
+                    </div>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${St.cls}`}>{St.label}</span>
+                  </div>
+                  <CuttingDiagram plano={plano} />
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-xs text-muted-foreground">{plano.data}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Maximize2 className="h-3 w-3" /> {plano.chapa.largura}x{plano.chapa.altura}mm
+                      </span>
+                      <span className="text-xs font-semibold text-primary">{plano.aproveitamento}%</span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </AppLayout>
+  );
+};
+
+export default PlanoDeCorte;
