@@ -1,26 +1,10 @@
 import { AppLayout } from "@/components/AppLayout";
-import { useState } from "react";
-import { Scissors, Plus, Search, CheckCircle, Clock, AlertTriangle, Maximize2 } from "lucide-react";
+import { useState, Suspense } from "react";
+import { Scissors, Plus, Search, CheckCircle, Clock, AlertTriangle, Maximize2, Box, Grid2X2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-
-interface Peca {
-  id: number;
-  largura: number;
-  altura: number;
-  qtd: number;
-  material: string;
-}
-
-interface Plano {
-  id: number;
-  nome: string;
-  data: string;
-  status: "concluido" | "andamento" | "pendente";
-  chapa: { largura: number; altura: number };
-  pecas: Peca[];
-  aproveitamento: number;
-}
+import { CuttingDiagram, COLORS, type Plano } from "@/components/plano-de-corte/CuttingDiagram";
+import { CuttingDiagram3D } from "@/components/plano-de-corte/CuttingDiagram3D";
 
 const planos: Plano[] = [
   {
@@ -66,50 +50,6 @@ const statusConfig = {
   andamento: { label: "Em andamento", icon: Clock, cls: "bg-[hsl(38,92%,50%)] text-white" },
   pendente: { label: "Pendente", icon: AlertTriangle, cls: "bg-muted text-muted-foreground" },
 };
-
-const COLORS = [
-  "hsl(207, 90%, 70%)", "hsl(142, 60%, 65%)", "hsl(38, 80%, 65%)",
-  "hsl(280, 60%, 70%)", "hsl(0, 60%, 70%)", "hsl(180, 50%, 60%)",
-];
-
-function CuttingDiagram({ plano }: { plano: Plano }) {
-  const scale = 280 / Math.max(plano.chapa.largura, plano.chapa.altura);
-  const w = plano.chapa.largura * scale;
-  const h = plano.chapa.altura * scale;
-
-  // Simple placement algorithm
-  const rects: { x: number; y: number; w: number; h: number; color: string; label: string }[] = [];
-  let cx = 4, cy = 4;
-  let rowH = 0;
-  plano.pecas.forEach((p, pi) => {
-    for (let q = 0; q < p.qtd; q++) {
-      const pw = p.largura * scale;
-      const ph = p.altura * scale;
-      if (cx + pw > w - 4) { cx = 4; cy += rowH + 3; rowH = 0; }
-      rects.push({ x: cx, y: cy, w: pw, h: ph, color: COLORS[pi % COLORS.length], label: `${p.largura}x${p.altura}` });
-      cx += pw + 3;
-      rowH = Math.max(rowH, ph);
-    }
-  });
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full border border-border rounded-lg bg-muted/30" style={{ maxHeight: 220 }}>
-      <rect x={0} y={0} width={w} height={h} fill="hsl(210, 20%, 96%)" stroke="hsl(214, 20%, 80%)" strokeWidth={1.5} rx={4} />
-      {rects.map((r, i) => (
-        <g key={i}>
-          <rect x={r.x} y={r.y} width={r.w} height={r.h} fill={r.color} fillOpacity={0.35} stroke={r.color} strokeWidth={1.2} rx={2} />
-          <text x={r.x + r.w / 2} y={r.y + r.h / 2} textAnchor="middle" dominantBaseline="central" fontSize={Math.min(10, r.w / 6)} fill="hsl(215, 25%, 25%)" fontWeight={600}>
-            {r.label}
-          </text>
-        </g>
-      ))}
-      {/* Waste area label */}
-      <text x={w - 6} y={h - 6} textAnchor="end" fontSize={8} fill="hsl(215, 15%, 55%)">
-        {plano.chapa.largura}x{plano.chapa.altura}mm
-      </text>
-    </svg>
-  );
-}
 
 const PlanoDeCorte = () => {
   const [search, setSearch] = useState("");
@@ -175,7 +115,27 @@ const PlanoDeCorte = () => {
                 </div>
               </div>
 
-              <CuttingDiagram plano={selectedPlano} />
+              <Tabs defaultValue="3d">
+                <TabsList>
+                  <TabsTrigger value="2d" className="gap-1.5"><Grid2X2 className="h-3.5 w-3.5" /> Diagrama 2D</TabsTrigger>
+                  <TabsTrigger value="3d" className="gap-1.5"><Box className="h-3.5 w-3.5" /> Modelo CAD 3D</TabsTrigger>
+                </TabsList>
+                <TabsContent value="2d">
+                  <CuttingDiagram plano={selectedPlano} />
+                </TabsContent>
+                <TabsContent value="3d">
+                  <Suspense fallback={
+                    <div className="w-full h-[400px] bg-muted/30 rounded-xl border border-border flex items-center justify-center">
+                      <div className="text-center space-y-2">
+                        <Box className="h-8 w-8 text-muted-foreground animate-pulse mx-auto" />
+                        <p className="text-sm text-muted-foreground">Carregando modelo 3D...</p>
+                      </div>
+                    </div>
+                  }>
+                    <CuttingDiagram3D plano={selectedPlano} />
+                  </Suspense>
+                </TabsContent>
+              </Tabs>
 
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">Peças</h3>
