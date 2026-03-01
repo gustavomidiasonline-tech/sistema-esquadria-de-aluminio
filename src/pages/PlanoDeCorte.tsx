@@ -1,12 +1,14 @@
 import { AppLayout } from "@/components/AppLayout";
 import { useState, Suspense } from "react";
-import { Scissors, Plus, Search, CheckCircle, Clock, AlertTriangle, Maximize2, Box, Grid2X2 } from "lucide-react";
+import { Scissors, Plus, Search, CheckCircle, Clock, AlertTriangle, Maximize2, Box, Grid2X2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CuttingDiagram, COLORS, type Plano } from "@/components/plano-de-corte/CuttingDiagram";
 import { CuttingDiagram3D } from "@/components/plano-de-corte/CuttingDiagram3D";
+import { ProfileCuttingTable } from "@/components/plano-de-corte/ProfileCuttingTable";
+import { produtosEsquadria } from "@/data/perfis-aluminio";
 
-const planos: Plano[] = [
+const planos: (Plano & { produtoId?: number })[] = [
   {
     id: 1, nome: "Pedido #1042 - Box Banheiro", data: "27/02/2026", status: "concluido",
     chapa: { largura: 2200, altura: 1100 },
@@ -15,6 +17,7 @@ const planos: Plano[] = [
       { id: 2, largura: 400, altura: 1900, qtd: 1, material: "Temperado 8mm Incolor" },
     ],
     aproveitamento: 87.3,
+    produtoId: 5,
   },
   {
     id: 2, nome: "Pedido #1038 - Janela 4 folhas", data: "26/02/2026", status: "andamento",
@@ -24,6 +27,7 @@ const planos: Plano[] = [
       { id: 2, largura: 300, altura: 200, qtd: 2, material: "Temperado 6mm Incolor" },
     ],
     aproveitamento: 72.8,
+    produtoId: 2,
   },
   {
     id: 3, nome: "Pedido #1035 - Porta Pivotante", data: "25/02/2026", status: "pendente",
@@ -33,6 +37,7 @@ const planos: Plano[] = [
       { id: 2, largura: 200, altura: 2100, qtd: 2, material: "Laminado 10mm Incolor" },
     ],
     aproveitamento: 64.1,
+    produtoId: 3,
   },
   {
     id: 4, nome: "Pedido #1030 - Fachada Loja", data: "24/02/2026", status: "concluido",
@@ -42,6 +47,7 @@ const planos: Plano[] = [
       { id: 2, largura: 1000, altura: 500, qtd: 3, material: "Laminado 8mm Verde" },
     ],
     aproveitamento: 91.5,
+    produtoId: 4,
   },
 ];
 
@@ -53,9 +59,13 @@ const statusConfig = {
 
 const PlanoDeCorte = () => {
   const [search, setSearch] = useState("");
-  const [selectedPlano, setSelectedPlano] = useState<Plano | null>(null);
+  const [selectedPlano, setSelectedPlano] = useState<(typeof planos)[0] | null>(null);
 
   const filtered = planos.filter((p) => p.nome.toLowerCase().includes(search.toLowerCase()));
+
+  const selectedProduto = selectedPlano?.produtoId
+    ? produtosEsquadria.find(p => p.id === selectedPlano.produtoId)
+    : undefined;
 
   return (
     <AppLayout>
@@ -115,11 +125,28 @@ const PlanoDeCorte = () => {
                 </div>
               </div>
 
-              <Tabs defaultValue="3d">
+              <Tabs defaultValue="perfis">
                 <TabsList>
+                  <TabsTrigger value="perfis" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Perfis de Corte</TabsTrigger>
                   <TabsTrigger value="2d" className="gap-1.5"><Grid2X2 className="h-3.5 w-3.5" /> Diagrama 2D</TabsTrigger>
                   <TabsTrigger value="3d" className="gap-1.5"><Box className="h-3.5 w-3.5" /> Modelo CAD 3D</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="perfis">
+                  {selectedProduto ? (
+                    <ProfileCuttingTable
+                      perfis={selectedProduto.perfis}
+                      produtoNome={selectedProduto.nome}
+                      largura={selectedProduto.largura}
+                      altura={selectedProduto.altura}
+                    />
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground text-sm">
+                      Nenhum produto vinculado a este plano.
+                    </div>
+                  )}
+                </TabsContent>
+
                 <TabsContent value="2d">
                   <CuttingDiagram plano={selectedPlano} />
                 </TabsContent>
@@ -138,7 +165,7 @@ const PlanoDeCorte = () => {
               </Tabs>
 
               <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Peças</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Peças de Vidro</h3>
                 <div className="space-y-2">
                   {selectedPlano.pecas.map((p, i) => (
                     <div key={p.id} className="flex items-center justify-between bg-muted/50 rounded-lg px-4 py-3">
