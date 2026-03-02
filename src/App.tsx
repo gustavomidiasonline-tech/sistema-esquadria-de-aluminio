@@ -13,6 +13,7 @@ import Precos from "./pages/Precos";
 import Relatorios from "./pages/Relatorios";
 import Mapa from "./pages/Mapa";
 import NotFound from "./pages/NotFound";
+import Servicos from "./pages/Servicos";
 import { PlaceholderPage } from "./components/PlaceholderPage";
 
 const queryClient = new QueryClient();
@@ -27,7 +28,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/orcamentos" element={<Orcamentos />} />
-          <Route path="/servicos" element={<PlaceholderPage title="Serviços" description="Gerencie os serviços da sua vidraçaria, incluindo instalação, manutenção e reparos." />} />
+          <Route path="/servicos" element={<Servicos />} />
           <Route path="/pedidos" element={<Pedidos />} />
           <Route path="/plano-de-corte" element={<PlanoDeCorte />} />
           <Route path="/agenda" element={<PlaceholderPage title="Agenda" description="Agende instalações, visitas técnicas e compromissos da equipe." />} />
