@@ -14,6 +14,8 @@ import Relatorios from "./pages/Relatorios";
 import Mapa from "./pages/Mapa";
 import NotFound from "./pages/NotFound";
 import Servicos from "./pages/Servicos";
+import Administradores from "./pages/Administradores";
+import Funcionarios from "./pages/Funcionarios";
 import { PlaceholderPage } from "./components/PlaceholderPage";
 
 const queryClient = new QueryClient();
@@ -36,9 +38,8 @@ const App = () => (
           <Route path="/precos" element={<Precos />} />
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/mapa" element={<Mapa />} />
-          <Route path="/administradores" element={<PlaceholderPage title="Administradores" description="Gerencie os administradores do sistema e suas permissões." />} />
-          <Route path="/funcionarios" element={<PlaceholderPage title="Funcionários" description="Cadastre e gerencie os funcionários da empresa." />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/administradores" element={<Administradores />} />
+          <Route path="/funcionarios" element={<Funcionarios />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
