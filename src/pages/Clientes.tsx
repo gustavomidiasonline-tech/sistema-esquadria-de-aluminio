@@ -31,7 +31,7 @@ const Clientes = () => (
         />
       </div>
 
-      <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
+      <div className="glass-surface rounded-xl divide-y divide-border/30">
         {mockClients.map((client) => (
           <div key={client.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors cursor-pointer">
             <div className="flex items-center gap-4">
