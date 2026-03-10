@@ -57,7 +57,7 @@ export function AppSidebar() {
     <aside
       className={`${
         collapsed ? "w-[72px]" : "w-[240px]"
-      } bg-sidebar flex flex-col h-screen sticky top-0 transition-all duration-300 shrink-0`}
+      } glass-sidebar flex flex-col h-screen sticky top-0 transition-all duration-300 shrink-0`}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border/30">

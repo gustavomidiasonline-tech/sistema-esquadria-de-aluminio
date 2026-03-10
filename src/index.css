@@ -107,11 +107,33 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-sm;
+    @apply bg-card/60 backdrop-blur-xl border border-border/30 shadow-lg;
+  }
+
+  .glass-sidebar {
+    background: hsla(207, 90%, 54%, 0.75);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  .glass-header {
+    @apply bg-card/60 backdrop-blur-xl border-b border-border/30;
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  .glass-surface {
+    @apply bg-card/50 backdrop-blur-xl border border-border/20 shadow-lg;
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  .glass-input {
+    @apply bg-background/40 backdrop-blur-md border border-border/30;
   }
 
   .stat-card-blue {
-    background: linear-gradient(135deg, hsl(207 90% 54%), hsl(207 80% 45%));
-    @apply text-white rounded-xl p-5 shadow-md;
+    background: linear-gradient(135deg, hsla(207, 90%, 54%, 0.85), hsla(207, 80%, 45%, 0.85));
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    @apply text-white rounded-xl p-5 shadow-lg;
   }
 }
