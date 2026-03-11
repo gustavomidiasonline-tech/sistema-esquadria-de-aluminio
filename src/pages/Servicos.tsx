@@ -1,7 +1,6 @@
 import { AppLayout } from "@/components/AppLayout";
-import { CheckSquare, Plus, Search, Clock, CheckCircle2, AlertCircle, Wrench } from "lucide-react";
+import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Clock, Search, Settings, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import {
   Dialog,
@@ -22,183 +21,267 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 interface Servico {
-  id: number;
-  titulo: string;
-  cliente: string;
-  tipo: "instalacao" | "manutencao" | "reparo" | "medicao" | "entrega";
-  status: "pendente" | "em_andamento" | "concluido" | "cancelado";
-  data: string;
-  valor: number;
-  descricao: string;
+  id: string;
+  client: string;
+  address: string;
+  phone: string;
+  seller: string;
+  date: string;
+  value: string;
+  valueDate: string;
+  status: string;
+  statusDetail?: string;
+  statusNote?: string;
+  daysLabel: string;
+  overdue: boolean;
+  statusDaysLabel?: string;
+  statusOverdue?: boolean;
 }
 
-const tipoLabels: Record<string, string> = {
-  instalacao: "Instalação",
-  manutencao: "Manutenção",
-  reparo: "Reparo",
-  medicao: "Medição",
-  entrega: "Entrega",
-};
-
-const statusConfig: Record<string, { label: string; icon: React.ElementType; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pendente: { label: "Pendente", icon: Clock, variant: "outline" },
-  em_andamento: { label: "Em andamento", icon: AlertCircle, variant: "secondary" },
-  concluido: { label: "Concluído", icon: CheckCircle2, variant: "default" },
-  cancelado: { label: "Cancelado", icon: AlertCircle, variant: "destructive" },
-};
-
 const mockServicos: Servico[] = [
-  { id: 1, titulo: "Instalação de janela de correr", cliente: "Igor Soares de Souza", tipo: "instalacao", status: "em_andamento", data: "2025-03-15", valor: 850, descricao: "Janela de correr 4 folhas, linha Suprema" },
-  { id: 2, titulo: "Reparo em porta de abrir", cliente: "Maria Oliveira", tipo: "reparo", status: "pendente", data: "2025-03-18", valor: 320, descricao: "Troca de fechadura e ajuste de dobradiças" },
-  { id: 3, titulo: "Medição para box de banheiro", cliente: "Carlos Santos", tipo: "medicao", status: "concluido", data: "2025-03-10", valor: 0, descricao: "Medição no local para orçamento de box" },
-  { id: 4, titulo: "Instalação de fachada comercial", cliente: "Ana Costa", tipo: "instalacao", status: "pendente", data: "2025-03-20", valor: 4500, descricao: "Fachada em pele de vidro, 12m²" },
-  { id: 5, titulo: "Manutenção de porta de correr", cliente: "José Lima", tipo: "manutencao", status: "concluido", data: "2025-03-08", valor: 180, descricao: "Lubrificação de trilhos e ajuste de roldanas" },
-  { id: 6, titulo: "Entrega de esquadrias", cliente: "Fernanda Reis", tipo: "entrega", status: "em_andamento", data: "2025-03-16", valor: 0, descricao: "Entrega de 3 janelas e 2 portas" },
+  {
+    id: "SERVIÇO 1",
+    client: "IGOR SOARES DE SOUZA",
+    address: "Rua Teste, 1234, Caieiras, Serpa, 07716-053",
+    phone: "(11) 9602-2000",
+    seller: "Igor Soares de Souza",
+    date: "15/03/2025",
+    value: "R$ 850,00",
+    valueDate: "10/03/2025 14:30",
+    status: "EM ANDAMENTO",
+    statusDetail: "Data início: 12/03/2025 08:00",
+    daysLabel: "Faltam 4 dias",
+    overdue: false,
+    statusDaysLabel: "Faltam 2 dias",
+    statusOverdue: false,
+  },
+  {
+    id: "SERVIÇO 2",
+    client: "MARIA OLIVEIRA",
+    address: "Av. Brasil, 567, São Paulo, SP, 01234-000",
+    phone: "(11) 98765-4321",
+    seller: "Igor Soares de Souza",
+    date: "18/03/2025",
+    value: "R$ 320,00",
+    valueDate: "15/03/2025 09:15",
+    status: "PENDENTE",
+    daysLabel: "Faltam 7 dias",
+    overdue: false,
+  },
+  {
+    id: "SERVIÇO 3",
+    client: "CARLOS SANTOS",
+    address: "Rua das Flores, 89, Guarulhos, SP, 07123-456",
+    phone: "(11) 91234-5678",
+    seller: "Igor Soares de Souza",
+    date: "10/03/2025",
+    value: "R$ 0,00",
+    valueDate: "08/03/2025 16:45",
+    status: "CONCLUÍDO",
+    daysLabel: "No prazo",
+    overdue: false,
+  },
+  {
+    id: "SERVIÇO 4",
+    client: "ANA COSTA",
+    address: "Rua Industrial, 2000, Osasco, SP, 06100-000",
+    phone: "(11) 94567-8901",
+    seller: "Empresa modelo",
+    date: "20/03/2025",
+    value: "R$ 4.500,00",
+    valueDate: "14/03/2025 11:20",
+    status: "PENDENTE",
+    statusDetail: "Aguardando material",
+    daysLabel: "Faltam 9 dias",
+    overdue: false,
+    statusDaysLabel: "Faltam 5 dias",
+    statusOverdue: false,
+  },
+  {
+    id: "SERVIÇO 5",
+    client: "JOSÉ LIMA",
+    address: "Rua Manutenção, 45, Barueri, SP, 06400-100",
+    phone: "(11) 93456-7890",
+    seller: "Igor Soares de Souza",
+    date: "08/03/2025",
+    value: "R$ 180,00",
+    valueDate: "05/03/2025 10:00",
+    status: "CONCLUÍDO",
+    daysLabel: "No prazo",
+    overdue: false,
+  },
+  {
+    id: "SERVIÇO 6",
+    client: "FERNANDA REIS",
+    address: "Av. Paulista, 1500, São Paulo, SP, 01310-100",
+    phone: "(11) 92345-6789",
+    seller: "Empresa modelo",
+    date: "16/03/2025",
+    value: "R$ 0,00",
+    valueDate: "13/03/2025 08:30",
+    status: "EM ANDAMENTO",
+    statusDetail: "Entrega em rota",
+    daysLabel: "Atrasado 2 dias",
+    overdue: true,
+    statusDaysLabel: "Atrasado 1 dia",
+    statusOverdue: true,
+  },
+];
+
+const actionButtons = [
+  { icon: RotateCcw, label: "Reagendar" },
+  { icon: DollarSign, label: "Pagamentos" },
+  { icon: FileText, label: "Contrato" },
+  { icon: Printer, label: "Impressões" },
 ];
 
 const Servicos = () => {
-  const [servicos, setServicos] = useState<Servico[]>(mockServicos);
-  const [busca, setBusca] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [novoServico, setNovoServico] = useState({ titulo: "", cliente: "", tipo: "instalacao", descricao: "", valor: "" });
 
-  const filtrados = servicos.filter((s) => {
-    const matchBusca = s.titulo.toLowerCase().includes(busca.toLowerCase()) || s.cliente.toLowerCase().includes(busca.toLowerCase());
-    const matchStatus = filtroStatus === "todos" || s.status === filtroStatus;
-    return matchBusca && matchStatus;
-  });
-
   const handleCriar = () => {
-    const novo: Servico = {
-      id: Date.now(),
-      titulo: novoServico.titulo,
-      cliente: novoServico.cliente,
-      tipo: novoServico.tipo as Servico["tipo"],
-      status: "pendente",
-      data: new Date().toISOString().split("T")[0],
-      valor: parseFloat(novoServico.valor) || 0,
-      descricao: novoServico.descricao,
-    };
-    setServicos([novo, ...servicos]);
     setNovoServico({ titulo: "", cliente: "", tipo: "instalacao", descricao: "", valor: "" });
     setDialogOpen(false);
   };
 
-  const totais = {
-    pendente: servicos.filter((s) => s.status === "pendente").length,
-    em_andamento: servicos.filter((s) => s.status === "em_andamento").length,
-    concluido: servicos.filter((s) => s.status === "concluido").length,
-  };
-
   return (
     <AppLayout>
-      <div className="space-y-6 max-w-7xl">
-        {/* Header */}
+      <div className="space-y-4 max-w-7xl">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
-            <p className="text-sm text-muted-foreground">{servicos.length} serviços cadastrados</p>
-          </div>
+          <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
           <Button className="gap-2" onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4" /> Novo serviço
           </Button>
         </div>
 
-        {/* Cards resumo */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{totais.pendente}</p>
-              <p className="text-xs text-muted-foreground">Pendentes</p>
-            </div>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <Wrench className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{totais.em_andamento}</p>
-              <p className="text-xs text-muted-foreground">Em andamento</p>
-            </div>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{totais.concluido}</p>
-              <p className="text-xs text-muted-foreground">Concluídos</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Busca e filtro */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar serviço ou cliente..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-          <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="pendente">Pendente</SelectItem>
-              <SelectItem value="em_andamento">Em andamento</SelectItem>
-              <SelectItem value="concluido">Concluído</SelectItem>
-              <SelectItem value="cancelado">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Lista */}
-        <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
-          {filtrados.length === 0 ? (
-            <div className="px-5 py-12 text-center text-muted-foreground text-sm">Nenhum serviço encontrado.</div>
-          ) : (
-            filtrados.map((servico) => {
-              const sc = statusConfig[servico.status];
-              const StatusIcon = sc.icon;
-              return (
-                <div key={servico.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <CheckSquare className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{servico.titulo}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {servico.cliente} · {tipoLabels[servico.tipo]} · {new Date(servico.data).toLocaleDateString("pt-BR")}
-                      </p>
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {mockServicos.map((servico) => (
+            <div key={servico.id} className="bg-card border border-border rounded-xl shadow-sm flex flex-col">
+              {/* Header */}
+              <div className="p-4 pb-2 space-y-2">
+                <h3 className="text-base font-bold text-foreground">{servico.id}</h3>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-start gap-1.5">
+                    <User className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span className="font-medium text-foreground">{servico.client}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {servico.valor > 0 && (
-                      <span className="text-sm font-medium text-foreground">
-                        R$ {servico.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </span>
-                    )}
-                    <Badge variant={sc.variant} className="gap-1">
-                      <StatusIcon className="h-3 w-3" />
-                      {sc.label}
-                    </Badge>
+                  <div className="flex items-start gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{servico.address}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 shrink-0" />
+                    <span>{servico.phone}</span>
                   </div>
                 </div>
-              );
-            })
-          )}
+
+                {/* Seller + Date + Badge */}
+                <div className="text-xs space-y-0.5">
+                  <p className="text-muted-foreground">
+                    <span className="font-medium text-foreground">Vendedor:</span> {servico.seller}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground">
+                      <span className="font-medium text-foreground">Previsão:</span> {servico.date}
+                    </p>
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        servico.overdue
+                          ? "border-destructive/30 bg-destructive/10 text-destructive"
+                          : "border-success/30 bg-success/10 text-success"
+                      }`}
+                    >
+                      {servico.daysLabel}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Value */}
+                <div className="flex items-end justify-between">
+                  <p className={`text-lg font-bold ${servico.overdue ? "text-destructive" : "text-primary"}`}>
+                    {servico.value}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">{servico.valueDate}</p>
+                </div>
+              </div>
+
+              {/* Status section */}
+              {servico.status && (
+                <div className="px-4 py-2 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-foreground">{servico.status}</p>
+                    {servico.statusDaysLabel && (
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                          servico.statusOverdue
+                            ? "border-destructive/30 bg-destructive/10 text-destructive"
+                            : "border-success/30 bg-success/10 text-success"
+                        }`}
+                      >
+                        {servico.statusDaysLabel}
+                      </span>
+                    )}
+                  </div>
+                  {servico.statusDetail && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{servico.statusDetail}</p>
+                  )}
+                  {servico.statusNote && (
+                    <p className="text-[10px] text-muted-foreground">{servico.statusNote}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Action icons */}
+              <div className="px-4 py-3 border-t border-border">
+                <div className="flex items-center justify-between">
+                  {actionButtons.map((btn) => (
+                    <button
+                      key={btn.label}
+                      className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group"
+                    >
+                      <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center group-hover:border-primary/30 group-hover:bg-primary/5 transition-colors">
+                        <btn.icon className="h-4 w-4" />
+                      </div>
+                      <span className="text-[10px]">{btn.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors mt-3 text-xs">
+                  <div className="h-8 w-8 rounded-lg border border-border flex items-center justify-center hover:border-primary/30">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <span>Alterar etapa</span>
+                </button>
+              </div>
+
+              {/* Footer buttons */}
+              <div className="flex gap-2 p-4 pt-0 mt-auto">
+                <button className="flex-1 py-2 text-xs font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
+                  Cancelar
+                </button>
+                <button className="flex-1 py-2 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                  Concluir serviço
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
+
+        {/* Bottom bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border py-3 px-6 flex items-center justify-center gap-12 z-10">
+          <button className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
+            <Search className="h-5 w-5" />
+            <span className="text-xs">Buscar</span>
+          </button>
+          <button className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
+            <Settings className="h-5 w-5" />
+            <span className="text-xs">Configurar etapas</span>
+          </button>
+        </div>
+
+        {/* Spacer for bottom bar */}
+        <div className="h-16" />
       </div>
 
       {/* Dialog novo serviço */}
