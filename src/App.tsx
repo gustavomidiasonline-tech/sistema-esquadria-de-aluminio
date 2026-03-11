@@ -17,6 +17,14 @@ import Servicos from "./pages/Servicos";
 import Administradores from "./pages/Administradores";
 import Funcionarios from "./pages/Funcionarios";
 import { PlaceholderPage } from "./components/PlaceholderPage";
+import FinanceiroVisaoGeral from "./pages/financeiro/FinanceiroVisaoGeral";
+import ContasReceber from "./pages/financeiro/ContasReceber";
+import ContasPagar from "./pages/financeiro/ContasPagar";
+import NotasFiscais from "./pages/financeiro/NotasFiscais";
+import EmissaoNF from "./pages/financeiro/EmissaoNF";
+import Contratos from "./pages/financeiro/Contratos";
+import Documentos from "./pages/financeiro/Documentos";
+import FluxoCaixa from "./pages/financeiro/FluxoCaixa";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +48,15 @@ const App = () => (
           <Route path="/mapa" element={<Mapa />} />
           <Route path="/administradores" element={<Administradores />} />
           <Route path="/funcionarios" element={<Funcionarios />} />
+          {/* Financeiro */}
+          <Route path="/financeiro" element={<FinanceiroVisaoGeral />} />
+          <Route path="/financeiro/contas-receber" element={<ContasReceber />} />
+          <Route path="/financeiro/contas-pagar" element={<ContasPagar />} />
+          <Route path="/financeiro/notas-fiscais" element={<NotasFiscais />} />
+          <Route path="/financeiro/emissao-nf" element={<EmissaoNF />} />
+          <Route path="/financeiro/contratos" element={<Contratos />} />
+          <Route path="/financeiro/documentos" element={<Documentos />} />
+          <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixa />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
