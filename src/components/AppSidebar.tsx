@@ -14,6 +14,14 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
+  Wallet,
+  Receipt,
+  FileCheck,
+  FilePlus,
+  CreditCard,
+  TrendingUp,
+  Building2,
+  ChevronDown,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -34,6 +42,17 @@ const mainItems = [
   { title: "Mapa", url: "/mapa", icon: MapPin },
 ];
 
+const financeiroItems = [
+  { title: "Visão Geral", url: "/financeiro", icon: TrendingUp },
+  { title: "Contas a Receber", url: "/financeiro/contas-receber", icon: Wallet },
+  { title: "Contas a Pagar", url: "/financeiro/contas-pagar", icon: CreditCard },
+  { title: "Notas Fiscais", url: "/financeiro/notas-fiscais", icon: Receipt },
+  { title: "Emissão de NF", url: "/financeiro/emissao-nf", icon: FilePlus },
+  { title: "Contratos", url: "/financeiro/contratos", icon: FileCheck },
+  { title: "Documentos", url: "/financeiro/documentos", icon: FileText },
+  { title: "Fluxo de Caixa", url: "/financeiro/fluxo-caixa", icon: Building2 },
+];
+
 const adminItems = [
   { title: "Administradores", url: "/administradores", icon: ShieldCheck },
   { title: "Funcionários", url: "/funcionarios", icon: UserCog },
@@ -42,6 +61,9 @@ const adminItems = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const [financeiroOpen, setFinanceiroOpen] = useState(
+    location.pathname.startsWith("/financeiro")
+  );
 
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -51,6 +73,13 @@ export function AppSidebar() {
       isActive(path)
         ? "bg-sidebar-accent text-sidebar-accent-foreground"
         : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+    }`;
+
+  const subLinkClass = (path: string) =>
+    `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
+      isActive(path)
+        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
     }`;
 
   return (
@@ -85,6 +114,58 @@ export function AppSidebar() {
           </NavLink>
         ))}
 
+        {/* Financeiro Section */}
+        <div className="pt-4 pb-2">
+          {!collapsed && (
+            <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+              Financeiro
+            </p>
+          )}
+        </div>
+
+        {collapsed ? (
+          <NavLink
+            to="/financeiro"
+            className={linkClass("/financeiro")}
+            activeClassName=""
+          >
+            <Wallet className="h-5 w-5 shrink-0" />
+          </NavLink>
+        ) : (
+          <>
+            <button
+              onClick={() => setFinanceiroOpen(!financeiroOpen)}
+              className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
+            >
+              <div className="flex items-center gap-3">
+                <Wallet className="h-5 w-5 shrink-0" />
+                <span>Financeiro</span>
+              </div>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  financeiroOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {financeiroOpen && (
+              <div className="ml-3 pl-3 border-l border-sidebar-border/20 space-y-0.5">
+                {financeiroItems.map((item) => (
+                  <NavLink
+                    key={item.url}
+                    to={item.url}
+                    className={subLinkClass(item.url)}
+                    activeClassName=""
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span>{item.title}</span>
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Gestão Section */}
         <div className="pt-4 pb-2">
           {!collapsed && (
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
