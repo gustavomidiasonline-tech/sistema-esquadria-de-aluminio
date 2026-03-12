@@ -125,6 +125,25 @@ const PlanoDeCorte = () => {
   // ============ DETAIL VIEW ============
   if (selectedPlano) {
     const produto = getProduto(selectedPlano.produtoId);
+    const newL = Number(editLargura) || selectedPlano.largura;
+    const newA = Number(editAltura) || selectedPlano.altura;
+    const dimensionsChanged = produto && (newL !== produto.largura || newA !== produto.altura);
+
+    // Recalculate perfis based on new dimensions
+    const recalculatedPerfis = produto
+      ? recalcularPerfis(produto.perfis, produto.largura, produto.altura, newL, newA)
+      : [];
+
+    const handleSalvar = () => {
+      setPlanos(prev => prev.map(p =>
+        p.id === selectedPlano.id
+          ? { ...p, largura: newL, altura: newA }
+          : p
+      ));
+      setSelectedPlano({ ...selectedPlano, largura: newL, altura: newA });
+      toast.success("Dimensões salvas e perfis recalculados!");
+    };
+
     return (
       <AppLayout>
         <div className="max-w-7xl space-y-0">
@@ -168,24 +187,29 @@ const PlanoDeCorte = () => {
                     />
                   </div>
                 </div>
+                {dimensionsChanged && (
+                  <p className="text-xs text-primary font-medium animate-pulse">
+                    ⚡ Dimensões alteradas — perfis recalculados automaticamente
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Profile cutting table */}
+          {/* Profile cutting table with recalculated perfis */}
           {produto && (
             <ProfileCuttingTable
-              perfis={produto.perfis}
+              perfis={recalculatedPerfis}
               produtoNome={produto.nome}
-              largura={Number(editLargura) || produto.largura}
-              altura={Number(editAltura) || produto.altura}
+              largura={newL}
+              altura={newA}
               showHeader={false}
             />
           )}
 
           {/* Save button */}
           <div className="flex justify-end mt-4">
-            <Button className="gap-2" onClick={() => toast.success("Salvo com sucesso!")}>
+            <Button className="gap-2" onClick={handleSalvar}>
               <Save className="h-4 w-4" /> Salvar
             </Button>
           </div>
