@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, ArrowLeft, Printer, Save, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -8,8 +8,34 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ProfileCuttingTable } from "@/components/plano-de-corte/ProfileCuttingTable";
 import { ProductThumbnail } from "@/components/plano-de-corte/ProductThumbnail";
-import { produtosEsquadria, type ProdutoEsquadria } from "@/data/perfis-aluminio";
+import { produtosEsquadria, type PerfilCorte } from "@/data/perfis-aluminio";
 import { toast } from "sonner";
+
+/** Recalcula as medidas dos perfis proporcionalmente às novas dimensões */
+function recalcularPerfis(
+  perfisOrigem: PerfilCorte[],
+  larguraOriginal: number,
+  alturaOriginal: number,
+  novaLargura: number,
+  novaAltura: number
+): PerfilCorte[] {
+  const ratioL = novaLargura / larguraOriginal;
+  const ratioA = novaAltura / alturaOriginal;
+
+  return perfisOrigem.map((p) => {
+    let novaMedida = p.medida;
+    if (p.posicao === "Altura") {
+      novaMedida = Math.round(p.medida * ratioA);
+    } else if (p.posicao === "Largura" || p.posicao === "Travessa") {
+      novaMedida = Math.round(p.medida * ratioL);
+    } else if (p.posicao === "Montante") {
+      novaMedida = Math.round(p.medida * ratioA);
+    } else if (p.posicao === "Diagonal") {
+      novaMedida = Math.round(p.medida * Math.sqrt((ratioL ** 2 + ratioA ** 2) / 2));
+    }
+    return { ...p, medida: novaMedida };
+  });
+}
 
 interface PlanoItem {
   id: number;
