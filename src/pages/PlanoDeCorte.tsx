@@ -1,319 +1,303 @@
 import { AppLayout } from "@/components/AppLayout";
-import { useState, Suspense } from "react";
-import { Scissors, Plus, Search, CheckCircle, Clock, AlertTriangle, Maximize2, Box, Grid2X2, FileText } from "lucide-react";
+import { useState } from "react";
+import { Plus, ArrowLeft, Printer, Save, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CuttingDiagram, COLORS, type Plano } from "@/components/plano-de-corte/CuttingDiagram";
-import { CuttingDiagram3D } from "@/components/plano-de-corte/CuttingDiagram3D";
+import { Textarea } from "@/components/ui/textarea";
 import { ProfileCuttingTable } from "@/components/plano-de-corte/ProfileCuttingTable";
-import { produtosEsquadria } from "@/data/perfis-aluminio";
+import { ProductThumbnail } from "@/components/plano-de-corte/ProductThumbnail";
+import { produtosEsquadria, type ProdutoEsquadria } from "@/data/perfis-aluminio";
 import { toast } from "sonner";
 
-const initialPlanos: (Plano & { produtoId?: number })[] = [
-  {
-    id: 1, nome: "Pedido #1042 - Box Banheiro", data: "27/02/2026", status: "concluido",
-    chapa: { largura: 2200, altura: 1100 },
-    pecas: [
-      { id: 1, largura: 800, altura: 1900, qtd: 2, material: "Temperado 8mm Incolor" },
-      { id: 2, largura: 400, altura: 1900, qtd: 1, material: "Temperado 8mm Incolor" },
-    ],
-    aproveitamento: 87.3, produtoId: 5,
-  },
-  {
-    id: 2, nome: "Pedido #1038 - Janela 4 folhas", data: "26/02/2026", status: "andamento",
-    chapa: { largura: 2500, altura: 1300 },
-    pecas: [
-      { id: 1, largura: 600, altura: 1200, qtd: 4, material: "Temperado 6mm Incolor" },
-      { id: 2, largura: 300, altura: 200, qtd: 2, material: "Temperado 6mm Incolor" },
-    ],
-    aproveitamento: 72.8, produtoId: 2,
-  },
-  {
-    id: 3, nome: "Pedido #1035 - Porta Pivotante", data: "25/02/2026", status: "pendente",
-    chapa: { largura: 2200, altura: 1100 },
-    pecas: [
-      { id: 1, largura: 1000, altura: 2100, qtd: 1, material: "Laminado 10mm Incolor" },
-      { id: 2, largura: 200, altura: 2100, qtd: 2, material: "Laminado 10mm Incolor" },
-    ],
-    aproveitamento: 64.1, produtoId: 3,
-  },
-  {
-    id: 4, nome: "Pedido #1030 - Fachada Loja", data: "24/02/2026", status: "concluido",
-    chapa: { largura: 3210, altura: 2200 },
-    pecas: [
-      { id: 1, largura: 1500, altura: 2100, qtd: 2, material: "Laminado 8mm Verde" },
-      { id: 2, largura: 1000, altura: 500, qtd: 3, material: "Laminado 8mm Verde" },
-    ],
-    aproveitamento: 91.5, produtoId: 4,
-  },
-];
+interface PlanoItem {
+  id: number;
+  produtoId: number;
+  largura: number;
+  altura: number;
+  descricao: string;
+  criadoPor: string;
+  data: string;
+}
 
-const statusConfig = {
-  concluido: { label: "Concluído", icon: CheckCircle, cls: "bg-[hsl(142,72%,42%)] text-white" },
-  andamento: { label: "Em andamento", icon: Clock, cls: "bg-[hsl(38,92%,50%)] text-white" },
-  pendente: { label: "Pendente", icon: AlertTriangle, cls: "bg-muted text-muted-foreground" },
-};
+const mockPlanos: PlanoItem[] = [
+  { id: 1, produtoId: 1, largura: 2000, altura: 1000, descricao: "", criadoPor: "Fabio", data: "11/01/2022" },
+  { id: 2, produtoId: 2, largura: 2400, altura: 1200, descricao: "", criadoPor: "Odair Araújo", data: "21/02/2022" },
+  { id: 3, produtoId: 7, largura: 610, altura: 560, descricao: "", criadoPor: "Fabio", data: "11/01/2022" },
+  { id: 4, produtoId: 7, largura: 575, altura: 585, descricao: "", criadoPor: "Fabio", data: "11/01/2022" },
+  { id: 5, produtoId: 3, largura: 1200, altura: 2200, descricao: "", criadoPor: "Fabio", data: "11/01/2022" },
+  { id: 6, produtoId: 7, largura: 590, altura: 1810, descricao: "", criadoPor: "Fabio", data: "11/01/2022" },
+  { id: 7, produtoId: 8, largura: 2115, altura: 1945, descricao: "", criadoPor: "Fabio", data: "11/01/2022" },
+  { id: 8, produtoId: 9, largura: 1450, altura: 1070, descricao: "", criadoPor: "Fabio", data: "11/01/2022" },
+  { id: 9, produtoId: 5, largura: 278, altura: 785, descricao: "", criadoPor: "Norma G Silva Barbosa", data: "11/01/2022" },
+  { id: 10, produtoId: 10, largura: 1160, altura: 793, descricao: "", criadoPor: "Odair Araújo", data: "21/02/2022" },
+];
 
 const PlanoDeCorte = () => {
   const [search, setSearch] = useState("");
-  const [planos, setPlanos] = useState(initialPlanos);
-  const [selectedPlano, setSelectedPlano] = useState<(typeof initialPlanos)[0] | null>(null);
+  const [planos, setPlanos] = useState(mockPlanos);
+  const [selectedPlano, setSelectedPlano] = useState<PlanoItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [novoNome, setNovoNome] = useState("");
-  const [novoProdutoId, setNovoProdutoId] = useState("");
-  const [novoLargura, setNovoLargura] = useState("2200");
-  const [novoAltura, setNovoAltura] = useState("1100");
 
-  const filtered = planos.filter((p) => p.nome.toLowerCase().includes(search.toLowerCase()));
+  // Dialog state
+  const [selectedProdutoId, setSelectedProdutoId] = useState<number | null>(null);
+  const [novoAltura, setNovoAltura] = useState("");
+  const [novoLargura, setNovoLargura] = useState("");
+  const [novoDescricao, setNovoDescricao] = useState("");
 
-  const selectedProduto = selectedPlano?.produtoId
-    ? produtosEsquadria.find(p => p.id === selectedPlano.produtoId)
-    : undefined;
+  // Detail edit state
+  const [editLargura, setEditLargura] = useState("");
+  const [editAltura, setEditAltura] = useState("");
 
-  const handleCriarPlano = () => {
-    try {
-      if (!novoNome.trim()) {
-        toast.error("Informe o nome do plano");
-        return;
-      }
-      const prodId = novoProdutoId ? Number(novoProdutoId) : undefined;
-      const produto = prodId ? produtosEsquadria.find(p => p.id === prodId) : undefined;
-      const hoje = new Date();
-      const dataStr = `${String(hoje.getDate()).padStart(2, "0")}/${String(hoje.getMonth() + 1).padStart(2, "0")}/${hoje.getFullYear()}`;
+  const filtered = planos.filter((p) => {
+    const produto = produtosEsquadria.find(pr => pr.id === p.produtoId);
+    const nome = produto?.nome || "";
+    return nome.toLowerCase().includes(search.toLowerCase()) || p.criadoPor.toLowerCase().includes(search.toLowerCase());
+  });
 
-      const novoPlano: (typeof initialPlanos)[0] = {
-        id: Date.now(),
-        nome: novoNome,
-        data: dataStr,
-        status: "pendente",
-        chapa: { largura: Number(novoLargura) || 2200, altura: Number(novoAltura) || 1100 },
-        pecas: produto
-          ? [{ id: 1, largura: produto.largura, altura: produto.altura, qtd: 1, material: `${produto.linha} - ${produto.tipo}` }]
-          : [],
-        aproveitamento: 0,
-        produtoId: prodId,
-      };
-
-      setPlanos(prev => [novoPlano, ...prev]);
-      setDialogOpen(false);
-      setNovoNome("");
-      setNovoProdutoId("");
-      setNovoLargura("2200");
-      setNovoAltura("1100");
-      toast.success("Plano de corte criado com sucesso!");
-    } catch (error) {
-      console.error("Erro ao criar plano:", error);
-      toast.error("Erro ao criar plano de corte");
-    }
+  const handleSelectPlano = (plano: PlanoItem) => {
+    setSelectedPlano(plano);
+    setEditLargura(String(plano.largura));
+    setEditAltura(String(plano.altura));
   };
 
+  const handleCriarPlano = () => {
+    if (!selectedProdutoId) {
+      toast.error("Selecione um produto");
+      return;
+    }
+    if (!novoAltura || !novoLargura) {
+      toast.error("Informe altura e largura");
+      return;
+    }
+
+    const hoje = new Date();
+    const dataStr = `${String(hoje.getDate()).padStart(2, "0")}/${String(hoje.getMonth() + 1).padStart(2, "0")}/${hoje.getFullYear()}`;
+
+    const novo: PlanoItem = {
+      id: Date.now(),
+      produtoId: selectedProdutoId,
+      largura: Number(novoLargura),
+      altura: Number(novoAltura),
+      descricao: novoDescricao,
+      criadoPor: "Usuário",
+      data: dataStr,
+    };
+
+    setPlanos(prev => [novo, ...prev]);
+    setDialogOpen(false);
+    setSelectedProdutoId(null);
+    setNovoAltura("");
+    setNovoLargura("");
+    setNovoDescricao("");
+    toast.success("Plano de corte adicionado!");
+  };
+
+  const getProduto = (id: number) => produtosEsquadria.find(p => p.id === id);
+
+  // ============ DETAIL VIEW ============
+  if (selectedPlano) {
+    const produto = getProduto(selectedPlano.produtoId);
+    return (
+      <AppLayout>
+        <div className="max-w-7xl space-y-0">
+          {/* Top bar */}
+          <div className="flex items-center justify-between mb-6">
+            <button onClick={() => setSelectedPlano(null)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <Button className="gap-2">
+              <Printer className="h-4 w-4" /> Imprimir
+            </Button>
+          </div>
+
+          {/* Product header */}
+          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+            <div className="flex items-start gap-6">
+              {produto && (
+                <ProductThumbnail tipo={produto.tipo} folhas={produto.folhas} className="w-32 h-28" />
+              )}
+              <div className="flex-1 space-y-4">
+                <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
+                  {produto?.nome || "Produto"}
+                </h2>
+                <div className="grid grid-cols-2 gap-4 max-w-md">
+                  <div>
+                    <Label className="text-xs text-muted-foreground font-medium">Largura</Label>
+                    <Input
+                      type="number"
+                      value={editLargura}
+                      onChange={(e) => setEditLargura(e.target.value)}
+                      className="mt-1 bg-muted/50"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground font-medium">Altura</Label>
+                    <Input
+                      type="number"
+                      value={editAltura}
+                      onChange={(e) => setEditAltura(e.target.value)}
+                      className="mt-1 bg-muted/50"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Profile cutting table */}
+          {produto && (
+            <ProfileCuttingTable
+              perfis={produto.perfis}
+              produtoNome={produto.nome}
+              largura={Number(editLargura) || produto.largura}
+              altura={Number(editAltura) || produto.altura}
+              showHeader={false}
+            />
+          )}
+
+          {/* Save button */}
+          <div className="flex justify-end mt-4">
+            <Button className="gap-2" onClick={() => toast.success("Salvo com sucesso!")}>
+              <Save className="h-4 w-4" /> Salvar
+            </Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // ============ LIST VIEW ============
   return (
     <AppLayout>
-      <div className="space-y-6 max-w-7xl">
+      <div className="max-w-7xl space-y-5">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Plano de Corte</h1>
-            <p className="text-sm text-muted-foreground">Otimize o corte dos vidros e perfis com planos automatizados</p>
+            <p className="text-sm text-muted-foreground">Gerencie os planos de corte dos produtos</p>
           </div>
           <Button className="gap-2" onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4" /> Novo plano
+            <Plus className="h-4 w-4" /> Adicionar
           </Button>
         </div>
 
+        {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
-            type="text" placeholder="Buscar plano..." value={search} onChange={(e) => setSearch(e.target.value)}
+            type="text" placeholder="Buscar por produto ou responsável..." value={search} onChange={(e) => setSearch(e.target.value)}
             className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
           />
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-card border border-border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{planos.length}</p>
-            <p className="text-xs text-muted-foreground">Planos criados</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{planos.filter(p => p.status === "concluido").length}</p>
-            <p className="text-xs text-muted-foreground">Concluídos</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-primary">{planos.length > 0 ? (planos.reduce((a, p) => a + p.aproveitamento, 0) / planos.length).toFixed(1) : "0"}%</p>
-            <p className="text-xs text-muted-foreground">Aproveitamento médio</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{planos.reduce((a, p) => a + p.pecas.reduce((b, pc) => b + pc.qtd, 0), 0)}</p>
-            <p className="text-xs text-muted-foreground">Peças totais</p>
-          </div>
+        {/* Product cards grid - 2 columns like reference */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filtered.map((plano) => {
+            const produto = getProduto(plano.produtoId);
+            if (!produto) return null;
+
+            return (
+              <button
+                key={plano.id}
+                onClick={() => handleSelectPlano(plano)}
+                className="bg-card border border-border rounded-xl p-4 text-left hover:shadow-md hover:border-primary/40 transition-all flex items-center gap-4"
+              >
+                {/* Thumbnail */}
+                <ProductThumbnail tipo={produto.tipo} folhas={produto.folhas} className="w-20 h-16" />
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground uppercase leading-tight">
+                    {produto.nome}
+                  </p>
+                  <p className="text-xs font-medium text-primary mt-0.5">
+                    {plano.criadoPor} {plano.data}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    L: {plano.largura} X A: {plano.altura}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
         </div>
-
-        {selectedPlano ? (
-          <div className="space-y-4">
-            <Button variant="ghost" onClick={() => setSelectedPlano(null)} className="gap-2 text-muted-foreground">
-              ← Voltar para lista
-            </Button>
-            <div className="bg-card border border-border rounded-xl p-6 space-y-5">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h2 className="text-lg font-bold text-foreground">{selectedPlano.nome}</h2>
-                  <p className="text-xs text-muted-foreground">{selectedPlano.data} • Chapa {selectedPlano.chapa.largura}x{selectedPlano.chapa.altura}mm</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-primary">{selectedPlano.aproveitamento}% aproveitamento</span>
-                  <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full ${statusConfig[selectedPlano.status].cls}`}>
-                    {statusConfig[selectedPlano.status].label}
-                  </span>
-                </div>
-              </div>
-
-              <Tabs defaultValue="perfis" className="w-full">
-                <TabsList className="w-full sm:w-auto">
-                  <TabsTrigger value="perfis" className="gap-1.5">
-                    <FileText className="h-3.5 w-3.5" />
-                    <span>Perfis de Corte</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="2d" className="gap-1.5">
-                    <Grid2X2 className="h-3.5 w-3.5" />
-                    <span>Diagrama 2D</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="3d" className="gap-1.5">
-                    <Box className="h-3.5 w-3.5" />
-                    <span>Modelo CAD 3D</span>
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="perfis" className="mt-4">
-                  {selectedProduto ? (
-                    <ProfileCuttingTable
-                      perfis={selectedProduto.perfis}
-                      produtoNome={selectedProduto.nome}
-                      largura={selectedProduto.largura}
-                      altura={selectedProduto.altura}
-                    />
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground text-sm border border-border rounded-xl bg-muted/20">
-                      Nenhum produto vinculado a este plano.
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="2d" className="mt-4">
-                  <CuttingDiagram plano={selectedPlano} />
-                </TabsContent>
-
-                <TabsContent value="3d" className="mt-4">
-                  <Suspense fallback={
-                    <div className="w-full h-[400px] bg-muted/30 rounded-xl border border-border flex items-center justify-center">
-                      <div className="text-center space-y-2">
-                        <Box className="h-8 w-8 text-muted-foreground animate-pulse mx-auto" />
-                        <p className="text-sm text-muted-foreground">Carregando modelo 3D...</p>
-                      </div>
-                    </div>
-                  }>
-                    <CuttingDiagram3D plano={selectedPlano} />
-                  </Suspense>
-                </TabsContent>
-              </Tabs>
-
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Peças de Vidro</h3>
-                <div className="space-y-2">
-                  {selectedPlano.pecas.map((p, i) => (
-                    <div key={p.id} className="flex items-center justify-between bg-muted/50 rounded-lg px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-3 w-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{p.largura} x {p.altura} mm</p>
-                          <p className="text-xs text-muted-foreground">{p.material}</p>
-                        </div>
-                      </div>
-                      <span className="text-sm font-semibold text-foreground">x{p.qtd}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((plano) => {
-              const St = statusConfig[plano.status];
-              return (
-                <button
-                  key={plano.id}
-                  onClick={() => setSelectedPlano(plano)}
-                  className="bg-card border border-border rounded-xl p-5 text-left hover:shadow-md hover:border-primary/30 transition-all"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Scissors className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-semibold text-foreground">{plano.nome}</span>
-                    </div>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${St.cls}`}>{St.label}</span>
-                  </div>
-                  <CuttingDiagram plano={plano} />
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xs text-muted-foreground">{plano.data}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Maximize2 className="h-3 w-3" /> {plano.chapa.largura}x{plano.chapa.altura}mm
-                      </span>
-                      <span className="text-xs font-semibold text-primary">{plano.aproveitamento}%</span>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
-      {/* Dialog Novo Plano */}
+      {/* ============ ADD DIALOG ============ */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Plano de Corte</DialogTitle>
-            <DialogDescription>Preencha os dados para criar um novo plano de corte.</DialogDescription>
+            <DialogTitle>Adicionar Plano de Corte</DialogTitle>
+            <DialogDescription>Selecione o produto e informe as dimensões.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome do plano</Label>
-              <Input id="nome" placeholder="Ex: Pedido #1050 - Janela Sala" value={novoNome} onChange={(e) => setNovoNome(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Produto / Esquadria</Label>
-              <Select value={novoProdutoId} onValueChange={setNovoProdutoId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um produto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {produtosEsquadria.map(p => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      {p.nome} ({p.linha})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="largura">Largura chapa (mm)</Label>
-                <Input id="largura" type="number" value={novoLargura} onChange={(e) => setNovoLargura(e.target.value)} />
+
+          <div className="space-y-5 py-2">
+            {/* Product selection grid */}
+            <div>
+              <Label className="text-sm font-semibold mb-3 block">Selecione o Produto</Label>
+              <div className="grid grid-cols-3 gap-3 max-h-[280px] overflow-y-auto pr-1">
+                {produtosEsquadria.map((produto) => (
+                  <button
+                    key={produto.id}
+                    onClick={() => setSelectedProdutoId(produto.id)}
+                    className={`border rounded-xl p-3 flex flex-col items-center gap-2 transition-all text-center
+                      ${selectedProdutoId === produto.id
+                        ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20"
+                        : "border-border bg-card hover:border-primary/30 hover:shadow-sm"
+                      }`}
+                  >
+                    <ProductThumbnail tipo={produto.tipo} folhas={produto.folhas} className="w-16 h-14" />
+                    <span className="text-[11px] font-semibold text-foreground uppercase leading-tight">
+                      {produto.nome}
+                    </span>
+                  </button>
+                ))}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="altura">Altura chapa (mm)</Label>
-                <Input id="altura" type="number" value={novoAltura} onChange={(e) => setNovoAltura(e.target.value)} />
+            </div>
+
+            {/* Dimension inputs */}
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm font-semibold">
+                  Altura:<span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  type="number"
+                  placeholder="1000"
+                  value={novoAltura}
+                  onChange={(e) => setNovoAltura(e.target.value)}
+                  className="mt-1 bg-muted/30"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-semibold">
+                  Largura:<span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  type="number"
+                  placeholder="2000"
+                  value={novoLargura}
+                  onChange={(e) => setNovoLargura(e.target.value)}
+                  className="mt-1 bg-muted/30"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-semibold">Descrição:</Label>
+                <Textarea
+                  placeholder="Descrição opcional..."
+                  value={novoDescricao}
+                  onChange={(e) => setNovoDescricao(e.target.value)}
+                  className="mt-1 bg-muted/30 min-h-[60px]"
+                />
               </div>
             </div>
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCriarPlano}>Criar plano</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Voltar</Button>
+            <Button onClick={handleCriarPlano}>Adicionar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
