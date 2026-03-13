@@ -21,6 +21,7 @@ import Administradores from "./pages/Administradores";
 import Funcionarios from "./pages/Funcionarios";
 import Fornecedores from "./pages/Fornecedores";
 import Agenda from "./pages/Agenda";
+import EsquadriasModule from "./pages/EsquadriasModule";
 import FinanceiroVisaoGeral from "./pages/financeiro/FinanceiroVisaoGeral";
 import ContasReceber from "./pages/financeiro/ContasReceber";
 import ContasPagar from "./pages/financeiro/ContasPagar";
