@@ -22,14 +22,25 @@ const Login = () => {
     try {
       if (isSignUp) {
         await signUp(email, password, nome);
-        toast.success("Conta criada! Verifique seu email para confirmar.");
+        toast.success("Conta criada! Fazendo login...");
+        // Auto-login after signup (auto-confirm is enabled)
+        await signIn(email, password);
+        navigate("/");
       } else {
         await signIn(email, password);
         toast.success("Login realizado com sucesso!");
         navigate("/");
       }
     } catch (error: any) {
-      toast.error(error.message || "Erro ao autenticar");
+      const msg = error.message || "";
+      if (msg.includes("already registered") || msg.includes("already_exists")) {
+        toast.error("Este email já está cadastrado. Use 'Entrar' para fazer login.");
+        setIsSignUp(false);
+      } else if (msg.includes("Invalid login")) {
+        toast.error("Email ou senha incorretos.");
+      } else {
+        toast.error(msg || "Erro ao autenticar");
+      }
     } finally {
       setLoading(false);
     }
