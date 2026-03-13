@@ -1,132 +1,16 @@
 import { AppLayout } from "@/components/AppLayout";
-import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Clock, Search, Settings, Plus } from "lucide-react";
+import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Clock, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-
-interface Servico {
-  id: string;
-  client: string;
-  address: string;
-  phone: string;
-  seller: string;
-  date: string;
-  value: string;
-  valueDate: string;
-  status: string;
-  statusDetail?: string;
-  statusNote?: string;
-  daysLabel: string;
-  overdue: boolean;
-  statusDaysLabel?: string;
-  statusOverdue?: boolean;
-}
-
-const mockServicos: Servico[] = [
-  {
-    id: "SERVIÇO 1",
-    client: "IGOR SOARES DE SOUZA",
-    address: "Rua Teste, 1234, Caieiras, Serpa, 07716-053",
-    phone: "(11) 9602-2000",
-    seller: "Igor Soares de Souza",
-    date: "15/03/2025",
-    value: "R$ 850,00",
-    valueDate: "10/03/2025 14:30",
-    status: "EM ANDAMENTO",
-    statusDetail: "Data início: 12/03/2025 08:00",
-    daysLabel: "Faltam 4 dias",
-    overdue: false,
-    statusDaysLabel: "Faltam 2 dias",
-    statusOverdue: false,
-  },
-  {
-    id: "SERVIÇO 2",
-    client: "MARIA OLIVEIRA",
-    address: "Av. Brasil, 567, São Paulo, SP, 01234-000",
-    phone: "(11) 98765-4321",
-    seller: "Igor Soares de Souza",
-    date: "18/03/2025",
-    value: "R$ 320,00",
-    valueDate: "15/03/2025 09:15",
-    status: "PENDENTE",
-    daysLabel: "Faltam 7 dias",
-    overdue: false,
-  },
-  {
-    id: "SERVIÇO 3",
-    client: "CARLOS SANTOS",
-    address: "Rua das Flores, 89, Guarulhos, SP, 07123-456",
-    phone: "(11) 91234-5678",
-    seller: "Igor Soares de Souza",
-    date: "10/03/2025",
-    value: "R$ 0,00",
-    valueDate: "08/03/2025 16:45",
-    status: "CONCLUÍDO",
-    daysLabel: "No prazo",
-    overdue: false,
-  },
-  {
-    id: "SERVIÇO 4",
-    client: "ANA COSTA",
-    address: "Rua Industrial, 2000, Osasco, SP, 06100-000",
-    phone: "(11) 94567-8901",
-    seller: "Empresa modelo",
-    date: "20/03/2025",
-    value: "R$ 4.500,00",
-    valueDate: "14/03/2025 11:20",
-    status: "PENDENTE",
-    statusDetail: "Aguardando material",
-    daysLabel: "Faltam 9 dias",
-    overdue: false,
-    statusDaysLabel: "Faltam 5 dias",
-    statusOverdue: false,
-  },
-  {
-    id: "SERVIÇO 5",
-    client: "JOSÉ LIMA",
-    address: "Rua Manutenção, 45, Barueri, SP, 06400-100",
-    phone: "(11) 93456-7890",
-    seller: "Igor Soares de Souza",
-    date: "08/03/2025",
-    value: "R$ 180,00",
-    valueDate: "05/03/2025 10:00",
-    status: "CONCLUÍDO",
-    daysLabel: "No prazo",
-    overdue: false,
-  },
-  {
-    id: "SERVIÇO 6",
-    client: "FERNANDA REIS",
-    address: "Av. Paulista, 1500, São Paulo, SP, 01310-100",
-    phone: "(11) 92345-6789",
-    seller: "Empresa modelo",
-    date: "16/03/2025",
-    value: "R$ 0,00",
-    valueDate: "13/03/2025 08:30",
-    status: "EM ANDAMENTO",
-    statusDetail: "Entrega em rota",
-    daysLabel: "Atrasado 2 dias",
-    overdue: true,
-    statusDaysLabel: "Atrasado 1 dia",
-    statusOverdue: true,
-  },
-];
+import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate } from "@/hooks/useSupabaseQuery";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { differenceInDays, parseISO, format } from "date-fns";
 
 const actionButtons = [
   { icon: RotateCcw, label: "Reagendar" },
@@ -135,14 +19,67 @@ const actionButtons = [
   { icon: Printer, label: "Impressões" },
 ];
 
-const Servicos = () => {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [novoServico, setNovoServico] = useState({ titulo: "", cliente: "", tipo: "instalacao", descricao: "", valor: "" });
+const statusLabels: Record<string, string> = {
+  agendado: "AGENDADO",
+  em_andamento: "EM ANDAMENTO",
+  concluido: "CONCLUÍDO",
+  cancelado: "CANCELADO",
+};
 
-  const handleCriar = () => {
-    setNovoServico({ titulo: "", cliente: "", tipo: "instalacao", descricao: "", valor: "" });
-    setDialogOpen(false);
+const Servicos = () => {
+  const { user } = useAuth();
+  const { data: servicos = [], isLoading } = useSupabaseQuery("servicos", {
+    select: "*, clientes(nome, endereco, telefone, cidade, estado)",
+    orderBy: { column: "created_at", ascending: false },
+  });
+  const { data: clientes = [] } = useSupabaseQuery("clientes");
+  const insertMutation = useSupabaseInsert("servicos");
+  const updateMutation = useSupabaseUpdate("servicos");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [form, setForm] = useState({ cliente_id: "", tipo: "instalacao", descricao: "", valor: "", data_agendada: "", responsavel: "" });
+
+  const handleCriar = async () => {
+    if (!form.cliente_id) { toast.error("Selecione um cliente"); return; }
+    try {
+      await insertMutation.mutateAsync({
+        cliente_id: form.cliente_id,
+        tipo: form.tipo,
+        descricao: form.descricao,
+        valor: Number(form.valor) || 0,
+        data_agendada: form.data_agendada || null,
+        responsavel: form.responsavel,
+        created_by: user?.id,
+      });
+      toast.success("Serviço criado!");
+      setForm({ cliente_id: "", tipo: "instalacao", descricao: "", valor: "", data_agendada: "", responsavel: "" });
+      setDialogOpen(false);
+    } catch {}
   };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const values: any = { status: newStatus };
+      if (newStatus === "concluido") values.data_conclusao = new Date().toISOString().split("T")[0];
+      await updateMutation.mutateAsync({ id, values });
+      toast.success("Status atualizado!");
+    } catch {}
+  };
+
+  const filtered = servicos.filter((s: any) => {
+    const term = searchTerm.toLowerCase();
+    return !term || s.clientes?.nome?.toLowerCase().includes(term) || String(s.numero).includes(term);
+  });
+
+  const getDaysInfo = (date: string | null) => {
+    if (!date) return { label: "", overdue: false };
+    const diff = differenceInDays(parseISO(date), new Date());
+    if (diff < 0) return { label: `Atrasado ${Math.abs(diff)} dias`, overdue: true };
+    if (diff === 0) return { label: "Hoje", overdue: false };
+    return { label: `Faltam ${diff} dias`, overdue: false };
+  };
+
+  const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
   return (
     <AppLayout>
@@ -154,156 +91,118 @@ const Servicos = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {mockServicos.map((servico) => (
-            <div key={servico.id} className="bg-card border border-border rounded-xl shadow-sm flex flex-col">
-              {/* Header */}
-              <div className="p-4 pb-2 space-y-2">
-                <h3 className="text-base font-bold text-foreground">{servico.id}</h3>
-                <div className="space-y-1 text-xs text-muted-foreground">
-                  <div className="flex items-start gap-1.5">
-                    <User className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                    <span className="font-medium text-foreground">{servico.client}</span>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                    <span>{servico.address}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5 shrink-0" />
-                    <span>{servico.phone}</span>
-                  </div>
-                </div>
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input type="text" placeholder="Buscar serviço..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground" />
+        </div>
 
-                {/* Seller + Date + Badge */}
-                <div className="text-xs space-y-0.5">
-                  <p className="text-muted-foreground">
-                    <span className="font-medium text-foreground">Vendedor:</span> {servico.seller}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <p className="text-muted-foreground">
-                      <span className="font-medium text-foreground">Previsão:</span> {servico.date}
-                    </p>
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                        servico.overdue
-                          ? "border-destructive/30 bg-destructive/10 text-destructive"
-                          : "border-success/30 bg-success/10 text-success"
-                      }`}
-                    >
-                      {servico.daysLabel}
-                    </span>
+        {isLoading ? (
+          <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">Nenhum serviço encontrado.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filtered.map((servico: any) => {
+              const days = getDaysInfo(servico.data_agendada);
+              const cliente = servico.clientes;
+              return (
+                <div key={servico.id} className="bg-card border border-border rounded-xl shadow-sm flex flex-col">
+                  <div className="p-4 pb-2 space-y-2">
+                    <h3 className="text-base font-bold text-foreground">SERVIÇO #{servico.numero}</h3>
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      <div className="flex items-start gap-1.5">
+                        <User className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                        <span className="font-medium text-foreground">{cliente?.nome || "Sem cliente"}</span>
+                      </div>
+                      {cliente?.endereco && (
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          <span>{cliente.endereco}{cliente.cidade ? `, ${cliente.cidade}` : ""}</span>
+                        </div>
+                      )}
+                      {cliente?.telefone && (
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5 shrink-0" />
+                          <span>{cliente.telefone}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs space-y-0.5">
+                      {servico.responsavel && <p className="text-muted-foreground"><span className="font-medium text-foreground">Responsável:</span> {servico.responsavel}</p>}
+                      <div className="flex items-center justify-between">
+                        {servico.data_agendada && <p className="text-muted-foreground"><span className="font-medium text-foreground">Previsão:</span> {format(parseISO(servico.data_agendada), "dd/MM/yyyy")}</p>}
+                        {days.label && (
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${days.overdue ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-success/30 bg-success/10 text-success"}`}>
+                            {days.label}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-end justify-between">
+                      <p className={`text-lg font-bold ${days.overdue ? "text-destructive" : "text-primary"}`}>{fmt(Number(servico.valor) || 0)}</p>
+                      <p className="text-[10px] text-muted-foreground">{format(parseISO(servico.created_at), "dd/MM/yyyy HH:mm")}</p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Value */}
-                <div className="flex items-end justify-between">
-                  <p className={`text-lg font-bold ${servico.overdue ? "text-destructive" : "text-primary"}`}>
-                    {servico.value}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">{servico.valueDate}</p>
-                </div>
-              </div>
+                  <div className="px-4 py-2 border-t border-border">
+                    <p className="text-xs font-bold text-foreground">{statusLabels[servico.status] || servico.status}</p>
+                    {servico.tipo && <p className="text-[10px] text-muted-foreground mt-0.5">Tipo: {servico.tipo}</p>}
+                    {servico.descricao && <p className="text-[10px] text-muted-foreground">{servico.descricao}</p>}
+                  </div>
 
-              {/* Status section */}
-              {servico.status && (
-                <div className="px-4 py-2 border-t border-border">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-foreground">{servico.status}</p>
-                    {servico.statusDaysLabel && (
-                      <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                          servico.statusOverdue
-                            ? "border-destructive/30 bg-destructive/10 text-destructive"
-                            : "border-success/30 bg-success/10 text-success"
-                        }`}
+                  <div className="px-4 py-3 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      {actionButtons.map((btn) => (
+                        <button key={btn.label} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
+                          <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center group-hover:border-primary/30 group-hover:bg-primary/5 transition-colors">
+                            <btn.icon className="h-4 w-4" />
+                          </div>
+                          <span className="text-[10px]">{btn.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 p-4 pt-0 mt-auto">
+                    {servico.status !== "cancelado" && (
+                      <button onClick={() => handleStatusChange(servico.id, "cancelado")} className="flex-1 py-2 text-xs font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors">Cancelar</button>
+                    )}
+                    {servico.status !== "concluido" && servico.status !== "cancelado" && (
+                      <button
+                        onClick={() => handleStatusChange(servico.id, servico.status === "agendado" ? "em_andamento" : "concluido")}
+                        className="flex-1 py-2 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                       >
-                        {servico.statusDaysLabel}
-                      </span>
+                        {servico.status === "agendado" ? "Iniciar serviço" : "Concluir serviço"}
+                      </button>
                     )}
                   </div>
-                  {servico.statusDetail && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{servico.statusDetail}</p>
-                  )}
-                  {servico.statusNote && (
-                    <p className="text-[10px] text-muted-foreground">{servico.statusNote}</p>
-                  )}
                 </div>
-              )}
-
-              {/* Action icons */}
-              <div className="px-4 py-3 border-t border-border">
-                <div className="flex items-center justify-between">
-                  {actionButtons.map((btn) => (
-                    <button
-                      key={btn.label}
-                      className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group"
-                    >
-                      <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center group-hover:border-primary/30 group-hover:bg-primary/5 transition-colors">
-                        <btn.icon className="h-4 w-4" />
-                      </div>
-                      <span className="text-[10px]">{btn.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors mt-3 text-xs">
-                  <div className="h-8 w-8 rounded-lg border border-border flex items-center justify-center hover:border-primary/30">
-                    <Clock className="h-4 w-4" />
-                  </div>
-                  <span>Alterar etapa</span>
-                </button>
-              </div>
-
-              {/* Footer buttons */}
-              <div className="flex gap-2 p-4 pt-0 mt-auto">
-                <button className="flex-1 py-2 text-xs font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
-                  Cancelar
-                </button>
-                <button className="flex-1 py-2 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                  Concluir serviço
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border py-3 px-6 flex items-center justify-center gap-12 z-10">
-          <button className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
-            <Search className="h-5 w-5" />
-            <span className="text-xs">Buscar</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
-            <Settings className="h-5 w-5" />
-            <span className="text-xs">Configurar etapas</span>
-          </button>
-        </div>
-
-        {/* Spacer for bottom bar */}
-        <div className="h-16" />
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Dialog novo serviço */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Novo Serviço</DialogTitle>
+            <DialogDescription>Crie um novo serviço vinculado a um cliente.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-3 py-2">
             <div>
-              <Label>Título</Label>
-              <Input value={novoServico.titulo} onChange={(e) => setNovoServico({ ...novoServico, titulo: e.target.value })} placeholder="Ex: Instalação de janela" />
+              <Label>Cliente <span className="text-destructive">*</span></Label>
+              <Select value={form.cliente_id} onValueChange={(v) => setForm({ ...form, cliente_id: v })}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>{clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
-            <div>
-              <Label>Cliente</Label>
-              <Input value={novoServico.cliente} onChange={(e) => setNovoServico({ ...novoServico, cliente: e.target.value })} placeholder="Nome do cliente" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Tipo</Label>
-                <Select value={novoServico.tipo} onValueChange={(v) => setNovoServico({ ...novoServico, tipo: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="instalacao">Instalação</SelectItem>
                     <SelectItem value="manutencao">Manutenção</SelectItem>
@@ -315,17 +214,27 @@ const Servicos = () => {
               </div>
               <div>
                 <Label>Valor (R$)</Label>
-                <Input type="number" value={novoServico.valor} onChange={(e) => setNovoServico({ ...novoServico, valor: e.target.value })} placeholder="0,00" />
+                <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} className="mt-1" placeholder="0,00" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Data Agendada</Label>
+                <Input type="date" value={form.data_agendada} onChange={(e) => setForm({ ...form, data_agendada: e.target.value })} className="mt-1" />
+              </div>
+              <div>
+                <Label>Responsável</Label>
+                <Input value={form.responsavel} onChange={(e) => setForm({ ...form, responsavel: e.target.value })} className="mt-1" />
               </div>
             </div>
             <div>
               <Label>Descrição</Label>
-              <Textarea value={novoServico.descricao} onChange={(e) => setNovoServico({ ...novoServico, descricao: e.target.value })} placeholder="Detalhes do serviço..." />
+              <Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} className="mt-1" />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCriar} disabled={!novoServico.titulo || !novoServico.cliente}>Criar serviço</Button>
+            <Button onClick={handleCriar} disabled={insertMutation.isPending}>{insertMutation.isPending ? "Salvando..." : "Criar serviço"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
