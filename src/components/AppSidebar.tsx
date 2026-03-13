@@ -49,6 +49,7 @@ const financeiroItems = [
   { title: "Visão Geral", url: "/financeiro", icon: TrendingUp },
   { title: "Contas a Receber", url: "/financeiro/contas-receber", icon: Wallet },
   { title: "Contas a Pagar", url: "/financeiro/contas-pagar", icon: CreditCard },
+  { title: "Pagamentos", url: "/financeiro/pagamentos", icon: Banknote },
   { title: "Notas Fiscais", url: "/financeiro/notas-fiscais", icon: Receipt },
   { title: "Emissão de NF", url: "/financeiro/emissao-nf", icon: FilePlus },
   { title: "Contratos", url: "/financeiro/contratos", icon: FileCheck },
