@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
-import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Clock, Search, Settings, Plus } from "lucide-react";
+import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Clock, Search, Plus, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate } from "@/hooks/
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
-import { differenceInDays, parseISO, format } from "date-fns";
+import { differenceInDays, parseISO, format, isAfter, isBefore } from "date-fns";
 
 const actionButtons = [
   { icon: RotateCcw, label: "Reagendar" },
@@ -38,18 +38,19 @@ const Pedidos = () => {
   const updateMutation = useSupabaseUpdate("pedidos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todos");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [form, setForm] = useState({ cliente_id: "", vendedor: "", data_entrega: "", observacoes: "", valor_total: "" });
 
   const handleSave = async () => {
     if (!form.cliente_id) { toast.error("Selecione um cliente"); return; }
     try {
       await insertMutation.mutateAsync({
-        cliente_id: form.cliente_id,
-        vendedor: form.vendedor,
-        data_entrega: form.data_entrega || null,
-        observacoes: form.observacoes,
-        valor_total: Number(form.valor_total) || 0,
-        created_by: user?.id,
+        cliente_id: form.cliente_id, vendedor: form.vendedor,
+        data_entrega: form.data_entrega || null, observacoes: form.observacoes,
+        valor_total: Number(form.valor_total) || 0, created_by: user?.id,
       });
       toast.success("Pedido criado!");
       setDialogOpen(false);
@@ -66,7 +67,12 @@ const Pedidos = () => {
 
   const filteredPedidos = pedidos.filter((p: any) => {
     const term = searchTerm.toLowerCase();
-    return !term || p.clientes?.nome?.toLowerCase().includes(term) || String(p.numero).includes(term) || p.vendedor?.toLowerCase().includes(term);
+    const matchesSearch = !term || p.clientes?.nome?.toLowerCase().includes(term) || String(p.numero).includes(term) || p.vendedor?.toLowerCase().includes(term);
+    const matchesStatus = statusFilter === "todos" || p.status === statusFilter;
+    const createdDate = parseISO(p.created_at);
+    const matchesDateFrom = !dateFrom || isAfter(createdDate, parseISO(dateFrom));
+    const matchesDateTo = !dateTo || isBefore(createdDate, parseISO(dateTo + "T23:59:59"));
+    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
   });
 
   const getDaysInfo = (dataEntrega: string | null) => {
@@ -79,31 +85,57 @@ const Pedidos = () => {
 
   const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
+  const activeFilters = (statusFilter !== "todos" ? 1 : 0) + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0);
+
   return (
     <AppLayout>
       <div className="space-y-4 max-w-7xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Pedidos</h1>
-          <Button className="gap-2" onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4" /> Novo pedido
+          <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" /> Novo pedido</Button>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input type="text" placeholder="Buscar pedido..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground" />
+          </div>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowFilters(!showFilters)}>
+            <Filter className="h-4 w-4" /> Filtros {activeFilters > 0 && <span className="bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{activeFilters}</span>}
           </Button>
         </div>
 
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Buscar pedido..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
-          />
-        </div>
+        {showFilters && (
+          <div className="flex items-end gap-3 flex-wrap bg-card border border-border rounded-xl p-4">
+            <div>
+              <Label className="text-xs">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40 mt-1 h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
+                  <SelectItem value="em_producao">Em Produção</SelectItem>
+                  <SelectItem value="pronto">Pronto</SelectItem>
+                  <SelectItem value="entregue">Entregue</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Data de</Label>
+              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 h-9 w-40" />
+            </div>
+            <div>
+              <Label className="text-xs">Data até</Label>
+              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 h-9 w-40" />
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => { setStatusFilter("todos"); setDateFrom(""); setDateTo(""); }}>Limpar</Button>
+          </div>
+        )}
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-          </div>
+          <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
         ) : filteredPedidos.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">Nenhum pedido encontrado.</div>
         ) : (
@@ -116,81 +148,43 @@ const Pedidos = () => {
                   <div className="p-4 pb-2 space-y-2">
                     <h3 className="text-base font-bold text-foreground">PEDIDO #{pedido.numero}</h3>
                     <div className="space-y-1 text-xs text-muted-foreground">
-                      <div className="flex items-start gap-1.5">
-                        <User className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                        <span className="font-medium text-foreground">{cliente?.nome || "Sem cliente"}</span>
-                      </div>
-                      {cliente?.endereco && (
-                        <div className="flex items-start gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                          <span>{cliente.endereco}{cliente.cidade ? `, ${cliente.cidade}` : ""}{cliente.estado ? ` - ${cliente.estado}` : ""}</span>
-                        </div>
-                      )}
-                      {cliente?.telefone && (
-                        <div className="flex items-center gap-1.5">
-                          <Phone className="h-3.5 w-3.5 shrink-0" />
-                          <span>{cliente.telefone}</span>
-                        </div>
-                      )}
+                      <div className="flex items-start gap-1.5"><User className="h-3.5 w-3.5 mt-0.5 shrink-0" /><span className="font-medium text-foreground">{cliente?.nome || "Sem cliente"}</span></div>
+                      {cliente?.endereco && <div className="flex items-start gap-1.5"><MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" /><span>{cliente.endereco}{cliente.cidade ? `, ${cliente.cidade}` : ""}{cliente.estado ? ` - ${cliente.estado}` : ""}</span></div>}
+                      {cliente?.telefone && <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 shrink-0" /><span>{cliente.telefone}</span></div>}
                     </div>
                     <div className="text-xs space-y-0.5">
-                      {pedido.vendedor && (
-                        <p className="text-muted-foreground">
-                          <span className="font-medium text-foreground">Vendedor:</span> {pedido.vendedor}
-                        </p>
-                      )}
+                      {pedido.vendedor && <p className="text-muted-foreground"><span className="font-medium text-foreground">Vendedor:</span> {pedido.vendedor}</p>}
                       <div className="flex items-center justify-between">
-                        {pedido.data_entrega && (
-                          <p className="text-muted-foreground">
-                            <span className="font-medium text-foreground">Previsão:</span> {format(parseISO(pedido.data_entrega), "dd/MM/yyyy")}
-                          </p>
-                        )}
-                        {days.label && (
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${days.overdue ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-success/30 bg-success/10 text-success"}`}>
-                            {days.label}
-                          </span>
-                        )}
+                        {pedido.data_entrega && <p className="text-muted-foreground"><span className="font-medium text-foreground">Previsão:</span> {format(parseISO(pedido.data_entrega), "dd/MM/yyyy")}</p>}
+                        {days.label && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${days.overdue ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-success/30 bg-success/10 text-success"}`}>{days.label}</span>}
                       </div>
                     </div>
                     <div className="flex items-end justify-between">
-                      <p className={`text-lg font-bold ${days.overdue ? "text-destructive" : "text-primary"}`}>
-                        {fmt(Number(pedido.valor_total) || 0)}
-                      </p>
+                      <p className={`text-lg font-bold ${days.overdue ? "text-destructive" : "text-primary"}`}>{fmt(Number(pedido.valor_total) || 0)}</p>
                       <p className="text-[10px] text-muted-foreground">{format(parseISO(pedido.created_at), "dd/MM/yyyy HH:mm")}</p>
                     </div>
                   </div>
-
                   {pedido.status && (
                     <div className="px-4 py-2 border-t border-border">
                       <p className="text-xs font-bold text-foreground">{statusLabels[pedido.status] || pedido.status}</p>
                       {pedido.observacoes && <p className="text-[10px] text-muted-foreground mt-0.5">{pedido.observacoes}</p>}
                     </div>
                   )}
-
                   <div className="px-4 py-3 border-t border-border">
                     <div className="flex items-center justify-between">
                       {actionButtons.map((btn) => (
                         <button key={btn.label} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
-                          <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center group-hover:border-primary/30 group-hover:bg-primary/5 transition-colors">
-                            <btn.icon className="h-4 w-4" />
-                          </div>
+                          <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center group-hover:border-primary/30 group-hover:bg-primary/5 transition-colors"><btn.icon className="h-4 w-4" /></div>
                           <span className="text-[10px]">{btn.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
-
                   <div className="flex gap-2 p-4 pt-0 mt-auto">
-                    {pedido.status !== "cancelado" && (
-                      <button onClick={() => handleStatusChange(pedido.id, "cancelado")} className="flex-1 py-2 text-xs font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
-                        Cancelar
-                      </button>
-                    )}
+                    {pedido.status !== "cancelado" && <button onClick={() => handleStatusChange(pedido.id, "cancelado")} className="flex-1 py-2 text-xs font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors">Cancelar</button>}
                     {pedido.status !== "entregue" && pedido.status !== "cancelado" && (
-                      <button
-                        onClick={() => handleStatusChange(pedido.id, pedido.status === "pendente" ? "em_producao" : pedido.status === "em_producao" ? "pronto" : "entregue")}
-                        className="flex-1 py-2 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                      >
+                      <button onClick={() => handleStatusChange(pedido.id, pedido.status === "pendente" ? "em_producao" : pedido.status === "em_producao" ? "pronto" : "entregue")}
+                        className="flex-1 py-2 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                         {pedido.status === "pendente" ? "Iniciar produção" : pedido.status === "em_producao" ? "Marcar pronto" : "Concluir pedido"}
                       </button>
                     )}
@@ -204,44 +198,23 @@ const Pedidos = () => {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Novo Pedido</DialogTitle>
-            <DialogDescription>Crie um novo pedido vinculado a um cliente.</DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Novo Pedido</DialogTitle><DialogDescription>Crie um novo pedido vinculado a um cliente.</DialogDescription></DialogHeader>
           <div className="space-y-3 py-2">
-            <div>
-              <Label>Cliente <span className="text-destructive">*</span></Label>
+            <div><Label>Cliente <span className="text-destructive">*</span></Label>
               <Select value={form.cliente_id} onValueChange={(v) => setForm({ ...form, cliente_id: v })}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
-                <SelectContent>
-                  {clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Vendedor</Label>
-              <Input value={form.vendedor} onChange={(e) => setForm({ ...form, vendedor: e.target.value })} className="mt-1" />
-            </div>
+                <SelectContent>{clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+              </Select></div>
+            <div><Label>Vendedor</Label><Input value={form.vendedor} onChange={(e) => setForm({ ...form, vendedor: e.target.value })} className="mt-1" /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Data de Entrega</Label>
-                <Input type="date" value={form.data_entrega} onChange={(e) => setForm({ ...form, data_entrega: e.target.value })} className="mt-1" />
-              </div>
-              <div>
-                <Label>Valor Total</Label>
-                <Input type="number" value={form.valor_total} onChange={(e) => setForm({ ...form, valor_total: e.target.value })} className="mt-1" placeholder="0,00" />
-              </div>
+              <div><Label>Data de Entrega</Label><Input type="date" value={form.data_entrega} onChange={(e) => setForm({ ...form, data_entrega: e.target.value })} className="mt-1" /></div>
+              <div><Label>Valor Total</Label><Input type="number" value={form.valor_total} onChange={(e) => setForm({ ...form, valor_total: e.target.value })} className="mt-1" placeholder="0,00" /></div>
             </div>
-            <div>
-              <Label>Observações</Label>
-              <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} className="mt-1" />
-            </div>
+            <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} className="mt-1" /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={insertMutation.isPending}>
-              {insertMutation.isPending ? "Salvando..." : "Criar pedido"}
-            </Button>
+            <Button onClick={handleSave} disabled={insertMutation.isPending}>{insertMutation.isPending ? "Salvando..." : "Criar pedido"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
