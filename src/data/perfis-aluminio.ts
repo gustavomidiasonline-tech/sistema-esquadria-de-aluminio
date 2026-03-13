@@ -282,6 +282,359 @@ export const produtosEsquadria: ProdutoEsquadria[] = [
       { perfilCodigo: "VZ-003", medida: 540, quantidade: 40, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
     ],
   },
+  // ===== JANELA 3 FOLHAS SUPREMA =====
+  {
+    id: 11, nome: "Janela 3 Folhas de Vidro", tipo: "correr", largura: 2400, altura: 1200, folhas: 3, linha: "Suprema",
+    perfis: [
+      { perfilCodigo: "SU-003", medida: 1200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "SU-004", medida: 2400, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "SU-005", medida: 2400, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "SU-010", medida: 1150, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "SU-011", medida: 1150, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "SU-012", medida: 770, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "SU-013", medida: 770, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== PORTA DE GIRO =====
+  {
+    id: 12, nome: "Porta de Giro", tipo: "pivotante", largura: 900, altura: 2100, folhas: 1, linha: "Suprema",
+    perfis: [
+      { perfilCodigo: "SU-020", medida: 2100, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "SU-020", medida: 900, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "SU-021", medida: 2050, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "SU-021", medida: 810, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "SU-021", medida: 810, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Travessa" },
+      { perfilCodigo: "SU-022", medida: 2100, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "SU-022", medida: 900, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== JANELA CORRER LINHA 25 (Econômica 2F) =====
+  {
+    id: 13, nome: "Janela 2F Econômica L25", tipo: "correr", largura: 1500, altura: 1000, folhas: 2, linha: "Linha 25",
+    perfis: [
+      { perfilCodigo: "L25-003", medida: 1000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "L25-001", medida: 1500, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "L25-002", medida: 1500, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "L25-004", medida: 950, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "L25-005", medida: 950, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "L25-006", medida: 710, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "L25-007", medida: 710, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "L25-008", medida: 1500, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "L25-008", medida: 1000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== JANELA CORRER SÉRIE GOLD 2F (Premium) =====
+  {
+    id: 14, nome: "Janela 2F Premium Gold", tipo: "correr", largura: 2000, altura: 1200, folhas: 2, linha: "Série Gold",
+    perfis: [
+      { perfilCodigo: "GD-003", medida: 1200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "GD-001", medida: 2000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GD-002", medida: 2000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GD-004", medida: 1150, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "GD-005", medida: 1150, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "GD-006", medida: 950, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GD-007", medida: 950, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GD-008", medida: 2000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GD-008", medida: 1200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== JANELA 3F PREMIUM GOLD =====
+  {
+    id: 15, nome: "Janela 3F Premium Gold", tipo: "correr", largura: 3000, altura: 1200, folhas: 3, linha: "Série Gold",
+    perfis: [
+      { perfilCodigo: "GD-003", medida: 1200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "GD-010", medida: 3000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GD-011", medida: 3000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GD-004", medida: 1150, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "GD-005", medida: 1150, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "GD-006", medida: 960, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GD-007", medida: 960, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== DIVISÓRIA DE ESCRITÓRIO =====
+  {
+    id: 16, nome: "Divisória de Escritório", tipo: "divisoria", largura: 2000, altura: 2600, folhas: 0, linha: "Divisória",
+    perfis: [
+      { perfilCodigo: "DV-001", medida: 2600, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "DV-003", medida: 960, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "DV-004", medida: 960, quantidade: 8, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== DIVISÓRIA INDUSTRIAL =====
+  {
+    id: 17, nome: "Divisória Industrial", tipo: "divisoria", largura: 3000, altura: 3000, folhas: 0, linha: "Divisória",
+    perfis: [
+      { perfilCodigo: "DV-002", medida: 3000, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "DV-003", medida: 960, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "DV-004", medida: 960, quantidade: 12, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "RF-002", medida: 2950, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== PORTÃO DE ABRIR =====
+  {
+    id: 18, nome: "Portão de Abrir 2 Folhas", tipo: "portao", largura: 3000, altura: 2200, folhas: 2, linha: "Portão",
+    perfis: [
+      { perfilCodigo: "PT-001", medida: 2200, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PT-001", medida: 1460, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PT-002", medida: 1460, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Travessa" },
+      { perfilCodigo: "RF-003", medida: 2100, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== PORTÃO DE CORRER =====
+  {
+    id: 19, nome: "Portão de Correr", tipo: "portao", largura: 4000, altura: 2200, folhas: 1, linha: "Portão",
+    perfis: [
+      { perfilCodigo: "PT-003", medida: 2200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PT-003", medida: 4000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PT-002", medida: 3920, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Travessa" },
+      { perfilCodigo: "PT-004", medida: 5000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "RF-003", medida: 2100, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "RF-004", medida: 2750, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Diagonal" },
+    ],
+  },
+  // ===== PORTÃO INDUSTRIAL =====
+  {
+    id: 20, nome: "Portão Industrial Correr", tipo: "portao", largura: 5000, altura: 3000, folhas: 1, linha: "Portão",
+    perfis: [
+      { perfilCodigo: "PT-003", medida: 3000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PT-003", medida: 5000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PT-002", medida: 4920, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Travessa" },
+      { perfilCodigo: "PT-004", medida: 6000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PT-005", medida: 6000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "RF-003", medida: 2900, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "RF-004", medida: 3600, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Diagonal" },
+    ],
+  },
+  // ===== JANELA DE ABRIR (GIRO) =====
+  {
+    id: 21, nome: "Janela de Abrir 1 Folha", tipo: "basculante", largura: 800, altura: 1000, folhas: 1, linha: "Modular",
+    perfis: [
+      { perfilCodigo: "MD-001", medida: 800, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-002", medida: 800, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-003", medida: 1000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "MD-004", medida: 950, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "MD-004", medida: 700, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-005", medida: 700, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-005", medida: 950, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== JANELA DE ABRIR 2 FOLHAS =====
+  {
+    id: 22, nome: "Janela de Abrir 2 Folhas", tipo: "basculante", largura: 1400, altura: 1200, folhas: 2, linha: "Modular",
+    perfis: [
+      { perfilCodigo: "MD-001", medida: 1400, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-002", medida: 1400, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-003", medida: 1200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "MD-003", medida: 1200, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Montante" },
+      { perfilCodigo: "MD-004", medida: 1150, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "MD-004", medida: 650, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-005", medida: 650, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-005", medida: 1150, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== FACHADA SEMI-STRUCTURAL =====
+  {
+    id: 23, nome: "Fachada Semi-Structural", tipo: "fachada", largura: 3000, altura: 3000, folhas: 0, linha: "Fachada",
+    perfis: [
+      { perfilCodigo: "FC-005", medida: 3000, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "FC-006", medida: 980, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "FC-003", medida: 980, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "FC-004", medida: 980, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== VENEZIANA 2 FOLHAS =====
+  {
+    id: 24, nome: "Veneziana de Correr 2 Folhas", tipo: "veneziana", largura: 1500, altura: 1200, folhas: 2, linha: "Veneziana",
+    perfis: [
+      { perfilCodigo: "VZ-001", medida: 1500, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "SU-003", medida: 1200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "VZ-002", medida: 1150, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "VZ-005", medida: 710, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "VZ-003", medida: 680, quantidade: 20, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== JANELA BASCULANTE DUPLA =====
+  {
+    id: 25, nome: "Janela Basculante Dupla", tipo: "basculante", largura: 1200, altura: 600, folhas: 2, linha: "Basculante",
+    perfis: [
+      { perfilCodigo: "BA-001", medida: 1200, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BA-002", medida: 1200, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BA-003", medida: 600, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "BA-007", medida: 600, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Montante" },
+      { perfilCodigo: "BA-004", medida: 560, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BA-004", medida: 550, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== JANELA BASCULANTE COM BANDEIRA =====
+  {
+    id: 26, nome: "Janela Basculante c/ Bandeira", tipo: "basculante", largura: 800, altura: 1000, folhas: 1, linha: "Basculante",
+    perfis: [
+      { perfilCodigo: "BA-001", medida: 800, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BA-002", medida: 800, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BA-003", medida: 1000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "BA-006", medida: 750, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Travessa" },
+      { perfilCodigo: "BA-004", medida: 750, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BA-004", medida: 600, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== GUARDA-CORPO ESCADA =====
+  {
+    id: 27, nome: "Guarda-Corpo Escada", tipo: "fachada", largura: 3000, altura: 1000, folhas: 0, linha: "Guarda-corpo",
+    perfis: [
+      { perfilCodigo: "GC-001", medida: 1000, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "GC-002", medida: 3000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GC-003", medida: 960, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "GC-004", medida: 960, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== PERGOLADO =====
+  {
+    id: 28, nome: "Pergolado Alumínio", tipo: "fachada", largura: 3000, altura: 3000, folhas: 0, linha: "Especial",
+    perfis: [
+      { perfilCodigo: "SP-003", medida: 3000, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PT-001", medida: 3000, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PT-002", medida: 2920, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Travessa" },
+      { perfilCodigo: "RF-003", medida: 2800, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== COBERTURA POLICARBONATO =====
+  {
+    id: 29, nome: "Cobertura Policarbonato", tipo: "fachada", largura: 3000, altura: 2000, folhas: 0, linha: "Especial",
+    perfis: [
+      { perfilCodigo: "SP-004", medida: 2000, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "SP-004", medida: 3000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "AR-005", medida: 2000, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "AR-006", medida: 3000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== BRISE HORIZONTAL =====
+  {
+    id: 30, nome: "Brise Horizontal Fachada", tipo: "fachada", largura: 3000, altura: 2000, folhas: 0, linha: "Especial",
+    perfis: [
+      { perfilCodigo: "SP-001", medida: 3000, quantidade: 8, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "FC-001", medida: 2000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "FC-001", medida: 2000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Montante" },
+      { perfilCodigo: "AR-002", medida: 3000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== BRISE VERTICAL =====
+  {
+    id: 31, nome: "Brise Vertical Fachada", tipo: "fachada", largura: 3000, altura: 3000, folhas: 0, linha: "Especial",
+    perfis: [
+      { perfilCodigo: "SP-002", medida: 3000, quantidade: 10, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "FC-002", medida: 3000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "AR-002", medida: 3000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== JANELA ACÚSTICA / TÉRMICA =====
+  {
+    id: 32, nome: "Janela Acústica 2F", tipo: "correr", largura: 2000, altura: 1200, folhas: 2, linha: "Integrada",
+    perfis: [
+      { perfilCodigo: "IT-004", medida: 1200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "IT-001", medida: 2000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "IT-002", medida: 2000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "IT-003", medida: 1150, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "IT-003", medida: 950, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== PORTA BALCÃO 2 FOLHAS =====
+  {
+    id: 33, nome: "Porta Balcão 2 Folhas", tipo: "correr", largura: 1500, altura: 2100, folhas: 2, linha: "Porta Correr",
+    perfis: [
+      { perfilCodigo: "PC-001", medida: 1500, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-002", medida: 1500, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-003", medida: 2100, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PC-004", medida: 2050, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PC-005", medida: 710, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-006", medida: 150, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "SU-015", medida: 2100, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== PORTA DE CORRER 3 FOLHAS =====
+  {
+    id: 34, nome: "Porta de Correr 3 Folhas", tipo: "correr", largura: 2400, altura: 2100, folhas: 3, linha: "Porta Correr",
+    perfis: [
+      { perfilCodigo: "PC-001", medida: 2400, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-002", medida: 2400, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-003", medida: 2100, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PC-004", medida: 2050, quantidade: 6, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PC-005", medida: 760, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-006", medida: 150, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== PORTA DE CORRER 4 FOLHAS =====
+  {
+    id: 35, nome: "Porta de Correr 4 Folhas", tipo: "correr", largura: 3200, altura: 2100, folhas: 4, linha: "Porta Correr",
+    perfis: [
+      { perfilCodigo: "PC-001", medida: 3200, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-002", medida: 3200, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-003", medida: 2100, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PC-004", medida: 2050, quantidade: 8, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PC-005", medida: 760, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-006", medida: 150, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== PORTA DE ABRIR MODULAR =====
+  {
+    id: 36, nome: "Porta de Abrir Modular", tipo: "pivotante", largura: 900, altura: 2100, folhas: 1, linha: "Modular",
+    perfis: [
+      { perfilCodigo: "MD-001", medida: 900, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-002", medida: 900, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-003", medida: 2100, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "MD-004", medida: 2050, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "MD-004", medida: 800, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-005", medida: 800, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "MD-005", medida: 2050, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "RF-002", medida: 2000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== VITRINE LOJA =====
+  {
+    id: 37, nome: "Vitrine de Loja", tipo: "fachada", largura: 3000, altura: 2500, folhas: 0, linha: "Fachada",
+    perfis: [
+      { perfilCodigo: "FC-001", medida: 2500, quantidade: 3, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "FC-002", medida: 1470, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "FC-003", medida: 1470, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "FC-004", medida: 1470, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "AR-002", medida: 3000, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+    ],
+  },
+  // ===== BOX BANHEIRO CANTO =====
+  {
+    id: 38, nome: "Box Banheiro Canto L", tipo: "correr", largura: 1200, altura: 1900, folhas: 2, linha: "Box",
+    perfis: [
+      { perfilCodigo: "BX-001", medida: 1200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BX-002", medida: 1200, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BX-003", medida: 1900, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "BX-004", medida: 150, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "AR-001", medida: 1900, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== JANELA FIXA =====
+  {
+    id: 39, nome: "Janela Fixa Vidro", tipo: "fachada", largura: 1200, altura: 800, folhas: 0, linha: "Basculante",
+    perfis: [
+      { perfilCodigo: "BA-001", medida: 1200, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BA-002", medida: 1200, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "BA-003", medida: 800, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "AR-004", medida: 1140, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "AR-004", medida: 740, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
+  // ===== PORTA BALCÃO 4 FOLHAS =====
+  {
+    id: 40, nome: "Porta Balcão 4 Folhas", tipo: "correr", largura: 3000, altura: 2100, folhas: 4, linha: "Porta Correr",
+    perfis: [
+      { perfilCodigo: "PC-001", medida: 3000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-002", medida: 3000, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-003", medida: 2100, quantidade: 2, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PC-004", medida: 2050, quantidade: 8, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "PC-005", medida: 710, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Largura" },
+      { perfilCodigo: "PC-006", medida: 150, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "SU-015", medida: 2100, quantidade: 1, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+      { perfilCodigo: "RF-002", medida: 2050, quantidade: 4, anguloEsquerdo: 90, anguloDireito: 90, posicao: "Altura" },
+    ],
+  },
 ];
 
 // Helper function
