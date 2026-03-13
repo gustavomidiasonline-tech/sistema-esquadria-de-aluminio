@@ -20,6 +20,7 @@ import Servicos from "./pages/Servicos";
 import Administradores from "./pages/Administradores";
 import Funcionarios from "./pages/Funcionarios";
 import { PlaceholderPage } from "./components/PlaceholderPage";
+import Agenda from "./pages/Agenda";
 import FinanceiroVisaoGeral from "./pages/financeiro/FinanceiroVisaoGeral";
 import ContasReceber from "./pages/financeiro/ContasReceber";
 import ContasPagar from "./pages/financeiro/ContasPagar";
