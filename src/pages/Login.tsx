@@ -18,6 +18,24 @@ const Login = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) { toast.error("Digite seu email"); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+      setIsForgotPassword(false);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar email de recuperação.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -25,7 +43,6 @@ const Login = () => {
       if (isSignUp) {
         await signUp(email, password, nome);
         toast.success("Conta criada! Fazendo login...");
-        // Auto-login after signup (auto-confirm is enabled)
         await signIn(email, password);
         navigate("/");
       } else {
@@ -47,6 +64,48 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  if (isForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
+        <div className="w-full max-w-md mx-4">
+          <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
+            <div className="flex flex-col items-center mb-8">
+              <img src={manageasyLogo} alt="Alumy" className="h-14 w-14 rounded-xl object-contain mb-3" />
+              <h1 className="text-2xl font-bold text-foreground">Alumy</h1>
+              <p className="text-sm text-muted-foreground">by Manageasy</p>
+            </div>
+            <h2 className="text-lg font-semibold text-foreground text-center mb-2">Recuperar senha</h2>
+            <p className="text-sm text-muted-foreground text-center mb-6">
+              Digite seu email e enviaremos um link para redefinir sua senha.
+            </p>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  required
+                  className="mt-1"
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Enviando..." : "Enviar link de recuperação"}
+              </Button>
+            </form>
+            <p className="text-sm text-center text-muted-foreground mt-6">
+              <button onClick={() => setIsForgotPassword(false)} className="text-primary font-medium hover:underline">
+                Voltar ao login
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
@@ -102,6 +161,17 @@ const Login = () => {
                 className="mt-1"
               />
             </div>
+            {!isSignUp && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(true)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Carregando..." : isSignUp ? "Criar conta" : "Entrar"}
             </Button>
