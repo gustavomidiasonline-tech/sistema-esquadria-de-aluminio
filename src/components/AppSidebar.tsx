@@ -22,6 +22,8 @@ import {
   TrendingUp,
   Building2,
   ChevronDown,
+  Truck,
+  Banknote,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -38,6 +40,7 @@ const mainItems = [
   { title: "Agenda", url: "/agenda", icon: Calendar },
   { title: "Produtos", url: "/produtos", icon: Package },
   { title: "Preço dos itens", url: "/precos", icon: DollarSign },
+  { title: "Fornecedores", url: "/fornecedores", icon: Truck },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "Mapa", url: "/mapa", icon: MapPin },
 ];
@@ -46,6 +49,7 @@ const financeiroItems = [
   { title: "Visão Geral", url: "/financeiro", icon: TrendingUp },
   { title: "Contas a Receber", url: "/financeiro/contas-receber", icon: Wallet },
   { title: "Contas a Pagar", url: "/financeiro/contas-pagar", icon: CreditCard },
+  { title: "Pagamentos", url: "/financeiro/pagamentos", icon: Banknote },
   { title: "Notas Fiscais", url: "/financeiro/notas-fiscais", icon: Receipt },
   { title: "Emissão de NF", url: "/financeiro/emissao-nf", icon: FilePlus },
   { title: "Contratos", url: "/financeiro/contratos", icon: FileCheck },

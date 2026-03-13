@@ -157,6 +157,7 @@ export type Database = {
           descricao: string
           forma_pagamento: string | null
           fornecedor: string
+          fornecedor_id: string | null
           id: string
           observacoes: string | null
           status: Database["public"]["Enums"]["conta_status"]
@@ -172,6 +173,7 @@ export type Database = {
           descricao: string
           forma_pagamento?: string | null
           fornecedor: string
+          fornecedor_id?: string | null
           id?: string
           observacoes?: string | null
           status?: Database["public"]["Enums"]["conta_status"]
@@ -187,13 +189,22 @@ export type Database = {
           descricao?: string
           forma_pagamento?: string | null
           fornecedor?: string
+          fornecedor_id?: string | null
           id?: string
           observacoes?: string | null
           status?: Database["public"]["Enums"]["conta_status"]
           updated_at?: string
           valor?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contas_receber: {
         Row: {
@@ -354,6 +365,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          cep: string | null
+          cidade: string | null
+          contato: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          razao_social: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          cep?: string | null
+          cidade?: string | null
+          contato?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          razao_social?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          cep?: string | null
+          cidade?: string | null
+          contato?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          razao_social?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       notas_fiscais: {
         Row: {
@@ -521,6 +592,89 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagamentos: {
+        Row: {
+          cliente_id: string | null
+          comprovante_url: string | null
+          conta_pagar_id: string | null
+          conta_receber_id: string | null
+          created_at: string
+          created_by: string | null
+          data_pagamento: string
+          descricao: string
+          forma_pagamento: string | null
+          fornecedor_id: string | null
+          id: string
+          observacoes: string | null
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          comprovante_url?: string | null
+          conta_pagar_id?: string | null
+          conta_receber_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string
+          descricao: string
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          observacoes?: string | null
+          tipo?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          cliente_id?: string | null
+          comprovante_url?: string | null
+          conta_pagar_id?: string | null
+          conta_receber_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string
+          descricao?: string
+          forma_pagamento?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          observacoes?: string | null
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_conta_pagar_id_fkey"
+            columns: ["conta_pagar_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_conta_receber_id_fkey"
+            columns: ["conta_receber_id"]
+            isOneToOne: false
+            referencedRelation: "contas_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
             referencedColumns: ["id"]
           },
         ]

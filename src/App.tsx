@@ -19,7 +19,7 @@ import NotFound from "./pages/NotFound";
 import Servicos from "./pages/Servicos";
 import Administradores from "./pages/Administradores";
 import Funcionarios from "./pages/Funcionarios";
-import { PlaceholderPage } from "./components/PlaceholderPage";
+import Fornecedores from "./pages/Fornecedores";
 import Agenda from "./pages/Agenda";
 import FinanceiroVisaoGeral from "./pages/financeiro/FinanceiroVisaoGeral";
 import ContasReceber from "./pages/financeiro/ContasReceber";
@@ -29,6 +29,7 @@ import EmissaoNF from "./pages/financeiro/EmissaoNF";
 import Contratos from "./pages/financeiro/Contratos";
 import Documentos from "./pages/financeiro/Documentos";
 import FluxoCaixa from "./pages/financeiro/FluxoCaixa";
+import Pagamentos from "./pages/financeiro/Pagamentos";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
             <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
             <Route path="/precos" element={<ProtectedRoute><Precos /></ProtectedRoute>} />
+            <Route path="/fornecedores" element={<ProtectedRoute><Fornecedores /></ProtectedRoute>} />
             <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
             <Route path="/mapa" element={<ProtectedRoute><Mapa /></ProtectedRoute>} />
             <Route path="/administradores" element={<ProtectedRoute><Administradores /></ProtectedRoute>} />
@@ -58,6 +60,7 @@ const App = () => (
             <Route path="/financeiro" element={<ProtectedRoute><FinanceiroVisaoGeral /></ProtectedRoute>} />
             <Route path="/financeiro/contas-receber" element={<ProtectedRoute><ContasReceber /></ProtectedRoute>} />
             <Route path="/financeiro/contas-pagar" element={<ProtectedRoute><ContasPagar /></ProtectedRoute>} />
+            <Route path="/financeiro/pagamentos" element={<ProtectedRoute><Pagamentos /></ProtectedRoute>} />
             <Route path="/financeiro/notas-fiscais" element={<ProtectedRoute><NotasFiscais /></ProtectedRoute>} />
             <Route path="/financeiro/emissao-nf" element={<ProtectedRoute><EmissaoNF /></ProtectedRoute>} />
             <Route path="/financeiro/contratos" element={<ProtectedRoute><Contratos /></ProtectedRoute>} />
