@@ -20,6 +20,7 @@ import Servicos from "./pages/Servicos";
 import Administradores from "./pages/Administradores";
 import Funcionarios from "./pages/Funcionarios";
 import { PlaceholderPage } from "./components/PlaceholderPage";
+import Agenda from "./pages/Agenda";
 import FinanceiroVisaoGeral from "./pages/financeiro/FinanceiroVisaoGeral";
 import ContasReceber from "./pages/financeiro/ContasReceber";
 import ContasPagar from "./pages/financeiro/ContasPagar";
@@ -46,7 +47,7 @@ const App = () => (
             <Route path="/servicos" element={<ProtectedRoute><Servicos /></ProtectedRoute>} />
             <Route path="/pedidos" element={<ProtectedRoute><Pedidos /></ProtectedRoute>} />
             <Route path="/plano-de-corte" element={<ProtectedRoute><PlanoDeCorte /></ProtectedRoute>} />
-            <Route path="/agenda" element={<ProtectedRoute><PlaceholderPage title="Agenda" description="Agende instalações, visitas técnicas e compromissos da equipe." /></ProtectedRoute>} />
+            <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
             <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
             <Route path="/precos" element={<ProtectedRoute><Precos /></ProtectedRoute>} />
             <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
