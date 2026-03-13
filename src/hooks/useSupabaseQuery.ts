@@ -47,7 +47,7 @@ export function useSupabaseInsert(table: TableName) {
 
   return useMutation({
     mutationFn: async (values: Record<string, any>) => {
-      const { data, error } = await supabase.from(table).insert(values).select().single();
+      const { data, error } = await (supabase.from(table) as any).insert(values).select().single();
       if (error) throw error;
       return data;
     },
