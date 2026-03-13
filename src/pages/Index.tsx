@@ -1,8 +1,8 @@
-import { TrendingUp, Package, FileText, BarChart3, Wrench, DollarSign } from "lucide-react";
+import { TrendingUp, Package, FileText, BarChart3, Wrench, DollarSign, AlertTriangle } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInDays, isPast } from "date-fns";
 
 const Index = () => {
   const { profile } = useAuth();
@@ -20,6 +20,32 @@ const Index = () => {
   const saldo = totalReceber - totalPagar;
 
   const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+
+  // Overdue notifications
+  const pedidosAtrasados = pedidos.filter((p: any) => p.data_entrega && isPast(parseISO(p.data_entrega)) && p.status !== "entregue" && p.status !== "cancelado");
+  const contasVencidas = [
+    ...contasPagar.filter((c: any) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente").map((c: any) => ({ ...c, tipo: "pagar" })),
+    ...contasReceber.filter((c: any) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente").map((c: any) => ({ ...c, tipo: "receber" })),
+  ];
+  const servicosAtrasados = servicos.filter((s: any) => s.data_agendada && isPast(parseISO(s.data_agendada)) && s.status !== "concluido" && s.status !== "cancelado");
+
+  const notifications = [
+    ...pedidosAtrasados.map((p: any) => ({
+      id: p.id, type: "pedido" as const,
+      message: `Pedido #${p.numero} atrasado ${Math.abs(differenceInDays(parseISO(p.data_entrega), new Date()))} dias`,
+      detail: `Entrega prevista: ${format(parseISO(p.data_entrega), "dd/MM/yyyy")}`,
+    })),
+    ...contasVencidas.map((c: any) => ({
+      id: c.id, type: "conta" as const,
+      message: `Conta a ${c.tipo} vencida: ${c.descricao}`,
+      detail: `Vencimento: ${format(parseISO(c.data_vencimento), "dd/MM/yyyy")} · ${fmt(Number(c.valor))}`,
+    })),
+    ...servicosAtrasados.map((s: any) => ({
+      id: s.id, type: "servico" as const,
+      message: `Serviço #${s.numero} atrasado ${Math.abs(differenceInDays(parseISO(s.data_agendada), new Date()))} dias`,
+      detail: `Agendado: ${format(parseISO(s.data_agendada), "dd/MM/yyyy")}`,
+    })),
+  ];
 
   const kpiCards = [
     { title: "Vendas", value: fmt(totalPedidos), change: `${pedidos.length} pedidos`, subtitle: `${clientes.length} clientes`, highlight: true, icon: DollarSign },
@@ -50,6 +76,31 @@ const Index = () => {
             {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
           </p>
         </div>
+
+        {/* Notifications */}
+        {notifications.length > 0 && (
+          <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <h3 className="text-sm font-bold text-destructive">
+                {notifications.length} alerta{notifications.length > 1 ? "s" : ""} de atenção
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {notifications.map((n) => (
+                <div key={n.id} className="flex items-start gap-3 bg-background/50 rounded-lg p-3">
+                  <div className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${
+                    n.type === "pedido" ? "bg-warning" : n.type === "conta" ? "bg-destructive" : "bg-primary"
+                  }`} />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{n.message}</p>
+                    <p className="text-xs text-muted-foreground">{n.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {kpiCards.map((card) => (
