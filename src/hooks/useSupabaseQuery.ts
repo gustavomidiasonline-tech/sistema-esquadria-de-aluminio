@@ -18,7 +18,7 @@ export function useSupabaseQuery<T = any>(
   return useQuery({
     queryKey: [table, options?.filters],
     queryFn: async () => {
-      let query = supabase.from(table).select(options?.select || "*");
+      let query = (supabase.from(table) as any).select(options?.select || "*");
 
       if (options?.filters) {
         for (const f of options.filters) {
