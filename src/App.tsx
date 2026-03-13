@@ -3,6 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Login from "./pages/Login";
 import Index from "./pages/Index";
 import Clientes from "./pages/Clientes";
 import Orcamentos from "./pages/Orcamentos";
@@ -34,30 +37,33 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/clientes" element={<Clientes />} />
-          <Route path="/orcamentos" element={<Orcamentos />} />
-          <Route path="/servicos" element={<Servicos />} />
-          <Route path="/pedidos" element={<Pedidos />} />
-          <Route path="/plano-de-corte" element={<PlanoDeCorte />} />
-          <Route path="/agenda" element={<PlaceholderPage title="Agenda" description="Agende instalações, visitas técnicas e compromissos da equipe." />} />
-          <Route path="/produtos" element={<Produtos />} />
-          <Route path="/precos" element={<Precos />} />
-          <Route path="/relatorios" element={<Relatorios />} />
-          <Route path="/mapa" element={<Mapa />} />
-          <Route path="/administradores" element={<Administradores />} />
-          <Route path="/funcionarios" element={<Funcionarios />} />
-          {/* Financeiro */}
-          <Route path="/financeiro" element={<FinanceiroVisaoGeral />} />
-          <Route path="/financeiro/contas-receber" element={<ContasReceber />} />
-          <Route path="/financeiro/contas-pagar" element={<ContasPagar />} />
-          <Route path="/financeiro/notas-fiscais" element={<NotasFiscais />} />
-          <Route path="/financeiro/emissao-nf" element={<EmissaoNF />} />
-          <Route path="/financeiro/contratos" element={<Contratos />} />
-          <Route path="/financeiro/documentos" element={<Documentos />} />
-          <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixa />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
+            <Route path="/orcamentos" element={<ProtectedRoute><Orcamentos /></ProtectedRoute>} />
+            <Route path="/servicos" element={<ProtectedRoute><Servicos /></ProtectedRoute>} />
+            <Route path="/pedidos" element={<ProtectedRoute><Pedidos /></ProtectedRoute>} />
+            <Route path="/plano-de-corte" element={<ProtectedRoute><PlanoDeCorte /></ProtectedRoute>} />
+            <Route path="/agenda" element={<ProtectedRoute><PlaceholderPage title="Agenda" description="Agende instalações, visitas técnicas e compromissos da equipe." /></ProtectedRoute>} />
+            <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
+            <Route path="/precos" element={<ProtectedRoute><Precos /></ProtectedRoute>} />
+            <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+            <Route path="/mapa" element={<ProtectedRoute><Mapa /></ProtectedRoute>} />
+            <Route path="/administradores" element={<ProtectedRoute><Administradores /></ProtectedRoute>} />
+            <Route path="/funcionarios" element={<ProtectedRoute><Funcionarios /></ProtectedRoute>} />
+            {/* Financeiro */}
+            <Route path="/financeiro" element={<ProtectedRoute><FinanceiroVisaoGeral /></ProtectedRoute>} />
+            <Route path="/financeiro/contas-receber" element={<ProtectedRoute><ContasReceber /></ProtectedRoute>} />
+            <Route path="/financeiro/contas-pagar" element={<ProtectedRoute><ContasPagar /></ProtectedRoute>} />
+            <Route path="/financeiro/notas-fiscais" element={<ProtectedRoute><NotasFiscais /></ProtectedRoute>} />
+            <Route path="/financeiro/emissao-nf" element={<ProtectedRoute><EmissaoNF /></ProtectedRoute>} />
+            <Route path="/financeiro/contratos" element={<ProtectedRoute><Contratos /></ProtectedRoute>} />
+            <Route path="/financeiro/documentos" element={<ProtectedRoute><Documentos /></ProtectedRoute>} />
+            <Route path="/financeiro/fluxo-caixa" element={<ProtectedRoute><FluxoCaixa /></ProtectedRoute>} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
