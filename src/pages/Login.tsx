@@ -10,6 +10,7 @@ import manageasyLogo from "@/assets/manageasy-logo.avif";
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
