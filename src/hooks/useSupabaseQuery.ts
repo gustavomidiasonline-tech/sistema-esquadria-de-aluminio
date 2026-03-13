@@ -65,7 +65,7 @@ export function useSupabaseUpdate(table: TableName) {
 
   return useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Record<string, any> }) => {
-      const { data, error } = await supabase.from(table).update(values).eq("id", id).select().single();
+      const { data, error } = await (supabase.from(table) as any).update(values).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
