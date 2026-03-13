@@ -1,7 +1,23 @@
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function AppHeader() {
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
+
   return (
     <header className="h-16 glass-header flex items-center justify-between px-6 shrink-0">
       <div className="flex items-center gap-3">
@@ -23,15 +39,29 @@ export function AppHeader() {
           </span>
         </Button>
 
-        <div className="flex items-center gap-3 pl-3 border-l border-border">
-          <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center">
-            <User className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <div className="hidden md:block">
-            <p className="text-sm font-semibold text-foreground">Gabriel Silva</p>
-            <p className="text-xs text-muted-foreground">Administrador</p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-3 pl-3 border-l border-border cursor-pointer hover:opacity-80 transition-opacity">
+              <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center">
+                <User className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <div className="hidden md:block text-left">
+                <p className="text-sm font-semibold text-foreground">
+                  {profile?.nome || "Usuário"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {profile?.cargo || "Funcionário"}
+                </p>
+              </div>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
