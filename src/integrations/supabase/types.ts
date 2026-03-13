@@ -147,6 +147,51 @@ export type Database = {
         }
         Relationships: []
       }
+      componentes_modelo: {
+        Row: {
+          created_at: string
+          esquadria_id: string
+          formula_calculo: string
+          id: string
+          perfil_id: string | null
+          posicao: string | null
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string
+          esquadria_id: string
+          formula_calculo: string
+          id?: string
+          perfil_id?: string | null
+          posicao?: string | null
+          quantidade?: number
+        }
+        Update: {
+          created_at?: string
+          esquadria_id?: string
+          formula_calculo?: string
+          id?: string
+          perfil_id?: string | null
+          posicao?: string | null
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "componentes_modelo_esquadria_id_fkey"
+            columns: ["esquadria_id"]
+            isOneToOne: false
+            referencedRelation: "modelos_esquadria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "componentes_modelo_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_catalogo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_pagar: {
         Row: {
           categoria: string | null
@@ -366,6 +411,57 @@ export type Database = {
           },
         ]
       }
+      fabricantes: {
+        Row: {
+          cnpj: string | null
+          contato: string | null
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          cnpj?: string | null
+          contato?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          cnpj?: string | null
+          contato?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      ferragens: {
+        Row: {
+          aplicacao: string | null
+          created_at: string
+          fabricante: string | null
+          id: string
+          nome: string
+          tipo: string | null
+        }
+        Insert: {
+          aplicacao?: string | null
+          created_at?: string
+          fabricante?: string | null
+          id?: string
+          nome: string
+          tipo?: string | null
+        }
+        Update: {
+          aplicacao?: string | null
+          created_at?: string
+          fabricante?: string | null
+          id?: string
+          nome?: string
+          tipo?: string | null
+        }
+        Relationships: []
+      }
       fornecedores: {
         Row: {
           ativo: boolean
@@ -425,6 +521,145 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      linhas: {
+        Row: {
+          aplicacao: string | null
+          categoria: string | null
+          created_at: string
+          espessura_mm: number | null
+          fabricante_id: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          aplicacao?: string | null
+          categoria?: string | null
+          created_at?: string
+          espessura_mm?: number | null
+          fabricante_id?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          aplicacao?: string | null
+          categoria?: string | null
+          created_at?: string
+          espessura_mm?: number | null
+          fabricante_id?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linhas_fabricante_id_fkey"
+            columns: ["fabricante_id"]
+            isOneToOne: false
+            referencedRelation: "fabricantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lista_corte: {
+        Row: {
+          comprimento_mm: number
+          created_at: string
+          id: string
+          perfil_codigo: string | null
+          perfil_id: string | null
+          perfil_nome: string | null
+          posicao: string | null
+          projeto_id: string
+          quantidade: number
+        }
+        Insert: {
+          comprimento_mm: number
+          created_at?: string
+          id?: string
+          perfil_codigo?: string | null
+          perfil_id?: string | null
+          perfil_nome?: string | null
+          posicao?: string | null
+          projeto_id: string
+          quantidade?: number
+        }
+        Update: {
+          comprimento_mm?: number
+          created_at?: string
+          id?: string
+          perfil_codigo?: string | null
+          perfil_id?: string | null
+          perfil_nome?: string | null
+          posicao?: string | null
+          projeto_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lista_corte_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_catalogo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lista_corte_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_esquadria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modelos_esquadria: {
+        Row: {
+          altura_max_mm: number | null
+          altura_min_mm: number | null
+          categoria: string
+          created_at: string
+          folhas: number | null
+          id: string
+          largura_max_mm: number | null
+          largura_min_mm: number | null
+          linha_id: string | null
+          nome: string
+          tipo: string
+        }
+        Insert: {
+          altura_max_mm?: number | null
+          altura_min_mm?: number | null
+          categoria?: string
+          created_at?: string
+          folhas?: number | null
+          id?: string
+          largura_max_mm?: number | null
+          largura_min_mm?: number | null
+          linha_id?: string | null
+          nome: string
+          tipo: string
+        }
+        Update: {
+          altura_max_mm?: number | null
+          altura_min_mm?: number | null
+          categoria?: string
+          created_at?: string
+          folhas?: number | null
+          id?: string
+          largura_max_mm?: number | null
+          largura_min_mm?: number | null
+          linha_id?: string | null
+          nome?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modelos_esquadria_linha_id_fkey"
+            columns: ["linha_id"]
+            isOneToOne: false
+            referencedRelation: "linhas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notas_fiscais: {
         Row: {
@@ -846,6 +1081,50 @@ export type Database = {
           },
         ]
       }
+      perfis_catalogo: {
+        Row: {
+          codigo: string
+          comprimento_padrao_mm: number | null
+          created_at: string
+          espessura_mm: number | null
+          id: string
+          linha_id: string | null
+          nome: string
+          peso_kg_m: number | null
+          tipo: string
+        }
+        Insert: {
+          codigo: string
+          comprimento_padrao_mm?: number | null
+          created_at?: string
+          espessura_mm?: number | null
+          id?: string
+          linha_id?: string | null
+          nome: string
+          peso_kg_m?: number | null
+          tipo: string
+        }
+        Update: {
+          codigo?: string
+          comprimento_padrao_mm?: number | null
+          created_at?: string
+          espessura_mm?: number | null
+          id?: string
+          linha_id?: string | null
+          nome?: string
+          peso_kg_m?: number | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfis_catalogo_linha_id_fkey"
+            columns: ["linha_id"]
+            isOneToOne: false
+            referencedRelation: "linhas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planos_de_corte: {
         Row: {
           altura: number
@@ -964,6 +1243,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      projetos_esquadria: {
+        Row: {
+          altura_mm: number
+          cliente_id: string | null
+          created_at: string
+          created_by: string | null
+          esquadria_id: string | null
+          id: string
+          largura_mm: number
+          nome: string
+          observacoes: string | null
+          quantidade: number
+          updated_at: string
+        }
+        Insert: {
+          altura_mm: number
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          esquadria_id?: string | null
+          id?: string
+          largura_mm: number
+          nome?: string
+          observacoes?: string | null
+          quantidade?: number
+          updated_at?: string
+        }
+        Update: {
+          altura_mm?: number
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          esquadria_id?: string | null
+          id?: string
+          largura_mm?: number
+          nome?: string
+          observacoes?: string | null
+          quantidade?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projetos_esquadria_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_esquadria_esquadria_id_fkey"
+            columns: ["esquadria_id"]
+            isOneToOne: false
+            referencedRelation: "modelos_esquadria"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       servicos: {
         Row: {

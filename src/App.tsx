@@ -21,6 +21,7 @@ import Administradores from "./pages/Administradores";
 import Funcionarios from "./pages/Funcionarios";
 import Fornecedores from "./pages/Fornecedores";
 import Agenda from "./pages/Agenda";
+import EsquadriasModule from "./pages/EsquadriasModule";
 import FinanceiroVisaoGeral from "./pages/financeiro/FinanceiroVisaoGeral";
 import ContasReceber from "./pages/financeiro/ContasReceber";
 import ContasPagar from "./pages/financeiro/ContasPagar";
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/mapa" element={<ProtectedRoute><Mapa /></ProtectedRoute>} />
             <Route path="/administradores" element={<ProtectedRoute><Administradores /></ProtectedRoute>} />
             <Route path="/funcionarios" element={<ProtectedRoute><Funcionarios /></ProtectedRoute>} />
+            <Route path="/esquadrias" element={<ProtectedRoute><EsquadriasModule /></ProtectedRoute>} />
             {/* Financeiro */}
             <Route path="/financeiro" element={<ProtectedRoute><FinanceiroVisaoGeral /></ProtectedRoute>} />
             <Route path="/financeiro/contas-receber" element={<ProtectedRoute><ContasReceber /></ProtectedRoute>} />

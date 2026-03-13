@@ -24,6 +24,7 @@ import {
   ChevronDown,
   Truck,
   Banknote,
+  Wrench,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -37,6 +38,7 @@ const mainItems = [
   { title: "Serviços", url: "/servicos", icon: CheckSquare },
   { title: "Pedidos", url: "/pedidos", icon: ListChecks },
   { title: "Plano de corte", url: "/plano-de-corte", icon: Scissors },
+  { title: "Esquadrias", url: "/esquadrias", icon: Wrench },
   { title: "Agenda", url: "/agenda", icon: Calendar },
   { title: "Produtos", url: "/produtos", icon: Package },
   { title: "Preço dos itens", url: "/precos", icon: DollarSign },
