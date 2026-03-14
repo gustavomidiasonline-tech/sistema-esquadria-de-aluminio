@@ -5,7 +5,7 @@ import { toast } from "sonner";
 type TableName = "clientes" | "produtos" | "planos_de_corte" | "perfis_aluminio" |
   "orcamentos" | "orcamento_itens" | "pedidos" | "pedido_itens" | "servicos" |
   "contas_receber" | "contas_pagar" | "notas_fiscais" | "contratos" | "documentos" | "profiles" |
-  "fornecedores" | "pagamentos" | "agenda_eventos";
+  "fornecedores" | "pagamentos" | "agenda_eventos" | "servico_checklist";
 
 export function useSupabaseQuery<T = any>(
   table: TableName,
