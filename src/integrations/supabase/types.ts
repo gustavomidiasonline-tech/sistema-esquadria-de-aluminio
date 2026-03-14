@@ -1036,6 +1036,57 @@ export type Database = {
           },
         ]
       }
+      order_progress: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          data: Json | null
+          id: string
+          pedido_id: string
+          stage_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          pedido_id: string
+          stage_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          pedido_id?: string
+          stage_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_progress_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_progress_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagamentos: {
         Row: {
           cliente_id: string | null
@@ -1683,6 +1734,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      workflow_templates: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          field_type: string
+          icon: string | null
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          field_type?: string
+          icon?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          field_type?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
