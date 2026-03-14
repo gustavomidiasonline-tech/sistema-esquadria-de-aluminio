@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/AppLayout";
 import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Search, Plus, Filter } from "lucide-react";
 import { ServiceWorkflow } from "@/components/servicos/ServiceWorkflow";
+import { ServicosKPIs } from "@/components/servicos/ServicosKPIs";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -188,6 +189,8 @@ const Servicos = () => {
           <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
           <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" /> Novo serviço</Button>
         </div>
+
+        <ServicosKPIs servicos={servicos} />
 
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 max-w-md">
