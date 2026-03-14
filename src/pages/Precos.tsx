@@ -1,195 +1,292 @@
 import { AppLayout } from "@/components/AppLayout";
 import { useState } from "react";
-import { Search, Edit2, Plus } from "lucide-react";
+import { Search, Save, RefreshCw, Package, Layers, Wrench, Settings2, Clock, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const vidros = [
-  { id: 1, nome: "Vidro Temperado Incolor 6mm", preco: 105.0, unidade: "m²", categoria: "Temperado" },
-  { id: 2, nome: "Vidro Temperado Incolor 8mm", preco: 135.0, unidade: "m²", categoria: "Temperado" },
-  { id: 3, nome: "Vidro Temperado Incolor 10mm", preco: 165.0, unidade: "m²", categoria: "Temperado" },
-  { id: 4, nome: "Vidro Laminado Incolor 8mm", preco: 180.0, unidade: "m²", categoria: "Laminado" },
-  { id: 5, nome: "Vidro Laminado Verde 8mm", preco: 195.0, unidade: "m²", categoria: "Laminado" },
-  { id: 6, nome: "Vidro Comum Incolor 4mm", preco: 65.0, unidade: "m²", categoria: "Comum" },
-  { id: 7, nome: "Espelho 4mm", preco: 120.0, unidade: "m²", categoria: "Espelho" },
-];
+interface ConfigRow {
+  id: string;
+  chave: string;
+  valor: number;
+  unidade: string | null;
+  descricao: string | null;
+}
 
-const perfis = [
-  { id: 1, codigo: "SU-001", nome: "Marco Superior Amadeirado", peso: 0.82, preco: 288.2, unidade: "barra 6m" },
-  { id: 2, codigo: "SU-002", nome: "Marco Inferior Amadeirado", peso: 0.76, preco: 276.36, unidade: "barra 6m" },
-  { id: 3, codigo: "SU-003", nome: "Montante Amadeirado", peso: 0.65, preco: 234.0, unidade: "barra 6m" },
-  { id: 4, codigo: "SU-004", nome: "Folha Preto", peso: 0.58, preco: 198.5, unidade: "barra 6m" },
-  { id: 5, codigo: "SU-005", nome: "Trilho Superior Preto", peso: 0.42, preco: 152.0, unidade: "barra 6m" },
-  { id: 6, codigo: "SU-006", nome: "Contramarco Branco", peso: 0.35, preco: 126.0, unidade: "barra 6m" },
-];
+const CATEGORIES: Record<string, { label: string; icon: React.ReactNode; keys: string[] }> = {
+  aluminio: {
+    label: "Alumínio",
+    icon: <Package className="h-4 w-4" />,
+    keys: ["preco_kg_aluminio"],
+  },
+  vidros: {
+    label: "Vidros",
+    icon: <Layers className="h-4 w-4" />,
+    keys: [
+      "preco_m2_vidro_temperado_6mm",
+      "preco_m2_vidro_temperado_8mm",
+      "preco_m2_vidro_temperado_10mm",
+      "preco_m2_vidro_laminado_8mm",
+      "preco_m2_vidro_comum_4mm",
+    ],
+  },
+  ferragens: {
+    label: "Ferragens",
+    icon: <Wrench className="h-4 w-4" />,
+    keys: [
+      "custo_ferragem_janela",
+      "custo_ferragem_porta",
+      "custo_ferragem_basculante",
+      "custo_ferragem_maximar",
+      "custo_ferragem_pivotante",
+    ],
+  },
+  acessorios: {
+    label: "Acessórios & Markup",
+    icon: <Settings2 className="h-4 w-4" />,
+    keys: ["custo_acessorios_padrao", "markup_padrao"],
+  },
+  mao_obra: {
+    label: "Mão de Obra",
+    icon: <Clock className="h-4 w-4" />,
+    keys: [
+      "custo_mao_de_obra_hora",
+      "horas_producao_janela",
+      "horas_producao_porta",
+      "horas_instalacao_padrao",
+    ],
+  },
+};
 
-const ferragens = [
-  { id: 1, nome: "Fechadura Tetra Cromada", preco: 89.9, unidade: "un" },
-  { id: 2, nome: "Puxador Concha Cromado 15cm", preco: 12.5, unidade: "un" },
-  { id: 3, nome: "Roldana 4 Rodas Concavo", preco: 18.9, unidade: "par" },
-  { id: 4, nome: "Trinco de Pressão Cromado", preco: 6.5, unidade: "un" },
-  { id: 5, nome: "Dobradiça Pivotante Inox", preco: 45.0, unidade: "par" },
-  { id: 6, nome: "Kit Box Quadrado Cromado", preco: 189.9, unidade: "kit" },
-  { id: 7, nome: "Mola de Piso Hidr. 65kg", preco: 320.0, unidade: "un" },
-  { id: 8, nome: "Fecho Concha Cromado", preco: 8.9, unidade: "un" },
-];
-
-const acessorios = [
-  { id: 1, nome: "Silicone Acético Incolor 280ml", preco: 14.9, unidade: "un" },
-  { id: 2, nome: "Fita Dupla Face 19mm x 20m", preco: 22.0, unidade: "rolo" },
-  { id: 3, nome: "Borracha de Vedação 5x7mm", preco: 3.5, unidade: "metro" },
-  { id: 4, nome: "Parafuso 4.2x32 Zincado", preco: 0.15, unidade: "un" },
-  { id: 5, nome: "Bucha S6", preco: 0.12, unidade: "un" },
-  { id: 6, nome: "Calço de Vidro 5mm", preco: 0.8, unidade: "un" },
-];
-
-const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmt = (v: number, unidade?: string | null) => {
+  if (unidade === "%" || unidade === "horas") return `${v}`;
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+};
 
 const Precos = () => {
   const [search, setSearch] = useState("");
+  const [editValues, setEditValues] = useState<Record<string, string>>({});
+  const [hasChanges, setHasChanges] = useState(false);
+  const queryClient = useQueryClient();
 
-  const filter = <T extends { nome: string }>(items: T[]) =>
-    items.filter((i) => i.nome.toLowerCase().includes(search.toLowerCase()));
+  const { data: configRows = [], isLoading } = useQuery({
+    queryKey: ["config_precos_admin"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("config_precos")
+        .select("*")
+        .order("chave");
+      if (error) throw error;
+      return (data || []) as ConfigRow[];
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (updates: { id: string; valor: number }[]) => {
+      for (const u of updates) {
+        const { error } = await supabase
+          .from("config_precos")
+          .update({ valor: u.valor })
+          .eq("id", u.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["config_precos_admin"] });
+      queryClient.invalidateQueries({ queryKey: ["config_precos"] });
+      setEditValues({});
+      setHasChanges(false);
+      toast.success("Preços atualizados com sucesso!");
+    },
+    onError: () => toast.error("Erro ao salvar preços"),
+  });
+
+  const handleChange = (chave: string, value: string) => {
+    setEditValues((prev) => ({ ...prev, [chave]: value }));
+    setHasChanges(true);
+  };
+
+  const handleSave = () => {
+    const updates = Object.entries(editValues)
+      .map(([chave, val]) => {
+        const row = configRows.find((r) => r.chave === chave);
+        if (!row) return null;
+        const num = parseFloat(val.replace(",", "."));
+        if (isNaN(num)) return null;
+        return { id: row.id, valor: num };
+      })
+      .filter(Boolean) as { id: string; valor: number }[];
+
+    if (updates.length === 0) {
+      toast.info("Nenhuma alteração para salvar");
+      return;
+    }
+    saveMutation.mutate(updates);
+  };
+
+  const handleReset = () => {
+    setEditValues({});
+    setHasChanges(false);
+  };
+
+  const getRowsByKeys = (keys: string[]) =>
+    configRows
+      .filter((r) => keys.includes(r.chave))
+      .filter((r) =>
+        search === "" ||
+        (r.descricao || r.chave).toLowerCase().includes(search.toLowerCase())
+      );
+
+  const getValue = (row: ConfigRow) =>
+    editValues[row.chave] !== undefined ? editValues[row.chave] : String(row.valor);
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="space-y-4 max-w-4xl">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-10 w-full max-w-md" />
+          <div className="grid gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32 w-full" />
+            ))}
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
-      <div className="space-y-6 max-w-7xl">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 max-w-4xl">
+        {/* Header */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Preço dos Itens</h1>
-            <p className="text-sm text-muted-foreground">Configure preços de vidros, perfis, ferragens e acessórios</p>
+            <h1 className="text-2xl font-bold text-foreground">Configuração de Preços</h1>
+            <p className="text-sm text-muted-foreground">
+              Preços base utilizados no cálculo automático de orçamentos
+            </p>
           </div>
-          <Button className="gap-2"><Plus className="h-4 w-4" /> Novo item</Button>
+          <div className="flex gap-2">
+            {hasChanges && (
+              <Button variant="outline" onClick={handleReset} className="gap-2">
+                <RefreshCw className="h-4 w-4" /> Desfazer
+              </Button>
+            )}
+            <Button
+              onClick={handleSave}
+              disabled={!hasChanges || saveMutation.isPending}
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {saveMutation.isPending ? "Salvando..." : "Salvar alterações"}
+            </Button>
+          </div>
         </div>
 
+        {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Buscar item..."
+          <Input
+            placeholder="Buscar configuração..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
+            className="pl-10"
           />
         </div>
 
+        {/* Tabs */}
         <Tabs defaultValue="vidros">
-          <TabsList>
-            <TabsTrigger value="vidros">Vidros ({filter(vidros).length})</TabsTrigger>
-            <TabsTrigger value="perfis">Perfis ({filter(perfis).length})</TabsTrigger>
-            <TabsTrigger value="ferragens">Ferragens ({filter(ferragens).length})</TabsTrigger>
-            <TabsTrigger value="acessorios">Acessórios ({filter(acessorios).length})</TabsTrigger>
+          <TabsList className="flex-wrap h-auto gap-1">
+            {Object.entries(CATEGORIES).map(([key, cat]) => (
+              <TabsTrigger key={key} value={key} className="gap-1.5">
+                {cat.icon} {cat.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          <TabsContent value="vidros">
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead className="text-right">Preço</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filter(vidros).map((v) => (
-                    <TableRow key={v.id}>
-                      <TableCell className="font-medium">{v.nome}</TableCell>
-                      <TableCell><span className="text-xs px-2 py-0.5 rounded-full bg-accent text-accent-foreground">{v.categoria}</span></TableCell>
-                      <TableCell className="text-right font-semibold">{fmt(v.preco)}</TableCell>
-                      <TableCell className="text-muted-foreground">{v.unidade}</TableCell>
-                      <TableCell><Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer" /></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="perfis">
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead className="text-right">Peso (kg/m)</TableHead>
-                    <TableHead className="text-right">Preço</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filter(perfis).map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell><span className="text-xs font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">{p.codigo}</span></TableCell>
-                      <TableCell className="font-medium">{p.nome}</TableCell>
-                      <TableCell className="text-right">{p.peso.toFixed(2)}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmt(p.preco)}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.unidade}</TableCell>
-                      <TableCell><Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer" /></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="ferragens">
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead className="text-right">Preço</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filter(ferragens).map((f) => (
-                    <TableRow key={f.id}>
-                      <TableCell className="font-medium">{f.nome}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmt(f.preco)}</TableCell>
-                      <TableCell className="text-muted-foreground">{f.unidade}</TableCell>
-                      <TableCell><Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer" /></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="acessorios">
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead className="text-right">Preço</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filter(acessorios).map((a) => (
-                    <TableRow key={a.id}>
-                      <TableCell className="font-medium">{a.nome}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmt(a.preco)}</TableCell>
-                      <TableCell className="text-muted-foreground">{a.unidade}</TableCell>
-                      <TableCell><Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer" /></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
+          {Object.entries(CATEGORIES).map(([key, cat]) => (
+            <TabsContent key={key} value={key}>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {cat.icon} {cat.label}
+                  </CardTitle>
+                  <CardDescription>
+                    Edite os valores abaixo. Eles serão usados automaticamente nos orçamentos.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {getRowsByKeys(cat.keys).map((row) => (
+                      <div
+                        key={row.id}
+                        className="flex items-center justify-between gap-4 p-3 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm text-foreground truncate">
+                            {row.descricao || row.chave}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono">{row.chave}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {row.unidade && (
+                            <span className="text-xs text-muted-foreground bg-accent/50 px-2 py-0.5 rounded">
+                              {row.unidade}
+                            </span>
+                          )}
+                          <div className="relative w-32">
+                            {row.unidade?.startsWith("R$") && (
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                                R$
+                              </span>
+                            )}
+                            {row.unidade === "%" && (
+                              <Percent className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            )}
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              value={getValue(row)}
+                              onChange={(e) => handleChange(row.chave, e.target.value)}
+                              className={`text-right font-semibold h-9 ${
+                                row.unidade?.startsWith("R$") ? "pl-8" : ""
+                              } ${row.unidade === "%" ? "pr-8" : ""} ${
+                                editValues[row.chave] !== undefined
+                                  ? "border-primary ring-1 ring-primary/30"
+                                  : ""
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {getRowsByKeys(cat.keys).length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Nenhum item encontrado
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
         </Tabs>
+
+        {/* Summary */}
+        <Card className="border-dashed">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-xs text-muted-foreground text-center">
+              💡 Estes valores são a base de cálculo dos orçamentos automáticos.
+              Ao alterar, todos os novos orçamentos usarão os valores atualizados.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );
