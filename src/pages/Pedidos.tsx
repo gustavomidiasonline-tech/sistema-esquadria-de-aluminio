@@ -12,6 +12,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
 import { differenceInDays, parseISO, format, isAfter, isBefore } from "date-fns";
+import { useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { TrendingUp, CheckCircle2, XCircle, Package, Truck } from "lucide-react";
 
 const actionButtons = (pedido: any) => [
   { icon: RotateCcw, label: "Reagendar", action: () => {} },
