@@ -91,12 +91,55 @@ const Pedidos = () => {
 
   const activeFilters = (statusFilter !== "todos" ? 1 : 0) + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0);
 
+  const stats = useMemo(() => {
+    const total = pedidos.length;
+    const pendentes = pedidos.filter((p: any) => p.status === "pendente").length;
+    const emProducao = pedidos.filter((p: any) => p.status === "em_producao").length;
+    const prontos = pedidos.filter((p: any) => p.status === "pronto").length;
+    const entregues = pedidos.filter((p: any) => p.status === "entregue").length;
+    const cancelados = pedidos.filter((p: any) => p.status === "cancelado").length;
+    const valorTotal = pedidos.reduce((s: number, p: any) => s + (Number(p.valor_total) || 0), 0);
+    const valorEntregue = pedidos.filter((p: any) => p.status === "entregue").reduce((s: number, p: any) => s + (Number(p.valor_total) || 0), 0);
+    const taxaEntrega = total > 0 ? Math.round((entregues / total) * 100) : 0;
+    const atrasados = pedidos.filter((p: any) => p.data_entrega && p.status !== "entregue" && p.status !== "cancelado" && differenceInDays(parseISO(p.data_entrega), new Date()) < 0).length;
+    return { total, pendentes, emProducao, prontos, entregues, cancelados, valorTotal, valorEntregue, taxaEntrega, atrasados };
+  }, [pedidos]);
+
   return (
     <AppLayout>
       <div className="space-y-4 max-w-7xl">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Pedidos</h1>
+          <div><h1 className="text-2xl font-bold text-foreground">Pedidos</h1><p className="text-sm text-muted-foreground">{pedidos.length} pedidos</p></div>
           <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" /> Novo pedido</Button>
+        </div>
+
+        {/* KPIs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+          {[
+            { label: "Total", value: stats.total, icon: Package, color: "text-primary", bg: "bg-primary/10" },
+            { label: "Pendentes", value: stats.pendentes, icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10" },
+            { label: "Em Produção", value: stats.emProducao, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
+            { label: "Prontos", value: stats.prontos, icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+            { label: "Entregues", value: stats.entregues, icon: Truck, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+            { label: "Cancelados", value: stats.cancelados, icon: XCircle, color: "text-destructive", bg: "bg-destructive/10" },
+            { label: "Atrasados", value: stats.atrasados, icon: Clock, color: "text-destructive", bg: "bg-destructive/10" },
+            { label: "Taxa entrega", value: `${stats.taxaEntrega}%`, icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+            { label: "Valor total", value: fmt(stats.valorTotal), icon: DollarSign, color: "text-primary", bg: "bg-primary/10", small: true },
+            { label: "Valor entregue", value: fmt(stats.valorEntregue), icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", small: true },
+          ].map((kpi) => {
+            const Icon = kpi.icon;
+            return (
+              <div key={kpi.label} className="bg-card border border-border rounded-xl p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-medium text-muted-foreground">{kpi.label}</span>
+                  <div className={cn("h-6 w-6 rounded-md flex items-center justify-center", kpi.bg)}>
+                    <Icon className={cn("h-3 w-3", kpi.color)} />
+                  </div>
+                </div>
+                <p className={cn("font-bold text-foreground", kpi.small ? "text-xs" : "text-lg")}>{kpi.value}</p>
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
