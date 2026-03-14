@@ -174,6 +174,66 @@ const Orcamentos = () => {
     toast.success("PDF gerado com sucesso!");
   };
 
+  // Smart configurator handler
+  const handleSmartAdd = async (item: ConfiguredItem) => {
+    if (!configOrcId) return;
+    try {
+      const { error } = await supabase.from("orcamento_itens").insert({
+        orcamento_id: configOrcId,
+        descricao: item.descricao,
+        quantidade: item.quantidade,
+        valor_unitario: item.valor_unitario,
+        valor_total: item.valor_total,
+        largura: item.largura,
+        altura: item.altura,
+        produto_id: item.produto_id,
+        custo_aluminio: item.custo_aluminio,
+        custo_vidro: item.custo_vidro,
+        custo_ferragem: item.custo_ferragem,
+        custo_acessorios: item.custo_acessorios,
+        custo_mao_obra: item.custo_mao_obra,
+        custo_total: item.custo_total,
+        markup_percentual: item.markup_percentual,
+        lucro: item.lucro,
+        tipo_vidro: item.tipo_vidro,
+        peso_total_kg: item.peso_total_kg,
+        area_vidro_m2: item.area_vidro_m2,
+      } as any);
+      if (error) throw error;
+
+      // Recalculate total
+      const orcItens = [...allItens.filter((i: any) => i.orcamento_id === configOrcId), { valor_total: item.valor_total }];
+      const newTotal = orcItens.reduce((s: number, i: any) => s + Number(i.valor_total), 0);
+      await supabase.from("orcamentos").update({ valor_total: newTotal }).eq("id", configOrcId);
+
+      queryClient.invalidateQueries({ queryKey: ["orcamento_itens"] });
+      queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
+      toast.success("Item calculado e adicionado ao orçamento!");
+      setConfigDialogOpen(false);
+    } catch (e: any) {
+      toast.error("Erro: " + e.message);
+    }
+  };
+
+  // Converter to pedido
+  const handleConverterPedido = async (orc: any) => {
+    try {
+      const { error } = await supabase.from("pedidos").insert({
+        cliente_id: orc.cliente_id,
+        orcamento_id: orc.id,
+        valor_total: Number(orc.valor_total) || 0,
+        observacoes: `Convertido do orçamento ORC-${String(orc.numero).padStart(3, "0")}`,
+        created_by: user?.id,
+      });
+      if (error) throw error;
+      await handleStatusChange(orc.id, "aprovado");
+      queryClient.invalidateQueries({ queryKey: ["pedidos"] });
+      toast.success("Orçamento convertido em pedido com sucesso!");
+    } catch (e: any) {
+      toast.error("Erro: " + e.message);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="space-y-4 max-w-7xl">
