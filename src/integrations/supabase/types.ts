@@ -1301,6 +1301,50 @@ export type Database = {
           },
         ]
       }
+      servico_checklist: {
+        Row: {
+          concluida: boolean
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string
+          etapa: string
+          id: string
+          observacoes: string | null
+          servico_id: string
+          updated_at: string
+        }
+        Insert: {
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          etapa: string
+          id?: string
+          observacoes?: string | null
+          servico_id: string
+          updated_at?: string
+        }
+        Update: {
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          etapa?: string
+          id?: string
+          observacoes?: string | null
+          servico_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servico_checklist_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       servicos: {
         Row: {
           cliente_id: string | null
