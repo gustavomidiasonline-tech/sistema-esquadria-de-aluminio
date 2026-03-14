@@ -274,6 +274,7 @@ const Servicos = () => {
                       </button>
                     </div>
                   </div>
+                  <ServiceWorkflow servicoId={servico.id} servicoStatus={servico.status} />
                   <div className="flex gap-2 p-4 pt-0 mt-auto">
                     {servico.status !== "cancelado" && <button onClick={() => handleStatusChange(servico.id, "cancelado")} className="flex-1 py-2 text-xs font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors">Cancelar</button>}
                     {servico.status !== "concluido" && servico.status !== "cancelado" && (
