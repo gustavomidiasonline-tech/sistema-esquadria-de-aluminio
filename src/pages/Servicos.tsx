@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/AppLayout";
 import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Search, Plus, Filter } from "lucide-react";
+import { ServiceWorkflow } from "@/components/servicos/ServiceWorkflow";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -273,6 +274,7 @@ const Servicos = () => {
                       </button>
                     </div>
                   </div>
+                  <ServiceWorkflow servicoId={servico.id} servicoStatus={servico.status} />
                   <div className="flex gap-2 p-4 pt-0 mt-auto">
                     {servico.status !== "cancelado" && <button onClick={() => handleStatusChange(servico.id, "cancelado")} className="flex-1 py-2 text-xs font-medium rounded-lg border border-border text-foreground hover:bg-muted transition-colors">Cancelar</button>}
                     {servico.status !== "concluido" && servico.status !== "cancelado" && (
