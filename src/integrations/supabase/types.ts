@@ -99,6 +99,41 @@ export type Database = {
           },
         ]
       }
+      catalog_profiles: {
+        Row: {
+          code: string
+          company_id: string
+          created_at: string | null
+          description: string | null
+          drawing_url: string | null
+          id: string
+        }
+        Insert: {
+          code: string
+          company_id: string
+          created_at?: string | null
+          description?: string | null
+          drawing_url?: string | null
+          id?: string
+        }
+        Update: {
+          code?: string
+          company_id?: string
+          created_at?: string | null
+          description?: string | null
+          drawing_url?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           cep: string | null
@@ -144,6 +179,30 @@ export type Database = {
           observacoes?: string | null
           telefone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      companies: {
+        Row: {
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          settings: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          settings?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          settings?: Json | null
         }
         Relationships: []
       }
@@ -393,6 +452,54 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cut_rules: {
+        Row: {
+          angle: string | null
+          axis: string
+          created_at: string | null
+          formula: string
+          id: string
+          product_id: string
+          profile_id: string
+          quantity: number | null
+        }
+        Insert: {
+          angle?: string | null
+          axis: string
+          created_at?: string | null
+          formula: string
+          id?: string
+          product_id: string
+          profile_id: string
+          quantity?: number | null
+        }
+        Update: {
+          angle?: string | null
+          axis?: string
+          created_at?: string | null
+          formula?: string
+          id?: string
+          product_id?: string
+          profile_id?: string
+          quantity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cut_rules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "mt_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cut_rules_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -687,6 +794,41 @@ export type Database = {
             columns: ["linha_id"]
             isOneToOne: false
             referencedRelation: "linhas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mt_products: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mt_products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -1275,6 +1417,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           cargo: string | null
+          company_id: string | null
           created_at: string
           email: string | null
           id: string
@@ -1286,6 +1429,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           cargo?: string | null
+          company_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -1297,6 +1441,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           cargo?: string | null
+          company_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -1305,7 +1450,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projetos_esquadria: {
         Row: {
@@ -1536,6 +1689,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_company_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
