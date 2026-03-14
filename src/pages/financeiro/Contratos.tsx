@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
-import { FileCheck, Plus } from "lucide-react";
+import { FileCheck, Plus, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
+import { FileUpload } from "@/components/shared/FileUpload";
 
 const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "outline" | "secondary" }> = {
   ativo: { label: "Ativo", variant: "default" },
@@ -30,6 +31,7 @@ const Contratos = () => {
   const insertMutation = useSupabaseInsert("contratos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ titulo: "", cliente_id: "", valor: "", data_inicio: "", data_fim: "", descricao: "" });
+  const [arquivoUrl, setArquivoUrl] = useState("");
 
   const handleSave = async () => {
     if (!form.titulo) { toast.error("Preencha o título"); return; }
@@ -41,11 +43,13 @@ const Contratos = () => {
         data_inicio: form.data_inicio || null,
         data_fim: form.data_fim || null,
         descricao: form.descricao,
+        arquivo_url: arquivoUrl || null,
         created_by: user?.id,
       });
       toast.success("Contrato criado!");
       setDialogOpen(false);
       setForm({ titulo: "", cliente_id: "", valor: "", data_inicio: "", data_fim: "", descricao: "" });
+      setArquivoUrl("");
     } catch {}
   };
 
@@ -71,7 +75,7 @@ const Contratos = () => {
             {contratos.map((c: any) => {
               const s = statusMap[c.status] || statusMap.rascunho;
               return (
-                <div key={c.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors cursor-pointer">
+                <div key={c.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <FileCheck className="h-5 w-5 text-primary" />
@@ -88,6 +92,14 @@ const Contratos = () => {
                   <div className="flex items-center gap-3">
                     {c.valor && <span className="text-sm font-bold text-foreground">{fmt(Number(c.valor))}</span>}
                     <Badge variant={s.variant}>{s.label}</Badge>
+                    {c.arquivo_url ? (
+                      <a href={c.arquivo_url} target="_blank" rel="noopener noreferrer"
+                        className="h-8 px-3 rounded-lg border border-border flex items-center gap-1.5 hover:bg-muted transition-colors text-xs font-medium text-foreground">
+                        <Download className="h-3.5 w-3.5" /> PDF
+                      </a>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px]">Sem arquivo</Badge>
+                    )}
                   </div>
                 </div>
               );
@@ -97,10 +109,10 @@ const Contratos = () => {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Novo Contrato</DialogTitle>
-            <DialogDescription>Crie um novo contrato vinculado a um cliente.</DialogDescription>
+            <DialogDescription>Crie um novo contrato e anexe o documento.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
@@ -122,6 +134,16 @@ const Contratos = () => {
             <div>
               <Label>Descrição</Label>
               <Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} className="mt-1" />
+            </div>
+            <div>
+              <Label>Arquivo do contrato</Label>
+              <FileUpload
+                bucket="contratos"
+                folder={user?.id}
+                onUploadComplete={(url) => setArquivoUrl(url)}
+                accept=".pdf,.doc,.docx"
+                className="mt-1"
+              />
             </div>
           </div>
           <DialogFooter>

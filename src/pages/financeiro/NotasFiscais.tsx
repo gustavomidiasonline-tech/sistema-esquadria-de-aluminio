@@ -11,7 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Receipt, Search, Eye, FileText, Download } from "lucide-react";
+import { Plus, Receipt, Search, FileText, Download } from "lucide-react";
+import { FileUpload } from "@/components/shared/FileUpload";
 
 const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "outline" | "secondary" }> = {
   emitida: { label: "Emitida", variant: "default" },
@@ -31,6 +32,8 @@ export default function NotasFiscais() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailNF, setDetailNF] = useState<any>(null);
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [xmlUrl, setXmlUrl] = useState("");
   const [form, setForm] = useState({
     tipo: "nfe" as string,
     numero: "",
@@ -72,6 +75,8 @@ export default function NotasFiscais() {
         status: form.status as any,
         data_emissao: form.status === "emitida" ? new Date().toISOString().split("T")[0] : null,
         created_by: user?.id,
+        pdf_url: pdfUrl || null,
+        xml_url: xmlUrl || null,
       });
       if (error) throw error;
     },
@@ -80,6 +85,8 @@ export default function NotasFiscais() {
       toast.success("Nota fiscal criada!");
       setDialogOpen(false);
       setForm({ tipo: "nfe", numero: "", valor: "", descricao: "", cliente_id: "", status: "pendente" });
+      setPdfUrl("");
+      setXmlUrl("");
     },
     onError: () => toast.error("Erro ao criar nota fiscal"),
   });
@@ -161,6 +168,7 @@ export default function NotasFiscais() {
           <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
             {filtered.map((nf: any) => {
               const s = statusMap[nf.status] || statusMap.pendente;
+              const hasFiles = nf.pdf_url || nf.xml_url;
               return (
                 <div key={nf.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setDetailNF(nf)}>
                   <div className="flex items-center gap-4">
@@ -181,6 +189,22 @@ export default function NotasFiscais() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-bold text-foreground">R$ {Number(nf.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
                     <Badge variant={s.variant}>{s.label}</Badge>
+                    {hasFiles && (
+                      <div className="flex gap-1">
+                        {nf.pdf_url && (
+                          <a href={nf.pdf_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                            className="h-7 px-2 rounded border border-border flex items-center gap-1 hover:bg-muted transition-colors text-[10px] font-medium text-foreground">
+                            <Download className="h-3 w-3" /> PDF
+                          </a>
+                        )}
+                        {nf.xml_url && (
+                          <a href={nf.xml_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                            className="h-7 px-2 rounded border border-border flex items-center gap-1 hover:bg-muted transition-colors text-[10px] font-medium text-foreground">
+                            <Download className="h-3 w-3" /> XML
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -208,6 +232,25 @@ export default function NotasFiscais() {
               <p><strong>Valor:</strong> R$ {Number(detailNF.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
               {detailNF.data_emissao && <p><strong>Emissão:</strong> {new Date(detailNF.data_emissao).toLocaleDateString("pt-BR")}</p>}
               {detailNF.descricao && <p><strong>Descrição:</strong> {detailNF.descricao}</p>}
+              
+              {/* File links */}
+              {(detailNF.pdf_url || detailNF.xml_url) && (
+                <div className="flex gap-2 pt-1">
+                  {detailNF.pdf_url && (
+                    <a href={detailNF.pdf_url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-muted transition-colors text-xs font-medium">
+                      <Download className="h-3.5 w-3.5" /> Baixar PDF
+                    </a>
+                  )}
+                  {detailNF.xml_url && (
+                    <a href={detailNF.xml_url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-muted transition-colors text-xs font-medium">
+                      <Download className="h-3.5 w-3.5" /> Baixar XML
+                    </a>
+                  )}
+                </div>
+              )}
+
               <div className="flex gap-2 pt-2">
                 {detailNF.status === "pendente" && (
                   <Button size="sm" onClick={() => emitirMutation.mutate(detailNF.id)}>
@@ -230,7 +273,7 @@ export default function NotasFiscais() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Nova Nota Fiscal</DialogTitle>
-            <DialogDescription>Preencha os dados para criar uma nota fiscal.</DialogDescription>
+            <DialogDescription>Preencha os dados e anexe os arquivos da nota fiscal.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -280,6 +323,26 @@ export default function NotasFiscais() {
             <div>
               <Label>Descrição</Label>
               <Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} rows={2} />
+            </div>
+            <div>
+              <Label>PDF da Nota Fiscal</Label>
+              <FileUpload
+                bucket="notas-fiscais"
+                folder={user?.id ? `${user.id}/pdf` : "pdf"}
+                onUploadComplete={(url) => setPdfUrl(url)}
+                accept=".pdf"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>XML da Nota Fiscal</Label>
+              <FileUpload
+                bucket="notas-fiscais"
+                folder={user?.id ? `${user.id}/xml` : "xml"}
+                onUploadComplete={(url) => setXmlUrl(url)}
+                accept=".xml"
+                className="mt-1"
+              />
             </div>
           </div>
           <DialogFooter>
