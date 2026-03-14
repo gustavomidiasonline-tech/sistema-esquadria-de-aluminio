@@ -49,7 +49,11 @@ const Orcamentos = () => {
   const [expandedOrc, setExpandedOrc] = useState<string | null>(null);
   const [form, setForm] = useState({ cliente_id: "", descricao: "", valor_total: "", validade: "", observacoes: "" });
 
-  // Item form state
+  // Smart configurator
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [configOrcId, setConfigOrcId] = useState("");
+
+  // Legacy simple item form
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [itemOrcId, setItemOrcId] = useState("");
   const [itemForm, setItemForm] = useState({ descricao: "", quantidade: "1", valor_unitario: "", largura: "", altura: "", produto_id: "" });
