@@ -10,6 +10,7 @@ interface Profile {
   telefone: string | null;
   cargo: string | null;
   avatar_url: string | null;
+  company_id: string | null;
 }
 
 interface AuthContextType {

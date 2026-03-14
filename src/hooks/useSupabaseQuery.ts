@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 type TableName = "clientes" | "produtos" | "planos_de_corte" | "perfis_aluminio" |
   "orcamentos" | "orcamento_itens" | "pedidos" | "pedido_itens" | "servicos" |
