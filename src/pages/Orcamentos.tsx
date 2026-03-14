@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/AppLayout";
-import { Plus, Search, Filter, Eye, ChevronDown, ChevronUp, FileText, Printer, DollarSign, TrendingUp, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Plus, Search, Filter, Eye, ChevronDown, ChevronUp, FileText, Printer, DollarSign, TrendingUp, CheckCircle2, Clock, XCircle, Download } from "lucide-react";
+import { exportOrcamentoPDF } from "@/lib/pdf-export";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -162,39 +163,10 @@ const Orcamentos = () => {
     return { total, aprovados, enviados, rascunhos, rejeitados, valorTotal, valorAprovado, taxaAprovacao };
   }, [orcamentos]);
 
-  const handleImprimir = (orc: any) => {
+  const handleExportPDF = (orc: any) => {
     const itensOrc = allItens.filter((i: any) => i.orcamento_id === orc.id);
-    const content = `
-      <html><head><title>Orçamento #${orc.numero}</title>
-      <style>body{font-family:Arial,sans-serif;padding:40px;color:#333;max-width:800px;margin:0 auto}
-      h1{font-size:22px;border-bottom:2px solid #7c3aed;padding-bottom:8px}
-      .info{margin:16px 0;line-height:1.8}.label{font-weight:bold;color:#555}
-      table{width:100%;border-collapse:collapse;margin-top:20px}
-      th{background:#f5f3ff;font-weight:bold;text-align:left;padding:8px 12px;border:1px solid #ddd;font-size:12px}
-      td{padding:8px 12px;border:1px solid #ddd;font-size:12px}
-      .total{text-align:right;font-size:18px;color:#7c3aed;font-weight:bold;margin-top:16px}</style></head>
-      <body>
-        <h1>ORÇAMENTO #${String(orc.numero).padStart(3, "0")}</h1>
-        <div class="info">
-          <p><span class="label">Cliente:</span> ${orc.clientes?.nome || "—"}</p>
-          <p><span class="label">Data:</span> ${format(parseISO(orc.created_at), "dd/MM/yyyy")}</p>
-          ${orc.validade ? `<p><span class="label">Validade:</span> ${format(parseISO(orc.validade), "dd/MM/yyyy")}</p>` : ""}
-          ${orc.descricao ? `<p><span class="label">Descrição:</span> ${orc.descricao}</p>` : ""}
-        </div>
-        ${itensOrc.length > 0 ? `
-        <table>
-          <thead><tr><th>Item</th><th>Dimensões</th><th>m²</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
-          <tbody>${itensOrc.map((i: any) => {
-            const m2 = i.largura && i.altura ? ((i.largura / 1000) * (i.altura / 1000)).toFixed(3) : "—";
-            return `<tr><td>${i.descricao}</td><td>${i.largura && i.altura ? `${i.largura}×${i.altura}mm` : "—"}</td><td>${m2}</td><td>${i.quantidade}</td><td>${fmt(Number(i.valor_unitario))}</td><td>${fmt(Number(i.valor_total))}</td></tr>`;
-          }).join("")}</tbody>
-        </table>` : ""}
-        <p class="total">Total: ${fmt(Number(orc.valor_total) || 0)}</p>
-        ${orc.observacoes ? `<p style="margin-top:20px;font-size:12px;color:#666"><strong>Observações:</strong> ${orc.observacoes}</p>` : ""}
-        <p style="margin-top:40px;font-size:11px;color:#999">Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")}</p>
-      </body></html>`;
-    const win = window.open("", "_blank");
-    if (win) { win.document.write(content); win.document.close(); win.print(); }
+    exportOrcamentoPDF(orc, itensOrc);
+    toast.success("PDF gerado com sucesso!");
   };
 
   return (
@@ -319,8 +291,8 @@ const Orcamentos = () => {
                         <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => { setItemOrcId(orc.id); setItemDialogOpen(true); }}>
                           <Plus className="h-3 w-3" /> Adicionar item
                         </Button>
-                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => handleImprimir(orc)}>
-                          <Printer className="h-3 w-3" /> Imprimir
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => handleExportPDF(orc)}>
+                          <Download className="h-3 w-3" /> Exportar PDF
                         </Button>
                         {orc.clientes && (
                           <div className="ml-auto text-[10px] text-muted-foreground">

@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/AppLayout";
-import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Clock, Search, Plus, Filter } from "lucide-react";
+import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Clock, Search, Plus, Filter, Download } from "lucide-react";
+import { exportPedidoPDF } from "@/lib/pdf-export";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -12,11 +13,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { differenceInDays, parseISO, format, isAfter, isBefore } from "date-fns";
 
-const actionButtons = [
-  { icon: RotateCcw, label: "Reagendar" },
-  { icon: DollarSign, label: "Pagamentos" },
-  { icon: FileText, label: "Contrato" },
-  { icon: Printer, label: "Impressões" },
+const actionButtons = (pedido: any) => [
+  { icon: RotateCcw, label: "Reagendar", action: () => {} },
+  { icon: DollarSign, label: "Pagamentos", action: () => {} },
+  { icon: FileText, label: "Contrato", action: () => {} },
+  { icon: Download, label: "PDF", action: () => { exportPedidoPDF(pedido); } },
 ];
 
 const statusLabels: Record<string, string> = {
@@ -172,8 +173,8 @@ const Pedidos = () => {
                   )}
                   <div className="px-4 py-3 border-t border-border">
                     <div className="flex items-center justify-between">
-                      {actionButtons.map((btn) => (
-                        <button key={btn.label} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
+                      {actionButtons(pedido).map((btn) => (
+                        <button key={btn.label} onClick={btn.action} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
                           <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center group-hover:border-primary/30 group-hover:bg-primary/5 transition-colors"><btn.icon className="h-4 w-4" /></div>
                           <span className="text-[10px]">{btn.label}</span>
                         </button>
