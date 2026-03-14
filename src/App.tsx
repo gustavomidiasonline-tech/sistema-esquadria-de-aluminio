@@ -35,6 +35,7 @@ import FluxoCaixa from "./pages/financeiro/FluxoCaixa";
 import Pagamentos from "./pages/financeiro/Pagamentos";
 import Planos from "./pages/Planos";
 import Workflow from "./pages/Workflow";
+import ConfiguracaoModelos from "./pages/ConfiguracaoModelos";
 
 const queryClient = new QueryClient();
 
