@@ -81,6 +81,14 @@ function addFooter(doc: jsPDF) {
   }
 }
 
+const VIDRO_LABELS: Record<string, string> = {
+  temperado_6mm: "Temperado 6mm",
+  temperado_8mm: "Temperado 8mm",
+  temperado_10mm: "Temperado 10mm",
+  laminado_8mm: "Laminado 8mm",
+  comum_4mm: "Comum 4mm",
+};
+
 // ===== ORÇAMENTO PDF =====
 export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
   const doc = new jsPDF();
@@ -106,11 +114,19 @@ export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
     y += 14;
   }
 
+  // Check if items have cost breakdown data
+  const hasCostData = itens.some((i: any) => (Number(i.custo_aluminio) || 0) > 0 || (Number(i.custo_vidro) || 0) > 0);
+
+  // ── Items table ──
   if (itens.length > 0) {
     const tableBody = itens.map((i: any) => {
-      const m2 = i.largura && i.altura ? ((i.largura / 1000) * (i.altura / 1000)).toFixed(3) : "—";
+      const m2 = i.area_vidro_m2
+        ? Number(i.area_vidro_m2).toFixed(3)
+        : i.largura && i.altura
+          ? ((i.largura / 1000) * (i.altura / 1000)).toFixed(3)
+          : "—";
       return [
-        i.descricao,
+        i.descricao + (i.tipo_vidro ? `\n${VIDRO_LABELS[i.tipo_vidro] || i.tipo_vidro}` : ""),
         i.largura && i.altura ? `${i.largura}×${i.altura}mm` : "—",
         m2,
         String(i.quantidade),
@@ -142,28 +158,177 @@ export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
     y = doc.lastAutoTable.finalY + 8;
   }
 
-  // Totals summary
-  const totalM2 = itens.reduce((s: number, i: any) => {
-    if (i.largura && i.altura) return s + (i.largura / 1000) * (i.altura / 1000) * i.quantidade;
-    return s;
-  }, 0);
+  // ── Cost breakdown table (per item) ──
+  if (hasCostData) {
+    // Check page space
+    if (y > 220) {
+      doc.addPage();
+      y = 20;
+    }
 
-  if (totalM2 > 0) {
-    doc.setFillColor(...COLORS.light);
-    doc.roundedRect(14, y, 182, 16, 3, 3, "F");
-    doc.setFontSize(8);
-    doc.setTextColor(...COLORS.muted);
-    doc.text("Área total de vidro:", 18, y + 7);
-    doc.setTextColor(...COLORS.primary);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(`${totalM2.toFixed(2)} m²`, 65, y + 7);
+    doc.setTextColor(...COLORS.dark);
+    doc.text("DETALHAMENTO DE CUSTOS", 14, y);
+    y += 6;
+
+    const costBody = itens.map((i: any) => [
+      i.descricao.substring(0, 30),
+      fmt(Number(i.custo_aluminio) || 0),
+      fmt(Number(i.custo_vidro) || 0),
+      fmt(Number(i.custo_ferragem) || 0),
+      fmt(Number(i.custo_acessorios) || 0),
+      fmt(Number(i.custo_mao_obra) || 0),
+      fmt(Number(i.custo_total) || 0),
+      fmt(Number(i.lucro) || 0),
+      fmt(Number(i.valor_total) || 0),
+    ]);
+
+    doc.autoTable({
+      startY: y,
+      head: [["Item", "Alumínio", "Vidro", "Ferragem", "Acess.", "M.Obra", "Custo", "Lucro", "Venda"]],
+      body: costBody,
+      theme: "grid",
+      headStyles: { fillColor: [50, 50, 65], textColor: COLORS.white, fontSize: 6.5, fontStyle: "bold", halign: "center" },
+      bodyStyles: { fontSize: 6.5, textColor: COLORS.dark, halign: "right" },
+      columnStyles: {
+        0: { halign: "left", cellWidth: 30 },
+        6: { fontStyle: "bold" },
+        7: { textColor: COLORS.success, fontStyle: "bold" },
+        8: { textColor: COLORS.primary, fontStyle: "bold" },
+      },
+      alternateRowStyles: { fillColor: [250, 248, 255] },
+      margin: { left: 14, right: 14 },
+    });
+
+    y = doc.lastAutoTable.finalY + 8;
+
+    // ── Aggregated cost summary ──
+    const totals = itens.reduce(
+      (acc: any, i: any) => ({
+        aluminio: acc.aluminio + (Number(i.custo_aluminio) || 0),
+        vidro: acc.vidro + (Number(i.custo_vidro) || 0),
+        ferragem: acc.ferragem + (Number(i.custo_ferragem) || 0),
+        acessorios: acc.acessorios + (Number(i.custo_acessorios) || 0),
+        maoObra: acc.maoObra + (Number(i.custo_mao_obra) || 0),
+        custo: acc.custo + (Number(i.custo_total) || 0),
+        lucro: acc.lucro + (Number(i.lucro) || 0),
+        peso: acc.peso + (Number(i.peso_total_kg) || 0),
+        vidroM2: acc.vidroM2 + (Number(i.area_vidro_m2) || 0),
+        venda: acc.venda + (Number(i.valor_total) || 0),
+      }),
+      { aluminio: 0, vidro: 0, ferragem: 0, acessorios: 0, maoObra: 0, custo: 0, lucro: 0, peso: 0, vidroM2: 0, venda: 0 }
+    );
+
+    if (y > 240) {
+      doc.addPage();
+      y = 20;
+    }
+
+    // Summary box
+    const boxH = 38;
+    doc.setFillColor(...COLORS.light);
+    doc.roundedRect(14, y, 182, boxH, 3, 3, "F");
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.dark);
+    doc.text("RESUMO DE CUSTOS", 18, y + 7);
+
+    const summaryItems = [
+      { label: "Alumínio", value: fmt(totals.aluminio) },
+      { label: "Vidro", value: fmt(totals.vidro) },
+      { label: "Ferragem", value: fmt(totals.ferragem) },
+      { label: "Acessórios", value: fmt(totals.acessorios) },
+      { label: "Mão de Obra", value: fmt(totals.maoObra) },
+    ];
+
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    summaryItems.forEach((item, idx) => {
+      const x = 18 + idx * 36;
+      doc.setTextColor(...COLORS.muted);
+      doc.text(item.label, x, y + 14);
+      doc.setTextColor(...COLORS.dark);
+      doc.setFont("helvetica", "bold");
+      doc.text(item.value, x, y + 19);
+      doc.setFont("helvetica", "normal");
+    });
+
+    // Bottom row: totals
+    doc.setDrawColor(...COLORS.border);
+    doc.line(18, y + 23, 192, y + 23);
+
+    const bottomY = y + 29;
+    doc.setFontSize(7);
     doc.setTextColor(...COLORS.muted);
     doc.setFont("helvetica", "normal");
-    doc.text(`${itens.length} ${itens.length === 1 ? "item" : "itens"}`, 18, y + 12);
-    y += 22;
+
+    doc.text("Custo Total:", 18, bottomY);
+    doc.setTextColor(...COLORS.dark);
+    doc.setFont("helvetica", "bold");
+    doc.text(fmt(totals.custo), 48, bottomY);
+
+    doc.setTextColor(...COLORS.muted);
+    doc.setFont("helvetica", "normal");
+    doc.text("Lucro:", 80, bottomY);
+    doc.setTextColor(...COLORS.success);
+    doc.setFont("helvetica", "bold");
+    doc.text(fmt(totals.lucro), 96, bottomY);
+
+    doc.setTextColor(...COLORS.muted);
+    doc.setFont("helvetica", "normal");
+    doc.text("Preço de Venda:", 130, bottomY);
+    doc.setTextColor(...COLORS.primary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(fmt(totals.venda), 165, bottomY);
+
+    // Extra info
+    doc.setFontSize(6.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.muted);
+    const extraInfo: string[] = [];
+    if (totals.peso > 0) extraInfo.push(`Peso total: ${totals.peso.toFixed(2)} kg`);
+    if (totals.vidroM2 > 0) extraInfo.push(`Vidro total: ${totals.vidroM2.toFixed(2)} m²`);
+    const avgMarkup = itens.filter((i: any) => i.markup_percentual).map((i: any) => Number(i.markup_percentual));
+    if (avgMarkup.length > 0) {
+      const avg = avgMarkup.reduce((a: number, b: number) => a + b, 0) / avgMarkup.length;
+      extraInfo.push(`Markup médio: ${avg.toFixed(1)}%`);
+    }
+    if (extraInfo.length > 0) {
+      doc.text(extraInfo.join("  ·  "), 18, y + 35);
+    }
+
+    y += boxH + 8;
+  } else {
+    // Fallback: simple totals for items without cost data
+    const totalM2 = itens.reduce((s: number, i: any) => {
+      if (i.largura && i.altura) return s + (i.largura / 1000) * (i.altura / 1000) * i.quantidade;
+      return s;
+    }, 0);
+
+    if (totalM2 > 0) {
+      doc.setFillColor(...COLORS.light);
+      doc.roundedRect(14, y, 182, 16, 3, 3, "F");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.muted);
+      doc.text("Área total de vidro:", 18, y + 7);
+      doc.setTextColor(...COLORS.primary);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${totalM2.toFixed(2)} m²`, 65, y + 7);
+      doc.setTextColor(...COLORS.muted);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${itens.length} ${itens.length === 1 ? "item" : "itens"}`, 18, y + 12);
+      y += 22;
+    }
   }
 
   if (orcamento.observacoes) {
+    if (y > 260) {
+      doc.addPage();
+      y = 20;
+    }
     doc.setFontSize(7);
     doc.setTextColor(...COLORS.muted);
     doc.text("OBSERVAÇÕES", 14, y);
