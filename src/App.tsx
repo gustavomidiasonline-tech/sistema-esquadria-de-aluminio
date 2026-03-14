@@ -34,6 +34,7 @@ import Documentos from "./pages/financeiro/Documentos";
 import FluxoCaixa from "./pages/financeiro/FluxoCaixa";
 import Pagamentos from "./pages/financeiro/Pagamentos";
 import Planos from "./pages/Planos";
+import Workflow from "./pages/Workflow";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/funcionarios" element={<ProtectedRoute><Funcionarios /></ProtectedRoute>} />
             <Route path="/esquadrias" element={<ProtectedRoute><FeatureGate feature="esquadrias"><EsquadriasModule /></FeatureGate></ProtectedRoute>} />
             <Route path="/planos" element={<ProtectedRoute><Planos /></ProtectedRoute>} />
+            <Route path="/workflow" element={<ProtectedRoute><FeatureGate feature="pedidos"><Workflow /></FeatureGate></ProtectedRoute>} />
             {/* Financeiro */}
             <Route path="/financeiro" element={<ProtectedRoute><FeatureGate feature="financeiro"><FinanceiroVisaoGeral /></FeatureGate></ProtectedRoute>} />
             <Route path="/financeiro/contas-receber" element={<ProtectedRoute><FeatureGate feature="financeiro"><ContasReceber /></FeatureGate></ProtectedRoute>} />
