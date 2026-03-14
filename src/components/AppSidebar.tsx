@@ -43,6 +43,7 @@ const mainItems = [
   { title: "Orçamentos", url: "/orcamentos", icon: FileText },
   { title: "Serviços", url: "/servicos", icon: CheckSquare },
   { title: "Pedidos", url: "/pedidos", icon: ListChecks },
+  { title: "Workflow", url: "/workflow", icon: GitBranch },
   { title: "Plano de corte", url: "/plano-de-corte", icon: Scissors },
   { title: "Esquadrias", url: "/esquadrias", icon: Wrench },
   { title: "Agenda", url: "/agenda", icon: Calendar },
