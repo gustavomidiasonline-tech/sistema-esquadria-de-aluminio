@@ -32,6 +32,7 @@ import Contratos from "./pages/financeiro/Contratos";
 import Documentos from "./pages/financeiro/Documentos";
 import FluxoCaixa from "./pages/financeiro/FluxoCaixa";
 import Pagamentos from "./pages/financeiro/Pagamentos";
+import Planos from "./pages/Planos";
 
 const queryClient = new QueryClient();
 
