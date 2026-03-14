@@ -13,11 +13,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { differenceInDays, parseISO, format, isAfter, isBefore } from "date-fns";
 
-const actionButtons = [
-  { icon: RotateCcw, label: "Reagendar" },
-  { icon: DollarSign, label: "Pagamentos" },
-  { icon: FileText, label: "Contrato" },
-  { icon: Printer, label: "Impressões" },
+const actionButtons = (pedido: any) => [
+  { icon: RotateCcw, label: "Reagendar", action: () => {} },
+  { icon: DollarSign, label: "Pagamentos", action: () => {} },
+  { icon: FileText, label: "Contrato", action: () => {} },
+  { icon: Download, label: "PDF", action: () => { exportPedidoPDF(pedido); } },
 ];
 
 const statusLabels: Record<string, string> = {

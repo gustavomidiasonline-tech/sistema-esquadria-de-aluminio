@@ -153,8 +153,19 @@ const PlanoDeCorte = () => {
             <button onClick={() => setSelectedPlano(null)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <Button className="gap-2">
-              <Printer className="h-4 w-4" /> Imprimir
+            <Button className="gap-2" onClick={() => {
+              exportListaCortePDF(
+                produto?.nome || "Produto",
+                newL, newA,
+                recalculatedPerfis.map(p => ({
+                  codigo: p.codigo, descricao: p.descricao, posicao: p.posicao,
+                  medida: p.medida, quantidade: p.quantidade,
+                  pesoMetro: p.pesoMetro, anguloEsq: p.anguloEsquerdo, anguloDir: p.anguloDireito,
+                }))
+              );
+              toast.success("PDF gerado!");
+            }}>
+              <Download className="h-4 w-4" /> Exportar PDF
             </Button>
           </div>
 
