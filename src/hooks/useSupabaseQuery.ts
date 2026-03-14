@@ -46,10 +46,16 @@ export function useSupabaseQuery<T = any>(
 
 export function useSupabaseInsert(table: TableName) {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   return useMutation({
     mutationFn: async (values: Record<string, any>) => {
-      const { data, error } = await (supabase.from(table) as any).insert(values).select().single();
+      // Auto-inject company_id if not provided and user has one
+      const insertValues = { ...values };
+      if (!insertValues.company_id && profile?.company_id) {
+        insertValues.company_id = profile.company_id;
+      }
+      const { data, error } = await (supabase.from(table) as any).insert(insertValues).select().single();
       if (error) throw error;
       return data;
     },
