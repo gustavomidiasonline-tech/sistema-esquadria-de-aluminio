@@ -492,6 +492,13 @@ const Orcamentos = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Smart Configurator */}
+      <ItemConfigurator
+        open={configDialogOpen}
+        onOpenChange={setConfigDialogOpen}
+        onConfirm={handleSmartAdd}
+      />
     </AppLayout>
   );
 };
