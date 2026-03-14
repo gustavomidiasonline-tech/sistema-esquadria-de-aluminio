@@ -1435,6 +1435,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          active: boolean
+          created_at: string
+          expires_at: string | null
+          id: string
+          plan: Database["public"]["Enums"]["plan_tipo"]
+          started_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["plan_tipo"]
+          started_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["plan_tipo"]
+          started_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1466,6 +1499,7 @@ export type Database = {
         | "pronto"
         | "entregue"
         | "cancelado"
+      plan_tipo: "basico" | "essencial" | "avancado"
       servico_status: "agendado" | "em_andamento" | "concluido" | "cancelado"
     }
     CompositeTypes: {
@@ -1613,6 +1647,7 @@ export const Constants = {
         "entregue",
         "cancelado",
       ],
+      plan_tipo: ["basico", "essencial", "avancado"],
       servico_status: ["agendado", "em_andamento", "concluido", "cancelado"],
     },
   },
