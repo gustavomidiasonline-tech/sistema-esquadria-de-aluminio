@@ -158,9 +158,9 @@ const PlanoDeCorte = () => {
                 produto?.nome || "Produto",
                 newL, newA,
                 recalculatedPerfis.map(p => ({
-                  codigo: p.codigo, descricao: p.descricao, posicao: p.posicao,
+                  codigo: p.perfilCodigo, posicao: p.posicao,
                   medida: p.medida, quantidade: p.quantidade,
-                  pesoMetro: p.pesoMetro, anguloEsq: p.anguloEsquerdo, anguloDir: p.anguloDireito,
+                  anguloEsq: p.anguloEsquerdo, anguloDir: p.anguloDireito,
                 }))
               );
               toast.success("PDF gerado!");

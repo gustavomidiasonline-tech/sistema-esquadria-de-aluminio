@@ -173,8 +173,8 @@ const Pedidos = () => {
                   )}
                   <div className="px-4 py-3 border-t border-border">
                     <div className="flex items-center justify-between">
-                      {actionButtons.map((btn) => (
-                        <button key={btn.label} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
+                      {actionButtons(pedido).map((btn) => (
+                        <button key={btn.label} onClick={btn.action} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
                           <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center group-hover:border-primary/30 group-hover:bg-primary/5 transition-colors"><btn.icon className="h-4 w-4" /></div>
                           <span className="text-[10px]">{btn.label}</span>
                         </button>
