@@ -71,6 +71,7 @@ const App = () => (
             <Route path="/financeiro/contratos" element={<ProtectedRoute><Contratos /></ProtectedRoute>} />
             <Route path="/financeiro/documentos" element={<ProtectedRoute><Documentos /></ProtectedRoute>} />
             <Route path="/financeiro/fluxo-caixa" element={<ProtectedRoute><FluxoCaixa /></ProtectedRoute>} />
+            <Route path="/planos" element={<ProtectedRoute><Planos /></ProtectedRoute>} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
