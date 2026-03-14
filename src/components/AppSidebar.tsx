@@ -28,6 +28,7 @@ import {
   Lock,
   Crown,
   GitBranch,
+  Settings,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -46,6 +47,7 @@ const mainItems = [
   { title: "Workflow", url: "/workflow", icon: GitBranch },
   { title: "Plano de corte", url: "/plano-de-corte", icon: Scissors },
   { title: "Esquadrias", url: "/esquadrias", icon: Wrench },
+  { title: "Config. Modelos", url: "/configuracao-modelos", icon: Settings },
   { title: "Agenda", url: "/agenda", icon: Calendar },
   { title: "Produtos", url: "/produtos", icon: Package },
   { title: "Preço dos itens", url: "/precos", icon: DollarSign },
