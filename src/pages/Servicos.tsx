@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/AppLayout";
 import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Search, Plus, Filter } from "lucide-react";
 import { ServiceWorkflow } from "@/components/servicos/ServiceWorkflow";
+import { ServicosKPIs } from "@/components/servicos/ServicosKPIs";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
