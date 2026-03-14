@@ -353,12 +353,20 @@ const Orcamentos = () => {
                             <SelectItem value="expirado">Expirado</SelectItem>
                           </SelectContent>
                         </Select>
+                        <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => { setConfigOrcId(orc.id); setConfigDialogOpen(true); }}>
+                          <Calculator className="h-3 w-3" /> Calcular item
+                        </Button>
                         <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => { setItemOrcId(orc.id); setItemDialogOpen(true); }}>
-                          <Plus className="h-3 w-3" /> Adicionar item
+                          <Plus className="h-3 w-3" /> Item manual
                         </Button>
                         <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => handleExportPDF(orc)}>
-                          <Download className="h-3 w-3" /> Exportar PDF
+                          <Download className="h-3 w-3" /> PDF
                         </Button>
+                        {orc.status !== "aprovado" && itensOrc.length > 0 && (
+                          <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleConverterPedido(orc)}>
+                            <ShoppingCart className="h-3 w-3" /> Converter em pedido
+                          </Button>
+                        )}
                         {orc.clientes && (
                           <div className="ml-auto text-[10px] text-muted-foreground">
                             {orc.clientes.telefone && <span>{orc.clientes.telefone}</span>}
