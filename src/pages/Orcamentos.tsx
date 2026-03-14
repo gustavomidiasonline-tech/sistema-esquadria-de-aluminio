@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/AppLayout";
-import { Plus, Search, Filter, Eye, ChevronDown, ChevronUp, FileText, Printer, DollarSign, TrendingUp, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Plus, Search, Filter, Eye, ChevronDown, ChevronUp, FileText, Printer, DollarSign, TrendingUp, CheckCircle2, Clock, XCircle, Download } from "lucide-react";
+import { exportOrcamentoPDF } from "@/lib/pdf-export";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
