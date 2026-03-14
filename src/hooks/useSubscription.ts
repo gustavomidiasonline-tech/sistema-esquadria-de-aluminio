@@ -131,13 +131,22 @@ export const FEATURE_MIN_PLAN: Record<FeatureKey, PlanType> = {} as any;
 export function useSubscription() {
   const { user } = useAuth();
 
-  const { data: subscriptions = [], isLoading } = useSupabaseQuery("user_subscriptions", {
-    filters: user ? [{ column: "user_id", value: user.id }] : undefined,
+  const { data: subscription, isLoading } = useQuery({
+    queryKey: ["user_subscription", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("user_subscriptions" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+      if (error) return null;
+      return data;
+    },
     enabled: !!user,
   });
 
-  const subscription = subscriptions[0] as any;
-  const currentPlan: PlanType = subscription?.plan || "basico";
+  const currentPlan: PlanType = (subscription as any)?.plan || "basico";
 
   const hasFeature = useMemo(() => {
     return (feature: FeatureKey): boolean => {
