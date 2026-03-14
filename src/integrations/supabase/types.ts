@@ -192,6 +192,36 @@ export type Database = {
           },
         ]
       }
+      config_precos: {
+        Row: {
+          chave: string
+          descricao: string | null
+          id: string
+          unidade: string | null
+          updated_at: string
+          updated_by: string | null
+          valor: number
+        }
+        Insert: {
+          chave: string
+          descricao?: string | null
+          id?: string
+          unidade?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valor?: number
+        }
+        Update: {
+          chave?: string
+          descricao?: string | null
+          id?: string
+          unidade?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
       contas_pagar: {
         Row: {
           categoria: string | null
@@ -730,37 +760,70 @@ export type Database = {
       orcamento_itens: {
         Row: {
           altura: number | null
+          area_vidro_m2: number | null
           created_at: string
+          custo_acessorios: number | null
+          custo_aluminio: number | null
+          custo_ferragem: number | null
+          custo_mao_obra: number | null
+          custo_total: number | null
+          custo_vidro: number | null
           descricao: string
           id: string
           largura: number | null
+          lucro: number | null
+          markup_percentual: number | null
           orcamento_id: string
+          peso_total_kg: number | null
           produto_id: string | null
           quantidade: number
+          tipo_vidro: string | null
           valor_total: number
           valor_unitario: number
         }
         Insert: {
           altura?: number | null
+          area_vidro_m2?: number | null
           created_at?: string
+          custo_acessorios?: number | null
+          custo_aluminio?: number | null
+          custo_ferragem?: number | null
+          custo_mao_obra?: number | null
+          custo_total?: number | null
+          custo_vidro?: number | null
           descricao: string
           id?: string
           largura?: number | null
+          lucro?: number | null
+          markup_percentual?: number | null
           orcamento_id: string
+          peso_total_kg?: number | null
           produto_id?: string | null
           quantidade?: number
+          tipo_vidro?: string | null
           valor_total?: number
           valor_unitario?: number
         }
         Update: {
           altura?: number | null
+          area_vidro_m2?: number | null
           created_at?: string
+          custo_acessorios?: number | null
+          custo_aluminio?: number | null
+          custo_ferragem?: number | null
+          custo_mao_obra?: number | null
+          custo_total?: number | null
+          custo_vidro?: number | null
           descricao?: string
           id?: string
           largura?: number | null
+          lucro?: number | null
+          markup_percentual?: number | null
           orcamento_id?: string
+          peso_total_kg?: number | null
           produto_id?: string | null
           quantidade?: number
+          tipo_vidro?: string | null
           valor_total?: number
           valor_unitario?: number
         }
