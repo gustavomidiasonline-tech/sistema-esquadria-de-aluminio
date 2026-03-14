@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/AppLayout";
-import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Clock, Search, Plus, Filter } from "lucide-react";
+import { MapPin, Phone, User, RotateCcw, DollarSign, FileText, Printer, Clock, Search, Plus, Filter, Download } from "lucide-react";
+import { exportPedidoPDF } from "@/lib/pdf-export";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";

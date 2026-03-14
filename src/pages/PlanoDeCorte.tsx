@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/AppLayout";
 import { useState, useMemo } from "react";
-import { Plus, ArrowLeft, Printer, Save, Search } from "lucide-react";
+import { Plus, ArrowLeft, Printer, Save, Search, Download } from "lucide-react";
+import { exportListaCortePDF } from "@/lib/pdf-export";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
