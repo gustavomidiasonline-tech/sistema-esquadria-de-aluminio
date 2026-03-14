@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
-import { Plus, Search, Filter, Eye, ChevronDown, ChevronUp, FileText, Printer, DollarSign, TrendingUp, CheckCircle2, Clock, XCircle, Download } from "lucide-react";
+import { Plus, Search, Filter, Eye, ChevronDown, ChevronUp, FileText, Printer, DollarSign, TrendingUp, CheckCircle2, Clock, XCircle, Download, Calculator, ShoppingCart } from "lucide-react";
 import { exportOrcamentoPDF } from "@/lib/pdf-export";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
@@ -15,6 +15,7 @@ import { format, parseISO, isAfter, isBefore } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { OrcamentoDetail } from "@/components/orcamentos/OrcamentoDetail";
+import { ItemConfigurator, type ConfiguredItem } from "@/components/orcamentos/ItemConfigurator";
 import { cn } from "@/lib/utils";
 
 const statusColor: Record<string, string> = {
@@ -48,7 +49,11 @@ const Orcamentos = () => {
   const [expandedOrc, setExpandedOrc] = useState<string | null>(null);
   const [form, setForm] = useState({ cliente_id: "", descricao: "", valor_total: "", validade: "", observacoes: "" });
 
-  // Item form state
+  // Smart configurator
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [configOrcId, setConfigOrcId] = useState("");
+
+  // Legacy simple item form
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [itemOrcId, setItemOrcId] = useState("");
   const [itemForm, setItemForm] = useState({ descricao: "", quantidade: "1", valor_unitario: "", largura: "", altura: "", produto_id: "" });
@@ -167,6 +172,66 @@ const Orcamentos = () => {
     const itensOrc = allItens.filter((i: any) => i.orcamento_id === orc.id);
     exportOrcamentoPDF(orc, itensOrc);
     toast.success("PDF gerado com sucesso!");
+  };
+
+  // Smart configurator handler
+  const handleSmartAdd = async (item: ConfiguredItem) => {
+    if (!configOrcId) return;
+    try {
+      const { error } = await supabase.from("orcamento_itens").insert({
+        orcamento_id: configOrcId,
+        descricao: item.descricao,
+        quantidade: item.quantidade,
+        valor_unitario: item.valor_unitario,
+        valor_total: item.valor_total,
+        largura: item.largura,
+        altura: item.altura,
+        produto_id: item.produto_id,
+        custo_aluminio: item.custo_aluminio,
+        custo_vidro: item.custo_vidro,
+        custo_ferragem: item.custo_ferragem,
+        custo_acessorios: item.custo_acessorios,
+        custo_mao_obra: item.custo_mao_obra,
+        custo_total: item.custo_total,
+        markup_percentual: item.markup_percentual,
+        lucro: item.lucro,
+        tipo_vidro: item.tipo_vidro,
+        peso_total_kg: item.peso_total_kg,
+        area_vidro_m2: item.area_vidro_m2,
+      } as any);
+      if (error) throw error;
+
+      // Recalculate total
+      const orcItens = [...allItens.filter((i: any) => i.orcamento_id === configOrcId), { valor_total: item.valor_total }];
+      const newTotal = orcItens.reduce((s: number, i: any) => s + Number(i.valor_total), 0);
+      await supabase.from("orcamentos").update({ valor_total: newTotal }).eq("id", configOrcId);
+
+      queryClient.invalidateQueries({ queryKey: ["orcamento_itens"] });
+      queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
+      toast.success("Item calculado e adicionado ao orçamento!");
+      setConfigDialogOpen(false);
+    } catch (e: any) {
+      toast.error("Erro: " + e.message);
+    }
+  };
+
+  // Converter to pedido
+  const handleConverterPedido = async (orc: any) => {
+    try {
+      const { error } = await supabase.from("pedidos").insert({
+        cliente_id: orc.cliente_id,
+        orcamento_id: orc.id,
+        valor_total: Number(orc.valor_total) || 0,
+        observacoes: `Convertido do orçamento ORC-${String(orc.numero).padStart(3, "0")}`,
+        created_by: user?.id,
+      });
+      if (error) throw error;
+      await handleStatusChange(orc.id, "aprovado");
+      queryClient.invalidateQueries({ queryKey: ["pedidos"] });
+      toast.success("Orçamento convertido em pedido com sucesso!");
+    } catch (e: any) {
+      toast.error("Erro: " + e.message);
+    }
   };
 
   return (
@@ -288,12 +353,20 @@ const Orcamentos = () => {
                             <SelectItem value="expirado">Expirado</SelectItem>
                           </SelectContent>
                         </Select>
+                        <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => { setConfigOrcId(orc.id); setConfigDialogOpen(true); }}>
+                          <Calculator className="h-3 w-3" /> Calcular item
+                        </Button>
                         <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => { setItemOrcId(orc.id); setItemDialogOpen(true); }}>
-                          <Plus className="h-3 w-3" /> Adicionar item
+                          <Plus className="h-3 w-3" /> Item manual
                         </Button>
                         <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => handleExportPDF(orc)}>
-                          <Download className="h-3 w-3" /> Exportar PDF
+                          <Download className="h-3 w-3" /> PDF
                         </Button>
+                        {orc.status !== "aprovado" && itensOrc.length > 0 && (
+                          <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleConverterPedido(orc)}>
+                            <ShoppingCart className="h-3 w-3" /> Converter em pedido
+                          </Button>
+                        )}
                         {orc.clientes && (
                           <div className="ml-auto text-[10px] text-muted-foreground">
                             {orc.clientes.telefone && <span>{orc.clientes.telefone}</span>}
@@ -307,9 +380,9 @@ const Orcamentos = () => {
                         {itensOrc.length === 0 ? (
                           <div className="text-center py-8 text-muted-foreground">
                             <p className="text-sm">Nenhum item adicionado</p>
-                            <Button size="sm" variant="outline" className="mt-3 gap-1.5"
-                              onClick={() => { setItemOrcId(orc.id); setItemDialogOpen(true); }}>
-                              <Plus className="h-3.5 w-3.5" /> Adicionar primeiro item
+                            <Button size="sm" className="mt-3 gap-1.5"
+                              onClick={() => { setConfigOrcId(orc.id); setConfigDialogOpen(true); }}>
+                              <Calculator className="h-3.5 w-3.5" /> Calcular primeiro item
                             </Button>
                           </div>
                         ) : (
@@ -419,6 +492,13 @@ const Orcamentos = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Smart Configurator */}
+      <ItemConfigurator
+        open={configDialogOpen}
+        onOpenChange={setConfigDialogOpen}
+        onConfirm={handleSmartAdd}
+      />
     </AppLayout>
   );
 };
