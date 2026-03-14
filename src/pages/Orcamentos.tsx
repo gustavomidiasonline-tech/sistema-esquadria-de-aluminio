@@ -291,8 +291,8 @@ const Orcamentos = () => {
                         <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => { setItemOrcId(orc.id); setItemDialogOpen(true); }}>
                           <Plus className="h-3 w-3" /> Adicionar item
                         </Button>
-                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => handleImprimir(orc)}>
-                          <Printer className="h-3 w-3" /> Imprimir
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => handleExportPDF(orc)}>
+                          <Download className="h-3 w-3" /> Exportar PDF
                         </Button>
                         {orc.clientes && (
                           <div className="ml-auto text-[10px] text-muted-foreground">
