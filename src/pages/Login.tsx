@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import manageasyLogo from "@/assets/manageasy-logo.avif";
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -69,11 +68,13 @@ const Login = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
         <div className="w-full max-w-md mx-4">
-          <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
+          <div className="glass-card-premium p-8">
             <div className="flex flex-col items-center mb-8">
-              <img src={manageasyLogo} alt="Alumy" className="h-14 w-14 rounded-xl object-contain mb-3" />
-              <h1 className="text-2xl font-bold text-foreground">Alumy</h1>
-              <p className="text-sm text-muted-foreground">by Manageasy</p>
+              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-lg font-bold text-white mb-3">
+                PP
+              </div>
+              <h1 className="text-2xl font-bold text-foreground">PixelPerfect</h1>
+              <p className="text-sm text-muted-foreground">Gestão de Orçamentos</p>
             </div>
             <h2 className="text-lg font-semibold text-foreground text-center mb-2">Recuperar senha</h2>
             <p className="text-sm text-muted-foreground text-center mb-6">
@@ -110,7 +111,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
       <div className="w-full max-w-md mx-4">
-        <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
+        <div className="glass-card-premium p-8">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <img src={manageasyLogo} alt="Alumy" className="h-14 w-14 rounded-xl object-contain mb-3" />

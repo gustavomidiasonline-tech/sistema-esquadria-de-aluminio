@@ -111,7 +111,7 @@ export default function Estoque() {
             </div>
             <p className="text-2xl font-bold text-foreground">{s.totalValorEstoque.toLocaleString('pt-BR')}</p>
           </div>
-          <div className={`border rounded-xl p-4 bg-card ${s.totalAlertas > 0 ? 'border-red-300 bg-red-50' : 'border-border'}`}>
+          <div className={`border rounded-xl p-4 bg-card ${s.totalAlertas > 0 ? 'border-red-300 bg-red-500/15' : 'border-border'}`}>
             <div className="flex items-center gap-2 mb-1">
               <AlertTriangle className={`h-4 w-4 ${s.totalAlertas > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
               <span className="text-xs text-muted-foreground font-medium">Alertas de estoque</span>
@@ -121,14 +121,14 @@ export default function Estoque() {
         </div>
 
         {s.totalAlertas > 0 && (
-          <div className="border border-red-200 bg-red-50 rounded-xl p-4 space-y-2">
-            <div className="flex items-center gap-2 text-red-700">
+          <div className="border border-red-500/30 bg-red-500/15 rounded-xl p-4 space-y-2">
+            <div className="flex items-center gap-2 text-red-400">
               <AlertTriangle className="h-4 w-4" />
               <span className="text-sm font-semibold">Itens abaixo do estoque mínimo</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {s.alertas.map(a => (
-                <div key={a.itemId} className="bg-white border border-red-200 rounded-lg p-3">
+                <div key={a.itemId} className="glass-card-premium border-red-500/30 p-3">
                   <p className="text-xs font-semibold text-foreground">{a.nome}</p>
                   <p className="text-[11px] text-muted-foreground">{a.codigo}</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -164,7 +164,7 @@ export default function Estoque() {
           emptyMessage="Nenhum item encontrado"
           emptyIcon={<Package className="h-10 w-10 text-muted-foreground" />}
           rowClassName={(item) =>
-            item.quantidade_disponivel < item.quantidade_minima ? 'bg-red-50/50' : undefined
+            item.quantidade_disponivel < item.quantidade_minima ? 'bg-red-500/10' : undefined
           }
           renderActions={(item) => (
             <>

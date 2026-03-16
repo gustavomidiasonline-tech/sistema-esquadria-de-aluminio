@@ -310,13 +310,13 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
             </div>
 
             {reviewData.avisos.length > 0 && (
-              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 space-y-1">
+              <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/15 p-3 space-y-1">
                 <div className="flex items-center gap-2 text-yellow-800">
                   <AlertCircle className="h-4 w-4" />
                   <span className="text-sm font-medium">Avisos da extração</span>
                 </div>
                 {reviewData.avisos.map((aviso, i) => (
-                  <p key={i} className="text-sm text-yellow-700 ml-6">• {aviso}</p>
+                  <p key={i} className="text-sm text-yellow-400 ml-6">• {aviso}</p>
                 ))}
               </div>
             )}

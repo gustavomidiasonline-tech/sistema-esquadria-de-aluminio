@@ -37,7 +37,7 @@ export function ServicosFilters({
             placeholder="Buscar serviço..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
+            className="pl-10 pr-4 py-2.5 text-sm glass-card-premium rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
           />
         </div>
         <Button variant="outline" size="sm" className="gap-2" onClick={onToggleFilters}>
@@ -51,7 +51,7 @@ export function ServicosFilters({
       </div>
 
       {showFilters && (
-        <div className="flex items-end gap-3 flex-wrap bg-card border border-border rounded-xl p-4">
+        <div className="flex items-end gap-3 flex-wrap glass-card-premium p-4">
           <div>
             <Label className="text-xs">Status</Label>
             <Select value={statusFilter} onValueChange={onStatusChange}>

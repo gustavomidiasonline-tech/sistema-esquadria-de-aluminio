@@ -73,7 +73,7 @@ const Documentos = () => {
         ) : documentos.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">Nenhum documento cadastrado.</div>
         ) : (
-          <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
+          <div className="glass-card-premium divide-y divide-border">
             {documentos.map((doc: DocumentoWithCliente) => (
               <div key={doc.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-4">

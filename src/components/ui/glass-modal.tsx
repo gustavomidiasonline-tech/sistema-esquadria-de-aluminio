@@ -65,7 +65,7 @@ const GlassModalDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn('text-sm text-gray-400', className)}
+    className={cn('text-sm text-white/40', className)}
     {...props}
   />
 ));
@@ -78,7 +78,7 @@ const GlassModalCloseButton = React.forwardRef<
   <DialogPrimitive.Close
     ref={ref}
     className={cn(
-      'absolute right-4 top-4 rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none text-gray-400 hover:text-white',
+      'absolute right-4 top-4 rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none text-white/40 hover:text-white',
       className
     )}
     {...props}

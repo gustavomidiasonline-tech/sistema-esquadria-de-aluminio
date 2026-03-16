@@ -102,7 +102,7 @@ export function ProductThumbnail({ tipo, folhas = 2, className = "w-24 h-20" }: 
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg flex items-center justify-center p-2">
+    <div className="glass-card-premium rounded-lg flex items-center justify-center p-2">
       {renderSVG()}
     </div>
   );

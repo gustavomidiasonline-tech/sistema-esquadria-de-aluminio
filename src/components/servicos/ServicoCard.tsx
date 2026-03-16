@@ -22,7 +22,7 @@ export function ServicoCard({
   const { label: daysLabel, overdue } = daysInfo;
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-sm flex flex-col">
+    <div className="glass-card-premium flex flex-col">
       <div className="p-4 pb-2 space-y-2">
         <h3 className="text-base font-bold text-foreground">SERVIÇO #{servico.numero}</h3>
         <div className="space-y-1 text-xs text-muted-foreground">

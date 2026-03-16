@@ -59,7 +59,7 @@ export function RuleDetailView({
         <Button variant="outline" size="sm">Editar Produto</Button>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-5">
+      <div className="glass-card-premium p-5">
         <h3 className="text-sm font-semibold text-foreground mb-3">Simulador de Corte</h3>
         <div className="grid grid-cols-2 gap-4 max-w-sm">
           <div>
@@ -73,7 +73,7 @@ export function RuleDetailView({
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="glass-card-premium overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground">Regras de Corte ({rules.length})</h3>
           <Button size="sm" onClick={onNewRule} className="gap-2">
@@ -114,7 +114,7 @@ export function RuleDetailView({
                     <td className="p-3">
                       <span className={cn(
                         'text-[10px] font-semibold px-2 py-0.5 rounded-full',
-                        rule.axis === 'L' ? 'bg-blue-500/15 text-blue-700 dark:text-blue-400' : 'bg-purple-500/15 text-purple-700 dark:text-purple-400'
+                        rule.axis === 'L' ? 'bg-blue-500/15 text-blue-300' : 'bg-purple-500/15 text-purple-300'
                       )}>
                         {rule.axis === 'L' ? 'Largura' : 'Altura'}
                       </span>

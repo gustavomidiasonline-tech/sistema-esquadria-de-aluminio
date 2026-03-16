@@ -37,7 +37,6 @@
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
-import manageasyLogo from "@/assets/manageasy-logo.avif";
 import { useState } from "react";
 import { useSubscription, ROUTE_FEATURE_MAP, PLAN_LABELS, type FeatureKey } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
@@ -184,11 +183,13 @@ export function AppSidebar() {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <img src={manageasyLogo} alt="Manageasy" className="h-8 w-8 rounded-lg object-contain" />
+        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-xs font-bold text-white">
+          PP
+        </div>
         {!collapsed && (
           <div>
-            <h1 className="text-base font-bold text-sidebar-foreground">Alumy</h1>
-            <p className="text-[10px] text-sidebar-muted">by Manageasy</p>
+            <h1 className="text-base font-bold text-sidebar-foreground">PixelPerfect</h1>
+            <p className="text-[10px] text-sidebar-muted">Orçamentos</p>
           </div>
         )}
       </div>

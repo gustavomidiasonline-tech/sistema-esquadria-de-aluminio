@@ -35,7 +35,7 @@ const FinanceiroVisaoGeral = () => {
             { label: "Recebido", value: fmt(totalRecebido), icon: Wallet, color: "text-primary", count: `${contasReceber.filter((c: ContaReceberRow) => c.status === "pago").length} pagas` },
             { label: "Saldo", value: fmt(saldo), icon: DollarSign, color: saldo >= 0 ? "text-success" : "text-destructive", count: lucro >= 0 ? "Positivo" : "Negativo" },
           ].map((kpi) => (
-            <div key={kpi.label} className="bg-card border border-border rounded-xl p-5 space-y-3">
+            <div key={kpi.label} className="glass-card-premium p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-muted-foreground">{kpi.label}</p>
                 <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
@@ -47,7 +47,7 @@ const FinanceiroVisaoGeral = () => {
         </div>
 
         {/* Recent from both */}
-        <div className="bg-card border border-border rounded-xl shadow-sm">
+        <div className="glass-card-premium">
           <div className="px-5 py-4 border-b border-border">
             <h2 className="text-sm font-bold text-foreground">Últimas Contas</h2>
           </div>

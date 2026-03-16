@@ -54,13 +54,13 @@ export const GlassDashboardCard: React.FC<GlassDashboardCardProps> = ({
         {/* Header */}
         <div className='flex items-start justify-between'>
           <div className='flex-1'>
-            <h3 className='text-sm font-medium text-gray-400'>{title}</h3>
+            <h3 className='text-sm font-medium text-white/40'>{title}</h3>
             {subtitle && (
-              <p className='text-xs text-gray-500 mt-1'>{subtitle}</p>
+              <p className='text-xs text-white/50 mt-1'>{subtitle}</p>
             )}
           </div>
           {icon && (
-            <div className='text-gray-500'>
+            <div className='text-white/50'>
               {icon}
             </div>
           )}
@@ -99,10 +99,10 @@ export const GlassDashboardCard: React.FC<GlassDashboardCardProps> = ({
         {progress && (
           <div className='space-y-2'>
             <div className='flex justify-between'>
-              <span className='text-xs text-gray-400'>
+              <span className='text-xs text-white/40'>
                 {progress.label || 'Progress'}
               </span>
-              <span className='text-xs text-gray-500'>
+              <span className='text-xs text-white/50'>
                 {progress.value}%
               </span>
             </div>
@@ -116,7 +116,7 @@ export const GlassDashboardCard: React.FC<GlassDashboardCardProps> = ({
         {/* Footer */}
         {footer && (
           <div className='border-t border-white/10 pt-3 flex items-center justify-between'>
-            <p className='text-xs text-gray-400'>{footer.text}</p>
+            <p className='text-xs text-white/40'>{footer.text}</p>
             {footer.action && (
               <GlassButton
                 variant='secondary'

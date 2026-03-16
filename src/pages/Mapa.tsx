@@ -30,7 +30,7 @@ const Mapa = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Map placeholder */}
-          <div className="lg:col-span-2 bg-card border border-border rounded-xl overflow-hidden relative" style={{ minHeight: 480 }}>
+          <div className="lg:col-span-2 glass-card-premium overflow-hidden relative" style={{ minHeight: 480 }}>
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/20 flex items-center justify-center">
               <div className="relative w-full h-full">
                 {/* Grid simulating a map */}

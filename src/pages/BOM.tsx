@@ -14,11 +14,11 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 const categoriaBadge: Record<string, string> = {
-  aluminio: "bg-amber-100 text-amber-800 border-amber-200",
-  vidro: "bg-blue-100 text-blue-800 border-blue-200",
-  ferragem: "bg-orange-100 text-orange-800 border-orange-200",
-  acessorio: "bg-purple-100 text-purple-800 border-purple-200",
-  borracha: "bg-cyan-100 text-cyan-800 border-cyan-200",
+  aluminio: "bg-amber-100 text-amber-300 border-amber-200",
+  vidro: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  ferragem: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+  acessorio: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+  borracha: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
 };
 
 const BOM = () => {
@@ -246,7 +246,7 @@ const BOM = () => {
                         <tr key={i} className="hover:bg-muted/30 transition-colors">
                           <td className="p-3 font-medium text-foreground">{mat.nome}</td>
                           <td className="p-3">
-                            <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", categoriaBadge[mat.categoria] || "bg-gray-100 text-gray-800 border-gray-200")}>
+                            <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", categoriaBadge[mat.categoria] || "bg-white/10 text-white/80 border-white/20")}>
                               {mat.categoria}
                             </span>
                           </td>
@@ -289,7 +289,7 @@ const BOM = () => {
                           <tr key={i} className="hover:bg-muted/30 transition-colors">
                             <td className="p-3 text-foreground">{mat.nome}</td>
                             <td className="p-3">
-                              <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", categoriaBadge[mat.categoria] || "bg-gray-100 text-gray-800 border-gray-200")}>
+                              <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", categoriaBadge[mat.categoria] || "bg-white/10 text-white/80 border-white/20")}>
                                 {mat.categoria}
                               </span>
                             </td>

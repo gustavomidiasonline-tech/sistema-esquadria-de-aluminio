@@ -45,7 +45,7 @@ const EmissaoNF = () => {
           <p className="text-sm text-muted-foreground">Preencha os dados para emitir uma nova NF</p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+        <div className="glass-card-premium p-6 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Cliente / Destinatário <span className="text-destructive">*</span></Label>

@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import manageasyLogo from "@/assets/manageasy-logo.avif";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -56,8 +55,10 @@ const ResetPassword = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
         <div className="w-full max-w-md mx-4">
-          <div className="bg-card border border-border rounded-2xl shadow-xl p-8 text-center">
-            <img src={manageasyLogo} alt="Alumy" className="h-14 w-14 rounded-xl object-contain mb-3 mx-auto" />
+          <div className="glass-card-premium p-8 text-center">
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-lg font-bold text-white mb-3 mx-auto">
+              PP
+            </div>
             <h1 className="text-xl font-bold text-foreground mb-2">Link inválido</h1>
             <p className="text-sm text-muted-foreground mb-4">
               Este link de recuperação é inválido ou expirou.
@@ -74,9 +75,11 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
       <div className="w-full max-w-md mx-4">
-        <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
+        <div className="glass-card-premium p-8">
           <div className="flex flex-col items-center mb-8">
-            <img src={manageasyLogo} alt="Alumy" className="h-14 w-14 rounded-xl object-contain mb-3" />
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-lg font-bold text-white mb-3">
+              PP
+            </div>
             <h1 className="text-2xl font-bold text-foreground">Nova Senha</h1>
             <p className="text-sm text-muted-foreground">Digite sua nova senha abaixo</p>
           </div>

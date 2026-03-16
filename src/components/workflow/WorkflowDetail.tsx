@@ -89,7 +89,7 @@ export function WorkflowDetail({ pedido, onBack }: WorkflowDetailProps) {
       </div>
 
       {/* Progress summary */}
-      <div className="bg-card border border-border rounded-xl p-5">
+      <div className="glass-card-premium p-5">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-semibold text-foreground">Progresso do Pedido</span>
           <span className={cn(

@@ -44,7 +44,7 @@ export function OrcamentoStats({ orcamentos }: OrcamentoStatsProps) {
       {kpis.map((kpi) => {
         const Icon = kpi.icon;
         return (
-          <div key={kpi.label} className="bg-card border border-border rounded-xl p-3">
+          <div key={kpi.label} className="glass-card-premium p-3">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-medium text-muted-foreground">{kpi.label}</span>
               <div className={cn('h-6 w-6 rounded-md flex items-center justify-center', kpi.bg)}>

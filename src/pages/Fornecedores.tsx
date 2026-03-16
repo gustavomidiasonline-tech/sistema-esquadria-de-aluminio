@@ -59,18 +59,18 @@ const CATEGORIAS: { value: FornecedorCategoria; label: string }[] = [
 ];
 
 const CATEGORIA_COLORS: Record<string, string> = {
-  aluminio: 'bg-amber-100 text-amber-700 border-amber-200',
-  vidro: 'bg-blue-100 text-blue-700 border-blue-200',
-  ferragens: 'bg-orange-100 text-orange-700 border-orange-200',
-  acessorios: 'bg-purple-100 text-purple-700 border-purple-200',
-  perfis: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-  servico: 'bg-green-100 text-green-700 border-green-200',
-  outros: 'bg-gray-100 text-gray-700 border-gray-200',
+  aluminio: 'bg-amber-100 text-amber-400 border-amber-200',
+  vidro: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  ferragens: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+  acessorios: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+  perfis: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  servico: 'bg-green-500/15 text-green-400 border-green-500/30',
+  outros: 'bg-white/10 text-white/70 border-white/20',
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  ativo: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  inativo: 'bg-gray-100 text-gray-600 border-gray-200',
+  ativo: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  inativo: 'bg-white/10 text-white/60 border-white/20',
 };
 
 const FORM_EMPTY = {
@@ -404,28 +404,28 @@ export default function Fornecedores() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <Users className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium text-muted-foreground">Total</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{totalFornecedores}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               <span className="text-xs font-medium text-muted-foreground">Ativos</span>
             </div>
             <p className="text-2xl font-bold text-emerald-600">{ativos}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
-              <XCircle className="h-4 w-4 text-gray-400" />
+              <XCircle className="h-4 w-4 text-white/40" />
               <span className="text-xs font-medium text-muted-foreground">Inativos</span>
             </div>
-            <p className="text-2xl font-bold text-gray-500">{inativos}</p>
+            <p className="text-2xl font-bold text-white/50">{inativos}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <Package className="h-4 w-4 text-blue-500" />
               <span className="text-xs font-medium text-muted-foreground">Categorias</span>

@@ -85,7 +85,7 @@ const Planos = () => {
               <div
                 key={plan.id}
                 className={cn(
-                  "relative bg-card border rounded-2xl p-6 flex flex-col transition-all duration-300",
+                  "relative glass-card-premium rounded-2xl p-6 flex flex-col transition-all duration-300",
                   plan.recommended
                     ? "border-primary shadow-lg shadow-primary/10 scale-[1.02]"
                     : "border-border hover:border-primary/40",

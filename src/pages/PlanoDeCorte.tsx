@@ -170,7 +170,7 @@ const PlanoDeCorte = () => {
           </div>
 
           {/* Product header */}
-          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+          <div className="glass-card-premium p-6 mb-6">
             <div className="flex items-start gap-6">
               {produto && (
                 <ProductThumbnail tipo={produto.tipo} folhas={produto.folhas} className="w-32 h-28" />
@@ -250,7 +250,7 @@ const PlanoDeCorte = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text" placeholder="Buscar por produto ou responsável..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
+            className="pl-10 pr-4 py-2.5 text-sm glass-card-premium rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
           />
         </div>
 
@@ -264,7 +264,7 @@ const PlanoDeCorte = () => {
               <button
                 key={plano.id}
                 onClick={() => handleSelectPlano(plano)}
-                className="bg-card border border-border rounded-xl p-4 text-left hover:shadow-md hover:border-primary/40 transition-all flex items-center gap-4"
+                className="glass-card-premium p-4 text-left hover:shadow-md hover:border-primary/40 transition-all flex items-center gap-4"
               >
                 {/* Thumbnail */}
                 <ProductThumbnail tipo={produto.tipo} folhas={produto.folhas} className="w-20 h-16" />

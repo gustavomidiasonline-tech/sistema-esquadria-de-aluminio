@@ -23,11 +23,11 @@ type PedidoWithCliente = Pedido & {
 };
 
 const KANBAN_COLUMNS = [
-  { key: "pendente", label: "Novo", color: "bg-amber-500", lightBg: "bg-amber-50 border-amber-200" },
-  { key: "em_producao", label: "Producao", color: "bg-blue-500", lightBg: "bg-blue-50 border-blue-200" },
-  { key: "pronto", label: "Pronto", color: "bg-emerald-500", lightBg: "bg-emerald-50 border-emerald-200" },
-  { key: "entregue", label: "Entregue", color: "bg-green-600", lightBg: "bg-green-50 border-green-200" },
-  { key: "cancelado", label: "Cancelado", color: "bg-red-500", lightBg: "bg-red-50 border-red-200" },
+  { key: "pendente", label: "Novo", color: "bg-amber-500", lightBg: "bg-amber-500/15 border-amber-500/30" },
+  { key: "em_producao", label: "Producao", color: "bg-blue-500", lightBg: "bg-blue-500/15 border-blue-500/30" },
+  { key: "pronto", label: "Pronto", color: "bg-emerald-500", lightBg: "bg-emerald-500/15 border-emerald-500/30" },
+  { key: "entregue", label: "Entregue", color: "bg-green-600", lightBg: "bg-green-500/15 border-green-500/30" },
+  { key: "cancelado", label: "Cancelado", color: "bg-red-500", lightBg: "bg-red-500/15 border-red-500/30" },
 ];
 
 const nextStatus: Record<string, string | null> = {
@@ -132,7 +132,7 @@ const Pedidos = () => {
             <p className="text-sm text-muted-foreground">{pedidos.length} pedidos</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center bg-card border border-border rounded-lg p-0.5">
+            <div className="flex items-center glass-card-premium rounded-lg p-0.5">
               <button onClick={() => setViewMode("kanban")} className={cn("p-1.5 rounded-md transition-colors", viewMode === "kanban" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
                 <LayoutGrid className="h-4 w-4" />
               </button>
@@ -154,7 +154,7 @@ const Pedidos = () => {
           ].map((kpi) => {
             const Icon = kpi.icon;
             return (
-              <div key={kpi.label} className="bg-card border border-border rounded-xl p-3">
+              <div key={kpi.label} className="glass-card-premium p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-medium text-muted-foreground">{kpi.label}</span>
                   <div className={cn("h-6 w-6 rounded-md flex items-center justify-center", kpi.bg)}>
@@ -172,7 +172,7 @@ const Pedidos = () => {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input type="text" placeholder="Buscar pedido..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground" />
+              className="pl-10 pr-4 py-2.5 text-sm glass-card-premium rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground" />
           </div>
           <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-4 w-4" /> Filtros {activeFilters > 0 && <span className="bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{activeFilters}</span>}
@@ -180,7 +180,7 @@ const Pedidos = () => {
         </div>
 
         {showFilters && (
-          <div className="flex items-end gap-3 flex-wrap bg-card border border-border rounded-xl p-4">
+          <div className="flex items-end gap-3 flex-wrap glass-card-premium p-4">
             <div>
               <Label className="text-xs">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -228,7 +228,7 @@ const Pedidos = () => {
                       const days = getDaysInfo(pedido.data_entrega, pedido.status);
                       const next = nextStatus[pedido.status ?? "pendente"];
                       return (
-                        <div key={pedido.id} className="bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
+                        <div key={pedido.id} className="glass-card-premium rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
                           <div className="flex items-start justify-between mb-2">
                             <span className="text-xs font-bold text-primary">#{pedido.numero}</span>
                             {days.label && (
@@ -265,7 +265,7 @@ const Pedidos = () => {
           </div>
         ) : (
           /* LIST VIEW */
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <div className="glass-card-premium overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>

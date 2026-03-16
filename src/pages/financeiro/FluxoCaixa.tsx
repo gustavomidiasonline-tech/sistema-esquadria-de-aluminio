@@ -38,7 +38,7 @@ const FluxoCaixa = () => {
             {fluxo.map((m) => {
               const saldo = m.entradas - m.saidas;
               return (
-                <div key={m.mes} className="bg-card border border-border rounded-xl p-5 space-y-4">
+                <div key={m.mes} className="glass-card-premium p-5 space-y-4">
                   <p className="text-sm font-bold text-foreground capitalize">{m.mes}</p>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">

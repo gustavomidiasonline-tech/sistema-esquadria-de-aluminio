@@ -22,7 +22,7 @@ export function ProfileCuttingTable({ perfis, produtoNome, largura, altura, show
     <div className="space-y-4">
       {/* Header com dimensões - only shown when showHeader is true */}
       {showHeader && (
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="glass-card-premium p-5">
           <h3 className="text-sm font-bold text-foreground uppercase tracking-wide mb-3">{produtoNome}</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -38,7 +38,7 @@ export function ProfileCuttingTable({ perfis, produtoNome, largura, altura, show
       )}
 
       {/* Tabela de perfis - blue header like reference */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="glass-card-premium overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-primary">

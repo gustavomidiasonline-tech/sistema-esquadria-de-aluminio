@@ -283,7 +283,7 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
         <div className="flex-1 min-w-0">
           <p className={cn(
             "text-sm font-semibold",
-            isCompleted ? "text-emerald-700 dark:text-emerald-400" : "text-foreground"
+            isCompleted ? "text-emerald-400 dark:text-emerald-400" : "text-foreground"
           )}>
             {stage.name}
           </p>
@@ -299,8 +299,8 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
         <span className={cn(
           "text-[10px] font-semibold px-2.5 py-1 rounded-full shrink-0",
           isCompleted
-            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-            : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+            ? "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400"
+            : "bg-amber-500/15 text-amber-400 dark:text-amber-400"
         )}>
           {isCompleted ? "Concluído" : "Pendente"}
         </span>

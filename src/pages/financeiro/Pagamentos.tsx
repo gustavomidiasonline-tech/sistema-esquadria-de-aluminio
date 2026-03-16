@@ -139,7 +139,7 @@ export default function Pagamentos() {
             <p>Nenhum pagamento registrado.</p>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
+          <div className="glass-card-premium divide-y divide-border">
             {filtered.map((p: PagamentoRow) => (
               <div key={p.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-4">

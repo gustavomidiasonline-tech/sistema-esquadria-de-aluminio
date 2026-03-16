@@ -32,10 +32,10 @@ type ContratoWithCliente = Tables<"contratos"> & { clientes: { nome: string } | 
 // ---------------------------------------------------------------------------
 
 const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle2; className: string }> = {
-  ativo: { label: "Ativo", icon: CheckCircle2, className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  ativo: { label: "Ativo", icon: CheckCircle2, className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
   encerrado: { label: "Encerrado", icon: FileCheck, className: "bg-slate-100 text-slate-600 border-slate-200" },
-  rascunho: { label: "Rascunho", icon: Clock, className: "bg-yellow-100 text-yellow-700 border-yellow-200" },
-  cancelado: { label: "Cancelado", icon: XCircle, className: "bg-red-100 text-red-700 border-red-200" },
+  rascunho: { label: "Rascunho", icon: Clock, className: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
+  cancelado: { label: "Cancelado", icon: XCircle, className: "bg-red-500/15 text-red-400 border-red-500/30" },
 };
 
 // ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ function getVencimentoBadge(dataFim: string | null): React.ReactNode {
 
   if (daysLeft < 0) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-red-100 text-red-700 border-red-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-red-500/15 text-red-400 border-red-500/30">
         <AlertTriangle className="h-3 w-3" />
         Vencido
       </span>
@@ -78,7 +78,7 @@ function getVencimentoBadge(dataFim: string | null): React.ReactNode {
   }
   if (daysLeft <= 30) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-yellow-100 text-yellow-700 border-yellow-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-yellow-500/15 text-yellow-400 border-yellow-500/30">
         <AlertTriangle className="h-3 w-3" />
         {daysLeft}d restantes
       </span>
@@ -280,21 +280,21 @@ const Contratos = () => {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <FileCheck className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium text-muted-foreground">Total</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{kpis.total}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               <span className="text-xs font-medium text-muted-foreground">Ativos</span>
             </div>
             <p className="text-2xl font-bold text-emerald-600">{kpis.ativos}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <AlertTriangle className={`h-4 w-4 ${kpis.vencendo > 0 ? "text-red-500" : "text-yellow-500"}`} />
               <span className="text-xs font-medium text-muted-foreground">Vencendo 30d</span>
@@ -303,7 +303,7 @@ const Contratos = () => {
               {kpis.vencendo}
             </p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-blue-500" />
               <span className="text-xs font-medium text-muted-foreground">Valor Ativo</span>

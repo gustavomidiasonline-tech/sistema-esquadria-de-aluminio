@@ -176,11 +176,11 @@ const Clientes = () => {
   };
 
   const statusBadge: Record<string, string> = {
-    aprovado: "bg-emerald-100 text-emerald-800",
-    enviado: "bg-blue-100 text-blue-800",
-    rascunho: "bg-gray-100 text-gray-800",
-    rejeitado: "bg-red-100 text-red-800",
-    pendente: "bg-amber-100 text-amber-800",
+    aprovado: "bg-emerald-500/15 text-emerald-300",
+    enviado: "bg-blue-500/15 text-blue-300",
+    rascunho: "bg-white/10 text-white/80",
+    rejeitado: "bg-red-500/15 text-red-300",
+    pendente: "bg-amber-100 text-amber-300",
   };
 
   return (
@@ -206,7 +206,7 @@ const Clientes = () => {
           ].map((kpi) => {
             const Icon = kpi.icon;
             return (
-              <div key={kpi.label} className="bg-card border border-border rounded-xl p-3">
+              <div key={kpi.label} className="glass-card-premium p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-medium text-muted-foreground">{kpi.label}</span>
                   <div className={cn("h-6 w-6 rounded-md flex items-center justify-center", kpi.bg)}>
@@ -225,7 +225,7 @@ const Clientes = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text" placeholder="Buscar por nome, email, telefone, cidade..." value={search} onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
+              className="pl-10 pr-4 py-2.5 text-sm glass-card-premium rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <Select value={estadoFilter} onValueChange={setEstadoFilter}>
@@ -249,7 +249,7 @@ const Clientes = () => {
             {clientes.length === 0 ? 'Nenhum cliente cadastrado. Clique em "Novo cliente" para comecar.' : "Nenhum cliente encontrado."}
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <div className="glass-card-premium overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -278,7 +278,7 @@ const Clientes = () => {
                               <div className="flex items-center gap-1.5">
                                 <span className="font-semibold text-foreground">{client.nome}</span>
                                 {vip && (
-                                  <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] px-1.5 py-0 h-4">
+                                  <Badge className="bg-amber-100 text-amber-300 border-amber-200 text-[9px] px-1.5 py-0 h-4">
                                     <Star className="h-2.5 w-2.5 mr-0.5" /> VIP
                                   </Badge>
                                 )}
@@ -324,7 +324,7 @@ const Clientes = () => {
             <DialogTitle className="flex items-center gap-2">
               {detailCliente?.nome}
               {detailCliente && isVIP(detailCliente.id) && (
-                <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]">
+                <Badge className="bg-amber-100 text-amber-300 border-amber-200 text-[10px]">
                   <Star className="h-3 w-3 mr-1" /> VIP
                 </Badge>
               )}
@@ -370,7 +370,7 @@ const Clientes = () => {
                       <div key={orc.id} className="flex items-center justify-between bg-muted/30 rounded-lg p-2.5">
                         <div>
                           <span className="text-xs font-bold text-primary">#{orc.numero}</span>
-                          <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-2", statusBadge[orc.status] || "bg-gray-100 text-gray-800")}>
+                          <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-2", statusBadge[orc.status] || "bg-white/10 text-white/80")}>
                             {orc.status}
                           </span>
                         </div>

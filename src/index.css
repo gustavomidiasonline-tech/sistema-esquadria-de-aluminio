@@ -7,99 +7,55 @@
 
 @layer base {
   :root {
-    --background: 140 20% 97%;
-    --foreground: 210 20% 12%;
+    /* === DARK GLASS SYSTEM === */
+    --background: 230 45% 7%;
+    --foreground: 210 10% 93%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 210 20% 12%;
+    --card: 230 40% 10%;
+    --card-foreground: 210 10% 93%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 210 20% 12%;
+    --popover: 230 45% 9%;
+    --popover-foreground: 210 10% 93%;
 
-    --primary: 152 60% 36%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 152 100% 50%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 140 20% 96%;
-    --secondary-foreground: 210 20% 12%;
+    --secondary: 230 35% 15%;
+    --secondary-foreground: 210 10% 85%;
 
-    --muted: 140 10% 95%;
-    --muted-foreground: 210 10% 46%;
+    --muted: 230 30% 14%;
+    --muted-foreground: 210 15% 58%;
 
-    --accent: 152 40% 94%;
-    --accent-foreground: 152 60% 28%;
+    --accent: 152 60% 18%;
+    --accent-foreground: 152 100% 60%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 340 100% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 60% 42%;
-    --success-foreground: 0 0% 100%;
+    --success: 152 80% 40%;
+    --success-foreground: 0 0% 0%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 45 100% 50%;
+    --warning-foreground: 0 0% 0%;
 
-    --border: 140 10% 90%;
-    --input: 140 10% 90%;
-    --ring: 152 60% 36%;
+    --border: 230 20% 20%;
+    --input: 230 35% 13%;
+    --ring: 152 100% 50%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 210 20% 24%;
-    --sidebar-primary: 152 60% 36%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 152 50% 94%;
-    --sidebar-accent-foreground: 152 60% 30%;
-    --sidebar-border: 140 10% 92%;
-    --sidebar-ring: 152 60% 36%;
-    --sidebar-muted: 210 10% 56%;
-
-    /* === GLASS MORPHISM VARIANTS === */
-    --glass-neon-green: #00ff88;
-    --glass-neon-yellow: #ffd700;
-    --glass-neon-cyan: #00d9ff;
-    --glass-neon-pink: #ff006e;
-  }
-
-  .dark {
-    --background: 210 20% 7%;
-    --foreground: 210 10% 95%;
-
-    --card: 210 20% 11%;
-    --card-foreground: 210 10% 95%;
-
-    --popover: 210 20% 11%;
-    --popover-foreground: 210 10% 95%;
-
-    --primary: 152 60% 42%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 210 20% 16%;
-    --secondary-foreground: 210 10% 95%;
-
-    --muted: 210 20% 16%;
-    --muted-foreground: 210 10% 58%;
-
-    --accent: 152 40% 16%;
-    --accent-foreground: 152 60% 60%;
-
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 210 20% 18%;
-    --input: 210 20% 18%;
-    --ring: 152 60% 42%;
-
-    --sidebar-background: 210 25% 9%;
-    --sidebar-foreground: 210 10% 90%;
-    --sidebar-primary: 152 60% 42%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 25% 15%;
+    /* === SIDEBAR === */
+    --sidebar-background: 230 50% 5%;
+    --sidebar-foreground: 210 10% 85%;
+    --sidebar-primary: 152 100% 50%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 230 35% 14%;
     --sidebar-accent-foreground: 210 10% 90%;
-    --sidebar-border: 210 20% 16%;
-    --sidebar-ring: 152 60% 42%;
-    --sidebar-muted: 210 15% 40%;
+    --sidebar-border: 230 20% 12%;
+    --sidebar-ring: 152 100% 50%;
+    --sidebar-muted: 210 15% 50%;
 
-    /* === GLASS MORPHISM DARK MODE === */
+    /* === GLASS NEON PALETTE === */
     --glass-neon-green: #00ff88;
     --glass-neon-yellow: #ffd700;
     --glass-neon-cyan: #00d9ff;
@@ -112,39 +68,64 @@
     @apply border-border;
   }
 
+  html, body, #root {
+    min-height: 100vh;
+  }
+
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    /* Deep gradient — visible through all transparent panels */
+    background: linear-gradient(135deg,
+      #080c1a 0%,
+      #0f172a 15%,
+      #1a1040 30%,
+      #2d1b69 50%,
+      #3a0f58 65%,
+      #4a0e2e 80%,
+      #350820 100%
+    );
+    background-attachment: fixed;
+    background-size: 100% 100%;
   }
 }
 
 @layer utilities {
-  .glass-card {
-    @apply bg-card border border-border shadow-sm;
-  }
+  /* ============================================
+     GLASS PANELS — transparent over body gradient
+     ============================================ */
 
   .glass-sidebar {
-    @apply bg-sidebar border-r border-sidebar-border;
+    background: rgba(6, 8, 22, 0.42);
+    backdrop-filter: blur(28px) saturate(1.4);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .glass-header {
-    @apply bg-card border-b border-border;
+    background: rgba(8, 10, 28, 0.35);
+    backdrop-filter: blur(24px) saturate(1.3);
+    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
   }
 
   .glass-surface {
-    @apply bg-card border border-border shadow-sm;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .glass-input {
-    @apply bg-background border border-border;
-  }
-
-  .stat-card-primary {
-    @apply bg-primary text-primary-foreground rounded-xl p-5 shadow-sm;
-  }
-
-  /* Keep old class name for backwards compat */
-  .stat-card-blue {
-    @apply bg-primary text-primary-foreground rounded-xl p-5 shadow-sm;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
   }
 }

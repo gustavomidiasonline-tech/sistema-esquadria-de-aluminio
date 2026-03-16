@@ -43,7 +43,7 @@ export default function GlassDashboard() {
               Dashboard
             </span>
           </h1>
-          <p className='text-gray-400'>
+          <p className='text-white/40'>
             Premium frosted glass design with real-time data analytics
           </p>
         </div>
@@ -95,7 +95,7 @@ export default function GlassDashboard() {
             <div className='space-y-4 h-full flex flex-col'>
               <div>
                 <h3 className='text-lg font-bold text-white'>Revenue Trend</h3>
-                <p className='text-sm text-gray-400'>Last 7 days performance</p>
+                <p className='text-sm text-white/40'>Last 7 days performance</p>
               </div>
               <div className='flex-1 flex items-end justify-between gap-2'>
                 {[40, 60, 45, 75, 55, 70, 85].map((height, i) => (
@@ -104,7 +104,7 @@ export default function GlassDashboard() {
                       className='w-full bg-gradient-to-t from-green-400 to-cyan-400 rounded-t-lg shadow-lg shadow-green-400/30'
                       style={{ height: `${height}%` }}
                     ></div>
-                    <span className='text-xs text-gray-500'>Day {i + 1}</span>
+                    <span className='text-xs text-white/50'>Day {i + 1}</span>
                   </div>
                 ))}
               </div>
@@ -118,22 +118,22 @@ export default function GlassDashboard() {
 
               <div className='space-y-3'>
                 <div className='flex justify-between items-center pb-3 border-b border-white/10'>
-                  <span className='text-sm text-gray-400'>Conversion</span>
+                  <span className='text-sm text-white/40'>Conversion</span>
                   <span className='text-lg font-bold text-green-400'>3.2%</span>
                 </div>
 
                 <div className='flex justify-between items-center pb-3 border-b border-white/10'>
-                  <span className='text-sm text-gray-400'>Bounce Rate</span>
+                  <span className='text-sm text-white/40'>Bounce Rate</span>
                   <span className='text-lg font-bold text-red-400'>24.8%</span>
                 </div>
 
                 <div className='flex justify-between items-center pb-3 border-b border-white/10'>
-                  <span className='text-sm text-gray-400'>Avg. Session</span>
+                  <span className='text-sm text-white/40'>Avg. Session</span>
                   <span className='text-lg font-bold text-yellow-400'>4m 32s</span>
                 </div>
 
                 <div className='flex justify-between items-center'>
-                  <span className='text-sm text-gray-400'>Engagement</span>
+                  <span className='text-sm text-white/40'>Engagement</span>
                   <span className='text-lg font-bold text-blue-400'>78%</span>
                 </div>
               </div>
@@ -213,7 +213,7 @@ export default function GlassDashboard() {
                   <AlertCircle className='h-5 w-5 text-red-400 mt-0.5 flex-shrink-0' />
                   <div>
                     <p className='text-sm font-semibold text-red-400'>High Error Rate</p>
-                    <p className='text-xs text-gray-400 mt-1'>
+                    <p className='text-xs text-white/40 mt-1'>
                       Payment processing errors increased by 12%
                     </p>
                   </div>
@@ -222,7 +222,7 @@ export default function GlassDashboard() {
                   <AlertCircle className='h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0' />
                   <div>
                     <p className='text-sm font-semibold text-yellow-400'>Queue Full</p>
-                    <p className='text-xs text-gray-400 mt-1'>
+                    <p className='text-xs text-white/40 mt-1'>
                       Processing queue reached 95% capacity
                     </p>
                   </div>
@@ -234,10 +234,10 @@ export default function GlassDashboard() {
 
         {/* Footer Info */}
         <GlassCard variant='panel' className='p-6 text-center'>
-          <p className='text-sm text-gray-400'>
+          <p className='text-sm text-white/40'>
             Last updated: {new Date().toLocaleTimeString()}
           </p>
-          <p className='text-xs text-gray-500 mt-2'>
+          <p className='text-xs text-white/50 mt-2'>
             Dashboard powered by Glass Morphism Design System
           </p>
         </GlassCard>

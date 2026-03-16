@@ -12,7 +12,7 @@ import { BOMService } from "@/services/bom.service";
 import type { LucideIcon } from "lucide-react";
 
 const StatCard = ({ icon: Icon, label, value, change, positive }: { icon: LucideIcon; label: string; value: string; change: string; positive: boolean }) => (
-  <div className="bg-card border border-border rounded-xl p-5">
+  <div className="glass-card-premium p-5">
     <div className="flex items-center justify-between mb-3">
       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
         <Icon className="h-5 w-5 text-primary" />
@@ -189,7 +189,7 @@ const Relatorios = () => {
           {/* FINANCEIRO */}
           <TabsContent value="financeiro" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-card border border-border rounded-xl p-6">
+              <div className="glass-card-premium p-6">
                 <h3 className="text-sm font-semibold text-foreground mb-4">Faturamento Mensal</h3>
                 {financeiroData.mensal.every((m) => m.valor === 0) ? (
                   <p className="text-center text-muted-foreground py-8">Sem dados de vendas.</p>
@@ -214,13 +214,13 @@ const Relatorios = () => {
               </div>
 
               <div className="space-y-4">
-                <div className="bg-card border border-border rounded-xl p-6">
+                <div className="glass-card-premium p-6">
                   <h3 className="text-sm font-semibold text-foreground mb-3">Ticket Medio</h3>
                   <p className="text-3xl font-bold text-primary">{fmtCur(financeiroData.ticketMedio)}</p>
                   <p className="text-xs text-muted-foreground mt-1">por pedido</p>
                 </div>
 
-                <div className="bg-card border border-border rounded-xl p-6">
+                <div className="glass-card-premium p-6">
                   <h3 className="text-sm font-semibold text-foreground mb-3">Top 5 Clientes por Valor</h3>
                   <div className="space-y-2">
                     {financeiroData.topClientes.length === 0 ? (
@@ -245,24 +245,24 @@ const Relatorios = () => {
           {/* PRODUCAO */}
           <TabsContent value="producao" className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="bg-card border border-border rounded-xl p-4">
+              <div className="glass-card-premium p-4">
                 <p className="text-[10px] font-medium text-muted-foreground uppercase">Taxa Conversao</p>
                 <p className="text-3xl font-bold text-primary">{producaoData.taxaConversao}%</p>
                 <p className="text-xs text-muted-foreground">orcamentos aprovados</p>
               </div>
-              <div className="bg-card border border-border rounded-xl p-4">
+              <div className="glass-card-premium p-4">
                 <p className="text-[10px] font-medium text-muted-foreground uppercase">Tempo Medio</p>
                 <p className="text-3xl font-bold text-foreground">{producaoData.tempoMedio}d</p>
                 <p className="text-xs text-muted-foreground">para aprovacao</p>
               </div>
-              <div className="bg-card border border-border rounded-xl p-4">
+              <div className="glass-card-premium p-4">
                 <p className="text-[10px] font-medium text-muted-foreground uppercase">Total</p>
                 <p className="text-3xl font-bold text-foreground">{orcamentos.length}</p>
                 <p className="text-xs text-muted-foreground">orcamentos</p>
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-6">
+            <div className="glass-card-premium p-6">
               <h3 className="text-sm font-semibold text-foreground mb-4">Orcamentos por Status</h3>
               {Object.keys(producaoData.statusCounts).length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Sem orcamentos.</p>
@@ -293,19 +293,19 @@ const Relatorios = () => {
           {/* MATERIAIS */}
           <TabsContent value="materiais" className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-card border border-border rounded-xl p-4">
+              <div className="glass-card-premium p-4">
                 <p className="text-[10px] font-medium text-muted-foreground uppercase">Itens Orcados</p>
                 <p className="text-3xl font-bold text-foreground">{materiaisData.totalItens}</p>
                 <p className="text-xs text-muted-foreground">itens com BOM calculado</p>
               </div>
-              <div className="bg-card border border-border rounded-xl p-4">
+              <div className="glass-card-premium p-4">
                 <p className="text-[10px] font-medium text-muted-foreground uppercase">Materiais Distintos</p>
                 <p className="text-3xl font-bold text-primary">{materiaisData.sorted.length}</p>
                 <p className="text-xs text-muted-foreground">tipos de material</p>
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-6">
+            <div className="glass-card-premium p-6">
               <h3 className="text-sm font-semibold text-foreground mb-4">Materiais Mais Usados</h3>
               {materiaisData.sorted.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Sem dados de materiais.</p>
@@ -333,7 +333,7 @@ const Relatorios = () => {
           {/* CLIENTES */}
           <TabsContent value="clientes" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-card border border-border rounded-xl p-6">
+              <div className="glass-card-premium p-6">
                 <h3 className="text-sm font-semibold text-foreground mb-4">Ranking por Valor</h3>
                 {clientesData.ranking.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">Sem dados.</p>
@@ -362,7 +362,7 @@ const Relatorios = () => {
               </div>
 
               <div className="space-y-4">
-                <div className="bg-card border border-border rounded-xl p-6">
+                <div className="glass-card-premium p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <MapPin className="h-4 w-4 text-primary" />
                     <h3 className="text-sm font-semibold text-foreground">Clientes por Cidade</h3>
@@ -389,7 +389,7 @@ const Relatorios = () => {
                   )}
                 </div>
 
-                <div className="bg-card border border-border rounded-xl p-6">
+                <div className="glass-card-premium p-6">
                   <h3 className="text-sm font-semibold text-foreground mb-3">Resumo</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div>

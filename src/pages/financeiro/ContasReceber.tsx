@@ -70,7 +70,7 @@ const ContasReceber = () => {
         ) : contas.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">Nenhuma conta a receber cadastrada.</div>
         ) : (
-          <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
+          <div className="glass-card-premium divide-y divide-border">
             {contas.map((c: ContaReceberWithCliente) => {
               const s = statusMap[c.status] || statusMap.pendente;
               return (

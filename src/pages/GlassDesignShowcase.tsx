@@ -26,7 +26,7 @@ export default function GlassDesignShowcase() {
               Design System
             </span>
           </h1>
-          <p className='text-gray-300 text-lg'>
+          <p className='text-white/70 text-lg'>
             Premium frosted glass effects with neon accents
           </p>
         </div>
@@ -38,7 +38,7 @@ export default function GlassDesignShowcase() {
             <div className='space-y-4'>
               <div className='h-3 bg-gradient-to-r from-green-400 to-cyan-400 rounded-full'></div>
               <h3 className='text-xl font-bold text-white'>Premium Card</h3>
-              <p className='text-gray-300 text-sm'>
+              <p className='text-white/70 text-sm'>
                 High-quality glass effect with blur and transparency
               </p>
               <GlassButton variant='secondary' className='w-full text-sm'>
@@ -51,14 +51,14 @@ export default function GlassDesignShowcase() {
           <GlassCard variant='stat'>
             <div className='space-y-3'>
               <div className='text-3xl font-bold text-green-400'>₹2.4K</div>
-              <p className='text-gray-400'>Total Revenue</p>
+              <p className='text-white/40'>Total Revenue</p>
               <div className='h-2 bg-white/10 rounded-full overflow-hidden'>
                 <div
                   className='h-full bg-gradient-to-r from-yellow-400 to-green-400'
                   style={{ width: '75%' }}
                 ></div>
               </div>
-              <p className='text-xs text-gray-400'>↑ 12% this month</p>
+              <p className='text-xs text-white/40'>↑ 12% this month</p>
             </div>
           </GlassCard>
 
@@ -69,7 +69,7 @@ export default function GlassDesignShowcase() {
                 Featured
               </div>
               <h3 className='text-xl font-bold text-white'>Advanced Effects</h3>
-              <p className='text-gray-300 text-sm'>
+              <p className='text-white/70 text-sm'>
                 Glow effects, neon accents, and smooth transitions
               </p>
             </div>
@@ -100,7 +100,7 @@ export default function GlassDesignShowcase() {
             <div className='space-y-3'>
               <span className='glass-badge-neon'>✓ Verified</span>
               <span className='glass-badge-neon ml-2'>🚀 Active</span>
-              <p className='text-gray-400 text-sm mt-4'>
+              <p className='text-white/40 text-sm mt-4'>
                 Neon badges with glow effects
               </p>
             </div>
@@ -141,8 +141,8 @@ export default function GlassDesignShowcase() {
                     boxShadow: `0 0 20px ${item.color}50`,
                   }}
                 ></div>
-                <p className='text-xs text-gray-400'>{item.name}</p>
-                <code className='text-xs text-gray-500'>{item.color}</code>
+                <p className='text-xs text-white/40'>{item.name}</p>
+                <code className='text-xs text-white/50'>{item.color}</code>
               </div>
             ))}
           </div>

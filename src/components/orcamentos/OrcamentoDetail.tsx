@@ -55,10 +55,10 @@ const VIDRO_LABELS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-600 border-gray-200" },
-  enviado: { label: "Enviado", className: "bg-yellow-100 text-yellow-700 border-yellow-200" },
-  aprovado: { label: "Aprovado", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  rejeitado: { label: "Rejeitado", className: "bg-red-100 text-red-700 border-red-200" },
+  rascunho: { label: "Rascunho", className: "bg-white/10 text-white/60 border-white/20" },
+  enviado: { label: "Enviado", className: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
+  aprovado: { label: "Aprovado", className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+  rejeitado: { label: "Rejeitado", className: "bg-red-500/15 text-red-400 border-red-500/30" },
   expirado: { label: "Expirado", className: "bg-slate-100 text-slate-600 border-slate-200" },
 };
 
@@ -184,8 +184,8 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
                 <span className={cn(
                   "flex items-center gap-1 px-2 py-0.5 rounded-full border font-medium",
                   validadeInfo.isValid
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : "bg-red-50 text-red-700 border-red-200"
+                    ? "bg-emerald-50 text-emerald-400 border-emerald-500/30"
+                    : "bg-red-500/15 text-red-400 border-red-500/30"
                 )}>
                   <Clock className="h-3 w-3" />
                   Validade: {new Date(orcamento.validade).toLocaleDateString("pt-BR")} ({validadeInfo.label})
@@ -420,7 +420,7 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
                                 {profiles.map((perfil) => (
                                   <div
                                     key={perfil.codigo}
-                                    className="flex items-center gap-3 p-2.5 bg-card border border-border rounded-lg"
+                                    className="flex items-center gap-3 p-2.5 glass-card-premium rounded-lg"
                                   >
                                     <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
                                       <div

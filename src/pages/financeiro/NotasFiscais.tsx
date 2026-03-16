@@ -34,15 +34,15 @@ type NfTipo = Database["public"]["Enums"]["nf_tipo"];
 // ---------------------------------------------------------------------------
 
 const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle2; className: string }> = {
-  emitida: { label: "Emitida", icon: CheckCircle2, className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  cancelada: { label: "Cancelada", icon: XCircle, className: "bg-red-100 text-red-700 border-red-200" },
-  pendente: { label: "Pendente", icon: Clock, className: "bg-yellow-100 text-yellow-700 border-yellow-200" },
+  emitida: { label: "Emitida", icon: CheckCircle2, className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+  cancelada: { label: "Cancelada", icon: XCircle, className: "bg-red-500/15 text-red-400 border-red-500/30" },
+  pendente: { label: "Pendente", icon: Clock, className: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
 };
 
 const TIPO_CONFIG: Record<string, { label: string; className: string }> = {
-  nfe: { label: "NF-e", className: "bg-blue-100 text-blue-700 border-blue-200" },
-  nfse: { label: "NFS-e", className: "bg-purple-100 text-purple-700 border-purple-200" },
-  nfce: { label: "NFC-e", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+  nfe: { label: "NF-e", className: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  nfse: { label: "NFS-e", className: "bg-purple-500/15 text-purple-400 border-purple-500/30" },
+  nfce: { label: "NFC-e", className: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30" },
 };
 
 // ---------------------------------------------------------------------------
@@ -318,14 +318,14 @@ export default function NotasFiscais() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <Receipt className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium text-muted-foreground">Total NFs</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{kpis.total}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               <span className="text-xs font-medium text-muted-foreground">Emitidas</span>
@@ -333,7 +333,7 @@ export default function NotasFiscais() {
             <p className="text-2xl font-bold text-emerald-600">{kpis.emitidas}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{fmt(kpis.totalEmitidas)}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-yellow-500" />
               <span className="text-xs font-medium text-muted-foreground">Pendentes</span>
@@ -341,7 +341,7 @@ export default function NotasFiscais() {
             <p className="text-2xl font-bold text-yellow-600">{kpis.pendentes}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{fmt(kpis.totalPendentes)}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="glass-card-premium p-4">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-blue-500" />
               <span className="text-xs font-medium text-muted-foreground">Valor Total</span>

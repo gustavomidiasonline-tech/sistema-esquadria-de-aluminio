@@ -80,7 +80,7 @@ const ConfiguracaoModelos = () => {
               <button
                 key={product.id}
                 onClick={() => { s.setSelectedProduct(product); s.loadCutRules(product.id); }}
-                className="bg-card border border-border rounded-xl p-5 text-left hover:shadow-lg hover:border-primary/30 transition-all group"
+                className="glass-card-premium p-5 text-left hover:shadow-lg hover:border-primary/30 transition-all group"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">

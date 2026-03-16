@@ -106,7 +106,7 @@ export function FileUploadDialog({ onDataExtracted, trigger }: FileUploadDialogP
             onDragOver={handleDrag}
             onDrop={handleDrop}
             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-              dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+              dragActive ? 'border-blue-500 bg-blue-500/15' : 'border-white/20 hover:border-white/40'
             }`}
           >
             <input
@@ -121,14 +121,14 @@ export function FileUploadDialog({ onDataExtracted, trigger }: FileUploadDialogP
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-                  <span className="text-sm text-gray-600">Processando arquivo...</span>
+                  <span className="text-sm text-white/60">Processando arquivo...</span>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Upload className="h-8 w-8 mx-auto text-gray-400" />
-                  <p className="text-sm font-medium text-gray-700">Arraste o arquivo aqui</p>
-                  <p className="text-xs text-gray-500">ou clique para selecionar</p>
-                  <p className="text-xs text-gray-400 mt-2">PDF ou CSV (máx. 10MB)</p>
+                  <Upload className="h-8 w-8 mx-auto text-white/40" />
+                  <p className="text-sm font-medium text-white/70">Arraste o arquivo aqui</p>
+                  <p className="text-xs text-white/50">ou clique para selecionar</p>
+                  <p className="text-xs text-white/40 mt-2">PDF ou CSV (máx. 10MB)</p>
                 </div>
               )}
             </label>
@@ -144,7 +144,7 @@ export function FileUploadDialog({ onDataExtracted, trigger }: FileUploadDialogP
 
           {/* Results Display */}
           {extractedData && (
-            <div className="space-y-3 border rounded-lg p-4 bg-gray-50">
+            <div className="space-y-3 border rounded-lg p-4 bg-white/5">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 <h4 className="font-medium text-sm">Dados Extraídos com Sucesso</h4>
@@ -153,7 +153,7 @@ export function FileUploadDialog({ onDataExtracted, trigger }: FileUploadDialogP
               {/* Confidence */}
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-600">Confiança</span>
+                  <span className="text-white/60">Confiança</span>
                   <span className={`font-medium ${confidenceColor}`}>
                     {Math.round(extractedData.confidence * 100)}%
                   </span>
@@ -165,8 +165,8 @@ export function FileUploadDialog({ onDataExtracted, trigger }: FileUploadDialogP
               <div className="grid grid-cols-3 gap-2">
                 {extractedData.largura && (
                   <div className="space-y-1">
-                    <p className="text-xs font-medium text-gray-600">Largura</p>
-                    <p className="text-sm font-semibold text-gray-900">{extractedData.largura.toFixed(1)}</p>
+                    <p className="text-xs font-medium text-white/60">Largura</p>
+                    <p className="text-sm font-semibold text-white/90">{extractedData.largura.toFixed(1)}</p>
                     <Badge variant="secondary" className="text-[10px] w-full text-center">
                       mm
                     </Badge>
@@ -174,8 +174,8 @@ export function FileUploadDialog({ onDataExtracted, trigger }: FileUploadDialogP
                 )}
                 {extractedData.altura && (
                   <div className="space-y-1">
-                    <p className="text-xs font-medium text-gray-600">Altura</p>
-                    <p className="text-sm font-semibold text-gray-900">{extractedData.altura.toFixed(1)}</p>
+                    <p className="text-xs font-medium text-white/60">Altura</p>
+                    <p className="text-sm font-semibold text-white/90">{extractedData.altura.toFixed(1)}</p>
                     <Badge variant="secondary" className="text-[10px] w-full text-center">
                       mm
                     </Badge>
@@ -183,8 +183,8 @@ export function FileUploadDialog({ onDataExtracted, trigger }: FileUploadDialogP
                 )}
                 {extractedData.quantidade && (
                   <div className="space-y-1">
-                    <p className="text-xs font-medium text-gray-600">Quantidade</p>
-                    <p className="text-sm font-semibold text-gray-900">{extractedData.quantidade.toFixed(0)}</p>
+                    <p className="text-xs font-medium text-white/60">Quantidade</p>
+                    <p className="text-sm font-semibold text-white/90">{extractedData.quantidade.toFixed(0)}</p>
                     <Badge variant="secondary" className="text-[10px] w-full text-center">
                       un
                     </Badge>
@@ -195,7 +195,7 @@ export function FileUploadDialog({ onDataExtracted, trigger }: FileUploadDialogP
               {/* Source */}
               <div className="pt-2 border-t">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-600">Origem:</span>
+                  <span className="text-white/60">Origem:</span>
                   <Badge variant="outline" className="text-[11px]">
                     {extractedData.source.toUpperCase()}
                   </Badge>
@@ -227,7 +227,7 @@ export function FileUploadDialog({ onDataExtracted, trigger }: FileUploadDialogP
           )}
 
           {/* Info */}
-          <div className="text-xs text-gray-500 space-y-1">
+          <div className="text-xs text-white/50 space-y-1">
             <p>
               <strong>Dica:</strong> Nomeie suas colunas no CSV como "largura", "altura", "quantidade" para melhor
               extração.

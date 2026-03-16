@@ -61,8 +61,8 @@ export function ServicosKPIs({ servicos }: ServicosKPIsProps) {
             <div
               key={kpi.label}
               className={cn(
-                "bg-card border border-border rounded-xl p-3 flex flex-col gap-1.5 transition-colors",
-                kpi.alert && "border-orange-500/40 bg-orange-500/5"
+                "glass-card-premium p-3 flex flex-col gap-1.5 transition-colors",
+                kpi.alert && "border-orange-500/40 bg-orange-500/150/5"
               )}
             >
               <div className="flex items-center justify-between">
@@ -79,7 +79,7 @@ export function ServicosKPIs({ servicos }: ServicosKPIsProps) {
 
       {/* Financial summary row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
+        <div className="glass-card-premium p-3 flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
             <DollarSign className="h-4 w-4 text-primary" />
           </div>
@@ -88,7 +88,7 @@ export function ServicosKPIs({ servicos }: ServicosKPIsProps) {
             <p className="text-sm font-bold text-foreground">{fmt(stats.valorTotal)}</p>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
+        <div className="glass-card-premium p-3 flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </div>
@@ -97,7 +97,7 @@ export function ServicosKPIs({ servicos }: ServicosKPIsProps) {
             <p className="text-sm font-bold text-emerald-600">{fmt(stats.valorConcluido)}</p>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
+        <div className="glass-card-premium p-3 flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
             <TrendingUp className="h-4 w-4 text-primary" />
           </div>

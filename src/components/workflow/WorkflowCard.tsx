@@ -50,17 +50,17 @@ export function WorkflowCard({ pedido, stages, onClick }: WorkflowCardProps) {
   };
 
   const statusColors: Record<string, string> = {
-    pendente: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-    em_producao: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-    pronto: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-    entregue: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-    cancelado: "bg-red-500/15 text-red-700 dark:text-red-400",
+    pendente: "bg-amber-500/15 text-amber-400 dark:text-amber-400",
+    em_producao: "bg-blue-500/15 text-blue-300",
+    pronto: "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400",
+    entregue: "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400",
+    cancelado: "bg-red-500/150/15 text-red-400 dark:text-red-400",
   };
 
   return (
     <button
       onClick={onClick}
-      className="w-full bg-card border border-border rounded-xl p-5 text-left hover:shadow-lg hover:border-primary/30 transition-all duration-200 group"
+      className="w-full glass-card-premium p-5 text-left hover:shadow-lg hover:border-primary/30 transition-all duration-200 group"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">

@@ -106,8 +106,8 @@ const Funcionarios = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+          <div className="glass-card-premium p-4 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-full bg-green-500/15 flex items-center justify-center">
               <UserCheck className="h-5 w-5 text-green-600" />
             </div>
             <div>
@@ -115,7 +115,7 @@ const Funcionarios = () => {
               <p className="text-xs text-muted-foreground">Ativos</p>
             </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
+          <div className="glass-card-premium p-4 flex items-center gap-4">
             <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
               <Briefcase className="h-5 w-5 text-accent-foreground" />
             </div>
@@ -124,8 +124,8 @@ const Funcionarios = () => {
               <p className="text-xs text-muted-foreground">Em férias</p>
             </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
+          <div className="glass-card-premium p-4 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-full bg-orange-500/15 flex items-center justify-center">
               <UserX className="h-5 w-5 text-orange-600" />
             </div>
             <div>
@@ -143,7 +143,7 @@ const Funcionarios = () => {
               placeholder="Buscar funcionário..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
+              className="pl-10 pr-4 py-2.5 text-sm glass-card-premium rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <Select value={filtroStatus} onValueChange={setFiltroStatus}>
@@ -160,7 +160,7 @@ const Funcionarios = () => {
           </Select>
         </div>
 
-        <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
+        <div className="glass-card-premium divide-y divide-border">
           {filtrados.length === 0 ? (
             <div className="px-5 py-12 text-center text-muted-foreground text-sm">Nenhum funcionário encontrado.</div>
           ) : (
