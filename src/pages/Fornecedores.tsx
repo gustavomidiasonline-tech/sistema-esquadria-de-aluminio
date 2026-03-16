@@ -17,6 +17,7 @@ import {
   Building2, Star, Package, Users, AlertCircle, CheckCircle2, XCircle,
   Loader2,
 } from 'lucide-react';
+import { DataTable, type ColumnDef } from '@/components/tables';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -315,6 +316,76 @@ export default function Fornecedores() {
     );
   };
 
+  // ---- Column definitions ----
+
+  const fornecedorColumns: ColumnDef<Fornecedor>[] = [
+    {
+      key: 'nome',
+      header: 'Fornecedor',
+      render: (f) => (
+        <div>
+          <p className="font-medium text-foreground">{f.nome}</p>
+          {f.razao_social && (
+            <p className="text-xs text-muted-foreground mt-0.5">{f.razao_social}</p>
+          )}
+          {f.cpf_cnpj && (
+            <p className="text-xs text-muted-foreground font-mono">{f.cpf_cnpj}</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'categoria',
+      header: 'Categoria',
+      render: (f) => <>{getCategoriaBadge(f.categoria)}</>,
+    },
+    {
+      key: 'ativo',
+      header: 'Status',
+      render: (f) => <>{getStatusBadge(f.ativo)}</>,
+    },
+    {
+      key: 'telefone',
+      header: 'Contato',
+      render: (f) => (
+        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+          {f.telefone && (
+            <span className="flex items-center gap-1">
+              <Phone className="h-3 w-3" />
+              {f.telefone}
+            </span>
+          )}
+          {f.email && (
+            <span className="flex items-center gap-1">
+              <Mail className="h-3 w-3" />
+              {f.email}
+            </span>
+          )}
+          {f.contato && (
+            <span className="flex items-center gap-1">
+              <User className="h-3 w-3" />
+              {f.contato}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'cidade',
+      header: 'Localizacao',
+      render: (f) =>
+        f.cidade ? (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            {f.cidade}
+            {f.estado ? `/${f.estado}` : ''}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground/50">--</span>
+        ),
+    },
+  ];
+
   // ---- Render ----
 
   return (
@@ -400,105 +471,32 @@ export default function Fornecedores() {
         </div>
 
         {/* Table */}
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p>Nenhum fornecedor encontrado.</p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-border overflow-hidden bg-card">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/40 border-b border-border">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Fornecedor</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Categoria</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Contato</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Localizacao</th>
-                    <th className="px-4 py-3 w-24" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {filtered.map((f) => (
-                    <tr key={f.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-medium text-foreground">{f.nome}</p>
-                          {f.razao_social && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{f.razao_social}</p>
-                          )}
-                          {f.cpf_cnpj && (
-                            <p className="text-xs text-muted-foreground font-mono">{f.cpf_cnpj}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">{getCategoriaBadge(f.categoria)}</td>
-                      <td className="px-4 py-3">{getStatusBadge(f.ativo)}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
-                          {f.telefone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {f.telefone}
-                            </span>
-                          )}
-                          {f.email && (
-                            <span className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {f.email}
-                            </span>
-                          )}
-                          {f.contato && (
-                            <span className="flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              {f.contato}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        {f.cidade ? (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <MapPin className="h-3 w-3" />
-                            {f.cidade}
-                            {f.estado ? `/${f.estado}` : ''}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground/50">--</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(f)} title="Editar">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteConfirmId(f.id)}
-                            className="text-destructive hover:text-destructive"
-                            title="Excluir"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {/* Footer */}
-            <div className="border-t border-border bg-muted/30 px-4 py-2.5 text-xs text-muted-foreground">
-              {filtered.length} fornecedor{filtered.length !== 1 ? 'es' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-        )}
+        <DataTable<Fornecedor>
+          data={filtered}
+          columns={fornecedorColumns}
+          isLoading={isLoading}
+          emptyMessage="Nenhum fornecedor encontrado."
+          emptyIcon={<Building2 className="h-12 w-12 opacity-30" />}
+          renderActions={(f) => (
+            <>
+              <Button variant="ghost" size="icon" onClick={() => openEdit(f)} title="Editar">
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDeleteConfirmId(f.id)}
+                className="text-destructive hover:text-destructive"
+                title="Excluir"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          footerContent={
+            <span>{filtered.length} fornecedor{filtered.length !== 1 ? 'es' : ''} encontrado{filtered.length !== 1 ? 's' : ''}</span>
+          }
+        />
       </div>
 
       {/* Delete confirmation dialog */}

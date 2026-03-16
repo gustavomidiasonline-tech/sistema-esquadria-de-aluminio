@@ -108,7 +108,7 @@ export function ProjetosTab() {
       <Dialog open={!!detailId} onOpenChange={() => setDetailId(null)}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Lista de Corte - {(selectedProjeto as any)?.modelos_esquadria?.nome}</DialogTitle>
+            <DialogTitle>Lista de Corte - {(selectedProjeto as ProjetoWithJoins)?.modelos_esquadria?.nome}</DialogTitle>
             <DialogDescription>
               {selectedProjeto?.largura_mm} x {selectedProjeto?.altura_mm} mm
             </DialogDescription>

@@ -45,10 +45,10 @@ const Orcamentos = () => {
 
   type SaveValues = { cliente_id: string; descricao?: string; valor_total?: string; validade?: string; observacoes?: string };
   const handleSave = async (v: SaveValues) => {
-    try { await insertMutation.mutateAsync({ cliente_id: v.cliente_id, descricao: v.descricao, valor_total: Number(v.valor_total) || 0, validade: v.validade || null, observacoes: v.observacoes, created_by: user?.id }); toast.success('Orçamento criado!'); setDialogOpen(false); } catch {}
+    try { await insertMutation.mutateAsync({ cliente_id: v.cliente_id, descricao: v.descricao, valor_total: Number(v.valor_total) || 0, validade: v.validade || null, observacoes: v.observacoes, created_by: user?.id }); toast.success('Orçamento criado!'); setDialogOpen(false); } catch { /* mutation onError handles toast */ }
   };
   const handleStatusChange = async (id: string, status: string) => {
-    try { await updateMutation.mutateAsync({ id, values: { status } }); toast.success('Status atualizado!'); } catch {}
+    try { await updateMutation.mutateAsync({ id, values: { status } }); toast.success('Status atualizado!'); } catch { /* mutation onError handles toast */ }
   };
 
   const handleAddItem = async () => {

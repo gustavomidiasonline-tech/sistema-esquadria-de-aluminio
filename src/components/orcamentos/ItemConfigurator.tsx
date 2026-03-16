@@ -11,6 +11,37 @@ import { usePricingConfig, VIDRO_TYPES, type CostBreakdown } from "@/hooks/usePr
 import { perfisAluminio } from "@/data/perfis-aluminio";
 import { cn } from "@/lib/utils";
 
+interface ProdutoRecord {
+  id: string;
+  nome: string;
+  tipo?: string;
+  ativo?: boolean;
+  largura_padrao?: number;
+  altura_padrao?: number;
+  folhas?: number;
+  [key: string]: unknown;
+}
+
+interface PerfilDBRecord {
+  id: string;
+  produto_id: string;
+  codigo: string;
+  descricao?: string;
+  posicao?: string;
+  medida: number;
+  quantidade: number;
+  peso_metro?: number;
+  [key: string]: unknown;
+}
+
+interface CostDisplayItem {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+  color: string;
+  bold?: boolean;
+}
+
 interface ItemConfiguratorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -58,7 +89,7 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
     setMarkup(config.markup_padrao);
   }, [config.markup_padrao]);
 
-  const selectedProd = produtos.find((p: any) => p.id === produtoId) as any;
+  const selectedProd = (produtos as ProdutoRecord[]).find((p) => p.id === produtoId);
 
   // When product is selected, fill defaults
   useEffect(() => {
@@ -72,7 +103,7 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
   // Get profiles for this product from DB
   const productPerfis = useMemo(() => {
     if (!produtoId) return [];
-    return perfisDB.filter((p: any) => p.produto_id === produtoId);
+    return (perfisDB as PerfilDBRecord[]).filter((p) => p.produto_id === produtoId);
   }, [produtoId, perfisDB]);
 
   // If no DB profiles, try to match from local data
@@ -106,7 +137,7 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
       const ratioL = larg / baseLarg;
       const ratioA = alt / baseAlt;
 
-      return productPerfis.map((p: any) => {
+      return productPerfis.map((p) => {
         const pos = (p.posicao || "").toLowerCase();
         let newMedida = p.medida;
         if (pos.includes("largura") || pos.includes("superior") || pos.includes("inferior") || pos.includes("travessa")) {

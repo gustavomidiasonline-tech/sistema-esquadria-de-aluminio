@@ -19,6 +19,7 @@ import {
 import { FileUpload } from "@/components/shared/FileUpload";
 import type { Tables } from "@/integrations/supabase/types";
 import type { Database } from "@/integrations/supabase/types";
+import { DataTable, type ColumnDef } from "@/components/tables";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -217,6 +218,88 @@ export default function NotasFiscais() {
     );
   };
 
+  // ---- Column definitions ----
+
+  const nfColumns: ColumnDef<NotaFiscalWithCliente>[] = [
+    {
+      key: "numero",
+      header: "Numero",
+      render: (nf) => (
+        <p className="font-medium text-foreground">{nf.numero || "Sem numero"}</p>
+      ),
+    },
+    {
+      key: "tipo",
+      header: "Tipo",
+      render: (nf) => <>{getTipoBadge(nf.tipo)}</>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (nf) => <>{getStatusBadge(nf.status)}</>,
+    },
+    {
+      key: "cliente_id",
+      header: "Cliente",
+      render: (nf) => (
+        <span className="text-muted-foreground">{nf.clientes?.nome || "--"}</span>
+      ),
+    },
+    {
+      key: "data_emissao",
+      header: "Emissao",
+      render: (nf) => (
+        <span className="text-muted-foreground text-xs">
+          {nf.data_emissao
+            ? new Date(nf.data_emissao).toLocaleDateString("pt-BR")
+            : "--"}
+        </span>
+      ),
+    },
+    {
+      key: "valor",
+      header: "Valor",
+      align: "right",
+      render: (nf) => (
+        <span className="font-semibold text-foreground">{fmt(Number(nf.valor))}</span>
+      ),
+    },
+    {
+      key: "pdf_url",
+      header: "Arquivos",
+      render: (nf) => {
+        const hasFiles = nf.pdf_url || nf.xml_url;
+        if (!hasFiles) {
+          return <span className="text-xs text-muted-foreground/50">--</span>;
+        }
+        return (
+          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            {nf.pdf_url && (
+              <a
+                href={nf.pdf_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-6 px-2 rounded border border-border flex items-center gap-1 hover:bg-muted transition-colors text-[10px] font-medium text-foreground"
+              >
+                <Download className="h-3 w-3" /> PDF
+              </a>
+            )}
+            {nf.xml_url && (
+              <a
+                href={nf.xml_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-6 px-2 rounded border border-border flex items-center gap-1 hover:bg-muted transition-colors text-[10px] font-medium text-foreground"
+              >
+                <Download className="h-3 w-3" /> XML
+              </a>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+
   // ---- Render ----
 
   return (
@@ -305,102 +388,27 @@ export default function NotasFiscais() {
         </div>
 
         {/* Table */}
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Receipt className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p>Nenhuma nota fiscal encontrada.</p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-border overflow-hidden bg-card">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/40 border-b border-border">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Numero</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tipo</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cliente</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Emissao</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Valor</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Arquivos</th>
-                    <th className="px-4 py-3 w-10" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {filtered.map((nf) => {
-                    const hasFiles = nf.pdf_url || nf.xml_url;
-                    return (
-                      <tr
-                        key={nf.id}
-                        className="hover:bg-muted/30 transition-colors cursor-pointer"
-                        onClick={() => setDetailNF(nf)}
-                      >
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-foreground">{nf.numero || "Sem numero"}</p>
-                        </td>
-                        <td className="px-4 py-3">{getTipoBadge(nf.tipo)}</td>
-                        <td className="px-4 py-3">{getStatusBadge(nf.status)}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{nf.clientes?.nome || "--"}</td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">
-                          {nf.data_emissao
-                            ? new Date(nf.data_emissao).toLocaleDateString("pt-BR")
-                            : "--"}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-foreground">
-                          {fmt(Number(nf.valor))}
-                        </td>
-                        <td className="px-4 py-3">
-                          {hasFiles ? (
-                            <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                              {nf.pdf_url && (
-                                <a
-                                  href={nf.pdf_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="h-6 px-2 rounded border border-border flex items-center gap-1 hover:bg-muted transition-colors text-[10px] font-medium text-foreground"
-                                >
-                                  <Download className="h-3 w-3" /> PDF
-                                </a>
-                              )}
-                              {nf.xml_url && (
-                                <a
-                                  href={nf.xml_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="h-6 px-2 rounded border border-border flex items-center gap-1 hover:bg-muted transition-colors text-[10px] font-medium text-foreground"
-                                >
-                                  <Download className="h-3 w-3" /> XML
-                                </a>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground/50">--</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <FileText className="h-3.5 w-3.5" />
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {/* Summary footer */}
-            <div className="border-t border-border bg-muted/30 px-4 py-2.5 flex items-center justify-between text-xs text-muted-foreground">
+        <DataTable<NotaFiscalWithCliente>
+          data={filtered}
+          columns={nfColumns}
+          isLoading={isLoading}
+          emptyMessage="Nenhuma nota fiscal encontrada."
+          emptyIcon={<Receipt className="h-12 w-12 opacity-30" />}
+          onRowClick={(nf) => setDetailNF(nf)}
+          renderActions={(nf) => (
+            <Button variant="ghost" size="icon" className="h-7 w-7">
+              <FileText className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          footerContent={
+            <div className="flex items-center justify-between w-full">
               <span>{filtered.length} nota{filtered.length !== 1 ? "s" : ""} fiscal{filtered.length !== 1 ? "is" : ""}</span>
               <span className="font-semibold text-foreground">
                 Total: {fmt(filtered.reduce((s, n) => s + Number(n.valor), 0))}
               </span>
             </div>
-          </div>
-        )}
+          }
+        />
       </div>
 
       {/* Detail dialog */}

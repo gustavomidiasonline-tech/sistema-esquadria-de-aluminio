@@ -1,100 +1,153 @@
-import { TrendingUp, Package, FileText, BarChart3, Wrench, DollarSign, AlertTriangle } from "lucide-react";
+import { TrendingUp, Package, FileText, BarChart3, DollarSign, AlertTriangle, Clock, Users, ArrowRight } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, differenceInDays, isPast } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
+
+const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+
+const statusColors: Record<string, string> = {
+  pendente: "bg-amber-500",
+  em_producao: "bg-blue-500",
+  pronto: "bg-emerald-500",
+  entregue: "bg-green-600",
+  cancelado: "bg-red-500",
+  aprovado: "bg-emerald-500",
+  enviado: "bg-blue-500",
+  rascunho: "bg-gray-400",
+  rejeitado: "bg-red-500",
+};
 
 const Index = () => {
   const { profile } = useAuth();
-  const { data: pedidos = [] } = useSupabaseQuery("pedidos", { orderBy: { column: "created_at", ascending: false } });
-  const { data: orcamentos = [] } = useSupabaseQuery("orcamentos");
-  const { data: clientes = [] } = useSupabaseQuery("clientes");
-  const { data: servicos = [] } = useSupabaseQuery("servicos");
-  const { data: contasReceber = [] } = useSupabaseQuery("contas_receber");
-  const { data: contasPagar = [] } = useSupabaseQuery("contas_pagar");
+  const navigate = useNavigate();
 
-  const totalPedidos = pedidos.reduce((sum: number, p) => sum + (Number(p.valor_total) || 0), 0);
-  const totalOrcamentos = orcamentos.reduce((sum: number, o) => sum + (Number(o.valor_total) || 0), 0);
-  const totalReceber = contasReceber.reduce((s: number, c) => s + Number(c.valor || 0), 0);
-  const totalPagar = contasPagar.reduce((s: number, c) => s + Number(c.valor || 0), 0);
-  const saldo = totalReceber - totalPagar;
+  const { data: orcamentos = [] } = useQuery({
+    queryKey: ["dashboard-orcamentos"],
+    queryFn: async () => {
+      const { data } = await supabase.from("orcamentos").select("id, numero, status, valor_total, created_at, clientes(nome)").order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
 
-  const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ["dashboard-pedidos"],
+    queryFn: async () => {
+      const { data } = await supabase.from("pedidos").select("id, numero, status, valor_total, data_entrega, created_at, clientes(nome)").order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
 
-  // Overdue notifications
-  const pedidosAtrasados = pedidos.filter((p) => p.data_entrega && isPast(parseISO(p.data_entrega)) && p.status !== "entregue" && p.status !== "cancelado");
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["dashboard-clientes"],
+    queryFn: async () => {
+      const { data } = await supabase.from("clientes").select("id").limit(1000);
+      return data ?? [];
+    },
+  });
+
+  const { data: contasReceber = [] } = useQuery({
+    queryKey: ["dashboard-contas-receber"],
+    queryFn: async () => {
+      const { data } = await supabase.from("contas_receber").select("id, valor, status, data_vencimento");
+      return data ?? [];
+    },
+  });
+
+  const { data: contasPagar = [] } = useQuery({
+    queryKey: ["dashboard-contas-pagar"],
+    queryFn: async () => {
+      const { data } = await supabase.from("contas_pagar").select("id, valor, status, data_vencimento, descricao");
+      return data ?? [];
+    },
+  });
+
+  // KPI calculations
+  const now = new Date();
+  const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  const orcMes = orcamentos.filter((o) => o.created_at >= inicioMes);
+  const orcAprovadosMes = orcMes.filter((o) => o.status === "aprovado");
+  const faturamentoMes = orcAprovadosMes.reduce((s, o) => s + (Number(o.valor_total) || 0), 0);
+  const orcPendentes = orcamentos.filter((o) => o.status === "enviado" || o.status === "rascunho").length;
+  const emProducao = pedidos.filter((p) => p.status === "em_producao" || p.status === "pendente").length;
+
+  // Alertas
+  const pedidosAtrasados = pedidos.filter(
+    (p) => p.data_entrega && isPast(parseISO(p.data_entrega)) && p.status !== "entregue" && p.status !== "cancelado"
+  );
   const contasVencidas = [
-    ...contasPagar.filter((c) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente").map((c) => ({ ...c, tipo: "pagar" as const })),
-    ...contasReceber.filter((c) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente").map((c) => ({ ...c, tipo: "receber" as const })),
+    ...contasPagar.filter((c) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente"),
+    ...contasReceber.filter((c) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente"),
   ];
-  const servicosAtrasados = servicos.filter((s) => s.data_agendada && isPast(parseISO(s.data_agendada)) && s.status !== "concluido" && s.status !== "cancelado");
+  const totalAlertas = pedidosAtrasados.length + contasVencidas.length;
 
-  const notifications = [
-    ...pedidosAtrasados.map((p) => ({
-      id: p.id, type: "pedido" as const,
-      message: `Pedido #${p.numero} atrasado ${Math.abs(differenceInDays(parseISO(p.data_entrega!), new Date()))} dias`,
-      detail: `Entrega prevista: ${format(parseISO(p.data_entrega!), "dd/MM/yyyy")}`,
-    })),
-    ...contasVencidas.map((c) => ({
-      id: c.id, type: "conta" as const,
-      message: `Conta a ${c.tipo} vencida: ${c.descricao}`,
-      detail: `Vencimento: ${format(parseISO(c.data_vencimento), "dd/MM/yyyy")} · ${fmt(Number(c.valor))}`,
-    })),
-    ...servicosAtrasados.map((s) => ({
-      id: s.id, type: "servico" as const,
-      message: `Serviço #${s.numero} atrasado ${Math.abs(differenceInDays(parseISO(s.data_agendada!), new Date()))} dias`,
-      detail: `Agendado: ${format(parseISO(s.data_agendada!), "dd/MM/yyyy")}`,
-    })),
-  ];
-
-  const kpiCards = [
-    { title: "Vendas", value: fmt(totalPedidos), change: `${pedidos.length} pedidos`, subtitle: `${clientes.length} clientes`, highlight: true, icon: DollarSign },
-    { title: "Pedidos", value: String(pedidos.length), change: `${pedidos.filter((p) => p.status === "entregue").length} entregues`, subtitle: `${pedidos.filter((p) => p.status === "pendente").length} pendentes`, highlight: false, icon: Package },
-    { title: "Orçamentos", value: fmt(totalOrcamentos), change: `${orcamentos.length} total`, subtitle: `${orcamentos.filter((o) => o.status === "aprovado").length} aprovados`, highlight: false, icon: FileText },
-    { title: "Serviços", value: String(servicos.length), change: `${servicos.filter((s) => s.status === "em_andamento").length} em andamento`, subtitle: `${servicos.filter((s) => s.status === "concluido").length} concluídos`, highlight: false, icon: Wrench },
-    { title: "A Receber", value: fmt(totalReceber), change: `${contasReceber.length} contas`, subtitle: `${contasReceber.filter((c) => c.status === "pago").length} pagas`, highlight: false, icon: TrendingUp },
-    { title: "Saldo", value: fmt(saldo), change: saldo >= 0 ? "Positivo" : "Negativo", subtitle: `${fmt(totalPagar)} a pagar`, highlight: false, icon: BarChart3 },
-  ];
-
-  const recentPedidos = pedidos.slice(0, 5);
+  // Pipeline stats
+  const statusCounts: Record<string, number> = {};
+  orcamentos.forEach((o) => {
+    statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+  });
+  const maxStatusCount = Math.max(...Object.values(statusCounts), 1);
 
   const getGreeting = () => {
-    const hour = new Date().getHours();
+    const hour = now.getHours();
     if (hour < 12) return "Bom dia";
     if (hour < 18) return "Boa tarde";
     return "Boa noite";
   };
 
+  const kpiCards: { title: string; value: string; subtitle: string; icon: LucideIcon; color: string; bg: string }[] = [
+    { title: "Faturamento do Mes", value: fmt(faturamentoMes), subtitle: `${orcAprovadosMes.length} orcamentos aprovados`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-500/10" },
+    { title: "Orcamentos Pendentes", value: String(orcPendentes), subtitle: `de ${orcamentos.length} total`, icon: FileText, color: "text-blue-600", bg: "bg-blue-500/10" },
+    { title: "Em Producao", value: String(emProducao), subtitle: `${pedidos.filter((p) => p.status === "entregue").length} entregues`, icon: Package, color: "text-primary", bg: "bg-primary/10" },
+    { title: "Alertas", value: String(totalAlertas), subtitle: `${pedidosAtrasados.length} pedidos atrasados`, icon: AlertTriangle, color: totalAlertas > 0 ? "text-destructive" : "text-emerald-600", bg: totalAlertas > 0 ? "bg-destructive/10" : "bg-emerald-500/10" },
+  ];
+
+  const recentOrcamentos = orcamentos.slice(0, 5);
+  const recentPedidos = pedidos.slice(0, 5);
+
   return (
     <AppLayout>
       <div className="space-y-6 max-w-7xl">
+        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Olá, {getGreeting()}, {profile?.nome || "Usuário"}.
+            {getGreeting()}, {profile?.nome || "Usuario"}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
+            {now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })} - {clientes.length} clientes cadastrados
           </p>
         </div>
 
-        {/* Notifications */}
-        {notifications.length > 0 && (
+        {/* Alertas */}
+        {totalAlertas > 0 && (
           <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
               <h3 className="text-sm font-bold text-destructive">
-                {notifications.length} alerta{notifications.length > 1 ? "s" : ""} de atenção
+                {totalAlertas} alerta{totalAlertas > 1 ? "s" : ""} de atencao
               </h3>
             </div>
             <div className="space-y-2">
-              {notifications.map((n) => (
-                <div key={n.id} className="flex items-start gap-3 bg-background/50 rounded-lg p-3">
-                  <div className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${
-                    n.type === "pedido" ? "bg-warning" : n.type === "conta" ? "bg-destructive" : "bg-primary"
-                  }`} />
+              {pedidosAtrasados.slice(0, 3).map((p) => (
+                <div key={p.id} className="flex items-start gap-3 bg-background/50 rounded-lg p-3">
+                  <div className="h-2 w-2 rounded-full mt-1.5 shrink-0 bg-amber-500" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">{n.message}</p>
-                    <p className="text-xs text-muted-foreground">{n.detail}</p>
+                    <p className="text-sm font-medium text-foreground">Pedido #{p.numero} atrasado {Math.abs(differenceInDays(parseISO(p.data_entrega!), now))} dias</p>
+                    <p className="text-xs text-muted-foreground">Entrega prevista: {format(parseISO(p.data_entrega!), "dd/MM/yyyy")}</p>
+                  </div>
+                </div>
+              ))}
+              {contasVencidas.slice(0, 3).map((c) => (
+                <div key={c.id} className="flex items-start gap-3 bg-background/50 rounded-lg p-3">
+                  <div className="h-2 w-2 rounded-full mt-1.5 shrink-0 bg-destructive" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Conta vencida: {fmt(Number(c.valor))}</p>
+                    <p className="text-xs text-muted-foreground">Vencimento: {format(parseISO(c.data_vencimento), "dd/MM/yyyy")}</p>
                   </div>
                 </div>
               ))}
@@ -102,48 +155,176 @@ const Index = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {kpiCards.map((card) => (
-            <div key={card.title} className={`rounded-xl p-5 ${card.highlight ? "stat-card-blue" : "bg-card border border-border shadow-sm"}`}>
-              <div className="flex items-center justify-between mb-1">
-                <p className={`text-sm font-medium ${card.highlight ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{card.title}</p>
-                <card.icon className={`h-4 w-4 ${card.highlight ? "text-primary-foreground/60" : "text-primary"}`} />
-              </div>
-              <p className={`text-2xl font-bold ${card.highlight ? "text-primary-foreground" : "text-foreground"}`}>{card.value}</p>
-              <div className="flex items-center justify-between mt-2">
-                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${card.highlight ? "bg-success/30 text-success-foreground" : "bg-success/10 text-success"}`}>
-                  <TrendingUp className="h-3 w-3" /> {card.change}
-                </span>
-                <p className={`text-xs ${card.highlight ? "text-primary-foreground/60" : "text-muted-foreground"}`}>{card.subtitle}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-card border border-border rounded-xl shadow-sm">
-          <div className="flex items-center justify-between p-5 border-b border-border">
-            <h3 className="text-base font-semibold text-foreground">Pedidos recentes</h3>
-          </div>
-          <div className="divide-y divide-border">
-            {recentPedidos.length === 0 ? (
-              <div className="px-5 py-8 text-center text-muted-foreground text-sm">Nenhum pedido ainda.</div>
-            ) : (
-              recentPedidos.map((order) => (
-                <div key={order.id} className="flex items-center justify-between px-5 py-4">
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-bold text-primary">#{order.numero}</span>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{order.observacoes || "Pedido"}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{order.status?.replace("_", " ")}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-foreground">{fmt(Number(order.valor_total || 0))}</p>
-                    <p className="text-xs text-muted-foreground">{format(parseISO(order.created_at), "dd/MM/yyyy")}</p>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {kpiCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div key={card.title} className="bg-card border border-border rounded-xl p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", card.bg)}>
+                    <Icon className={cn("h-5 w-5", card.color)} />
                   </div>
                 </div>
-              ))
-            )}
+                <p className="text-2xl font-bold text-foreground">{card.value}</p>
+                <p className="text-xs text-muted-foreground mt-1">{card.subtitle}</p>
+                <p className="text-[10px] font-medium text-muted-foreground/80 mt-0.5">{card.title}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Row 2: Ultimos orcamentos + Pipeline */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Ultimos orcamentos */}
+          <div className="bg-card border border-border rounded-xl shadow-sm">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <h3 className="text-base font-semibold text-foreground">Ultimos Orcamentos</h3>
+              <button onClick={() => navigate("/orcamentos")} className="text-xs text-primary hover:underline flex items-center gap-1">
+                Ver todos <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+            <div className="divide-y divide-border">
+              {recentOrcamentos.length === 0 ? (
+                <div className="px-5 py-8 text-center text-muted-foreground text-sm">Nenhum orcamento ainda.</div>
+              ) : (
+                recentOrcamentos.map((orc) => (
+                  <div key={orc.id} className="flex items-center justify-between px-5 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-primary">#{orc.numero}</span>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{(orc.clientes as { nome: string } | null)?.nome || "Sem cliente"}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className={cn("h-1.5 w-1.5 rounded-full", statusColors[orc.status] || "bg-gray-400")} />
+                          <span className="text-[10px] text-muted-foreground capitalize">{orc.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-foreground">{fmt(Number(orc.valor_total || 0))}</p>
+                      <p className="text-[10px] text-muted-foreground">{format(parseISO(orc.created_at), "dd/MM")}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Pipeline de status */}
+          <div className="bg-card border border-border rounded-xl shadow-sm">
+            <div className="p-5 border-b border-border">
+              <h3 className="text-base font-semibold text-foreground">Pipeline de Orcamentos</h3>
+            </div>
+            <div className="p-5 space-y-3">
+              {Object.keys(statusCounts).length === 0 ? (
+                <p className="text-center text-muted-foreground text-sm py-4">Sem dados.</p>
+              ) : (
+                Object.entries(statusCounts).map(([status, count]) => {
+                  const pct = Math.round((count / maxStatusCount) * 100);
+                  return (
+                    <div key={status} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-foreground capitalize">{status}</span>
+                        <span className="text-xs font-bold text-muted-foreground">{count}</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={cn("h-full rounded-full transition-all duration-500", statusColors[status] || "bg-primary")}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Ultimos pedidos + Avisos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-card border border-border rounded-xl shadow-sm">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <h3 className="text-base font-semibold text-foreground">Ultimos Pedidos</h3>
+              <button onClick={() => navigate("/pedidos")} className="text-xs text-primary hover:underline flex items-center gap-1">
+                Ver todos <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+            <div className="divide-y divide-border">
+              {recentPedidos.length === 0 ? (
+                <div className="px-5 py-8 text-center text-muted-foreground text-sm">Nenhum pedido ainda.</div>
+              ) : (
+                recentPedidos.map((p) => {
+                  const atrasado = p.data_entrega && isPast(parseISO(p.data_entrega)) && p.status !== "entregue" && p.status !== "cancelado";
+                  return (
+                    <div key={p.id} className="flex items-center justify-between px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <span className={cn("text-sm font-bold", atrasado ? "text-destructive" : "text-primary")}>#{p.numero}</span>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{(p.clientes as { nome: string } | null)?.nome || "Pedido"}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={cn("h-1.5 w-1.5 rounded-full", statusColors[p.status ?? ""] || "bg-gray-400")} />
+                            <span className="text-[10px] text-muted-foreground capitalize">{p.status?.replace("_", " ")}</span>
+                            {atrasado && <span className="text-[10px] text-destructive font-semibold">ATRASADO</span>}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-foreground">{fmt(Number(p.valor_total || 0))}</p>
+                        {p.data_entrega && <p className="text-[10px] text-muted-foreground">{format(parseISO(p.data_entrega), "dd/MM")}</p>}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* System Alerts */}
+          <div className="bg-card border border-border rounded-xl shadow-sm">
+            <div className="p-5 border-b border-border">
+              <h3 className="text-base font-semibold text-foreground">Resumo do Sistema</h3>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{clientes.length} clientes</p>
+                  <p className="text-[10px] text-muted-foreground">Total cadastrados</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <BarChart3 className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{orcMes.length} orcamentos este mes</p>
+                  <p className="text-[10px] text-muted-foreground">{orcAprovadosMes.length} aprovados</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{pedidos.filter((p) => p.status === "pendente").length} pedidos aguardando</p>
+                  <p className="text-[10px] text-muted-foreground">Iniciar producao</p>
+                </div>
+              </div>
+              {contasVencidas.length > 0 && (
+                <div className="flex items-center gap-3 p-3 bg-destructive/5 rounded-lg border border-destructive/20">
+                  <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-destructive">{contasVencidas.length} contas vencidas</p>
+                    <p className="text-[10px] text-muted-foreground">Requer atencao</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

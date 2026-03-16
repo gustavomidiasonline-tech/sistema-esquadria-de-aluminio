@@ -43,7 +43,9 @@ const ContasPagar = () => {
       toast.success("Conta adicionada!");
       setDialogOpen(false);
       setForm({ fornecedor: "", descricao: "", valor: "", data_vencimento: "" });
-    } catch {}
+    } catch {
+      // mutation onError handles toast
+    }
   };
 
   return (

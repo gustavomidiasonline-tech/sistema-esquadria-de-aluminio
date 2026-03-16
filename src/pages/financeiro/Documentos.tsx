@@ -45,7 +45,9 @@ const Documentos = () => {
       setDialogOpen(false);
       setForm({ titulo: "", tipo: "", descricao: "", cliente_id: "" });
       setFileData({ url: "", name: "", size: 0 });
-    } catch {}
+    } catch {
+      // mutation onError handles toast
+    }
   };
 
   const formatSize = (bytes: number | null) => {

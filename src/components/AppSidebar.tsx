@@ -30,6 +30,7 @@
   GitBranch,
   Settings,
   Warehouse,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -59,6 +60,7 @@ const mainItemsSecondary = [
   { title: "Agenda", url: "/agenda", icon: Calendar },
   { title: "Produtos", url: "/produtos", icon: Package },
   { title: "Estoque", url: "/estoque", icon: Warehouse },
+  { title: "Lista de Materiais", url: "/bom", icon: ClipboardList },
   { title: "Preço dos itens", url: "/precos", icon: DollarSign },
   { title: "Fornecedores", url: "/fornecedores", icon: Truck },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },

@@ -19,6 +19,7 @@ import {
   CheckCircle2, XCircle, Clock, Loader2, DollarSign, FileText,
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
+import { DataTable, type ColumnDef } from "@/components/tables";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -197,6 +198,70 @@ const Contratos = () => {
     );
   };
 
+  // ---- Column definitions ----
+
+  const contratoColumns: ColumnDef<ContratoWithCliente>[] = [
+    {
+      key: "titulo",
+      header: "Titulo",
+      render: (c) => <p className="font-medium text-foreground">{c.titulo}</p>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (c) => <>{getStatusBadge(c.status)}</>,
+    },
+    {
+      key: "cliente_id",
+      header: "Cliente",
+      render: (c) => (
+        <span className="text-muted-foreground text-xs">{c.clientes?.nome || "--"}</span>
+      ),
+    },
+    {
+      key: "data_inicio",
+      header: "Vigencia",
+      render: (c) => {
+        if (!c.data_inicio || !c.data_fim) {
+          return <span className="text-xs text-muted-foreground/50">Sem datas</span>;
+        }
+        const vigencia = calcVigencia(c.data_inicio, c.data_fim);
+        return (
+          <div className="space-y-1 min-w-[200px]">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+              <span>{format(parseISO(c.data_inicio), "dd/MM/yy")}</span>
+              <span>{format(parseISO(c.data_fim), "dd/MM/yy")}</span>
+            </div>
+            <div className="h-2 rounded-full overflow-hidden bg-muted">
+              <div
+                className={`h-full rounded-full transition-all ${vigencia.color}`}
+                style={{ width: `${vigencia.percent}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground text-right">
+              {vigencia.daysLeft > 0 ? `${vigencia.daysLeft} dias restantes` : "Vencido"}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      key: "valor",
+      header: "Valor",
+      align: "right",
+      render: (c) => (
+        <span className="font-semibold text-foreground">
+          {c.valor ? fmt(Number(c.valor)) : "--"}
+        </span>
+      ),
+    },
+    {
+      key: "data_fim",
+      header: "Alerta",
+      render: (c) => <>{c.status === "ativo" ? getVencimentoBadge(c.data_fim) : null}</>,
+    },
+  ];
+
   // ---- Render ----
 
   return (
@@ -273,103 +338,38 @@ const Contratos = () => {
         </div>
 
         {/* Table */}
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <FileCheck className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p>Nenhum contrato encontrado.</p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-border overflow-hidden bg-card">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/40 border-b border-border">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Titulo</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cliente</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vigencia</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Valor</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Alerta</th>
-                    <th className="px-4 py-3 w-20" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {filtered.map((c: ContratoWithCliente) => {
-                    const vigencia = calcVigencia(c.data_inicio, c.data_fim);
-                    const vencBadge = c.status === "ativo" ? getVencimentoBadge(c.data_fim) : null;
-                    return (
-                      <tr
-                        key={c.id}
-                        className="hover:bg-muted/30 transition-colors cursor-pointer"
-                        onClick={() => setDetailContrato(c)}
-                      >
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-foreground">{c.titulo}</p>
-                        </td>
-                        <td className="px-4 py-3">{getStatusBadge(c.status)}</td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">
-                          {c.clientes?.nome || "--"}
-                        </td>
-                        <td className="px-4 py-3 min-w-[200px]">
-                          {c.data_inicio && c.data_fim ? (
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                                <span>{format(parseISO(c.data_inicio), "dd/MM/yy")}</span>
-                                <span>{format(parseISO(c.data_fim), "dd/MM/yy")}</span>
-                              </div>
-                              <div className="h-2 rounded-full overflow-hidden bg-muted">
-                                <div
-                                  className={`h-full rounded-full transition-all ${vigencia.color}`}
-                                  style={{ width: `${vigencia.percent}%` }}
-                                />
-                              </div>
-                              <p className="text-[10px] text-muted-foreground text-right">
-                                {vigencia.daysLeft > 0 ? `${vigencia.daysLeft} dias restantes` : "Vencido"}
-                              </p>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground/50">Sem datas</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-foreground">
-                          {c.valor ? fmt(Number(c.valor)) : "--"}
-                        </td>
-                        <td className="px-4 py-3">{vencBadge}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                            {c.arquivo_url ? (
-                              <a
-                                href={c.arquivo_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-7 px-2 rounded border border-border flex items-center gap-1 hover:bg-muted transition-colors text-[10px] font-medium text-foreground"
-                              >
-                                <Download className="h-3 w-3" /> PDF
-                              </a>
-                            ) : (
-                              <Badge variant="secondary" className="text-[10px]">Sem arquivo</Badge>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {/* Footer */}
-            <div className="border-t border-border bg-muted/30 px-4 py-2.5 flex items-center justify-between text-xs text-muted-foreground">
+        <DataTable<ContratoWithCliente>
+          data={filtered as ContratoWithCliente[]}
+          columns={contratoColumns}
+          isLoading={isLoading}
+          emptyMessage="Nenhum contrato encontrado."
+          emptyIcon={<FileCheck className="h-12 w-12 opacity-30" />}
+          onRowClick={(c) => setDetailContrato(c)}
+          renderActions={(c) => (
+            <>
+              {c.arquivo_url ? (
+                <a
+                  href={c.arquivo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-7 px-2 rounded border border-border flex items-center gap-1 hover:bg-muted transition-colors text-[10px] font-medium text-foreground"
+                >
+                  <Download className="h-3 w-3" /> PDF
+                </a>
+              ) : (
+                <Badge variant="secondary" className="text-[10px]">Sem arquivo</Badge>
+              )}
+            </>
+          )}
+          footerContent={
+            <div className="flex items-center justify-between w-full">
               <span>{filtered.length} contrato{filtered.length !== 1 ? "s" : ""}</span>
               <span className="font-semibold text-foreground">
                 Valor total: {fmt(filtered.reduce((s, c: ContratoWithCliente) => s + (Number(c.valor) || 0), 0))}
               </span>
             </div>
-          </div>
-        )}
+          }
+        />
       </div>
 
       {/* Detail dialog */}

@@ -45,7 +45,9 @@ const ContasReceber = () => {
       toast.success("Conta adicionada!");
       setDialogOpen(false);
       setForm({ descricao: "", valor: "", data_vencimento: "" });
-    } catch {}
+    } catch {
+      // mutation onError handles toast
+    }
   };
 
   return (

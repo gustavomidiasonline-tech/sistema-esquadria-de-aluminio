@@ -32,7 +32,9 @@ const EmissaoNF = () => {
       });
       toast.success("Nota fiscal emitida com sucesso!");
       setForm({ cliente_id: "", tipo: "nfe", valor: "", descricao: "", numero: "" });
-    } catch {}
+    } catch {
+      // mutation onError handles toast
+    }
   };
 
   return (

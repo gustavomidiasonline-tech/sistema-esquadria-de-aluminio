@@ -42,7 +42,7 @@ export interface ResultadoOtimizacao {
 export function avaliarFormula(formula: string, largura: number, altura: number, folhas: number): number {
   try {
     // Replace variables
-    let expr = formula
+    const expr = formula
       .replace(/largura_total/g, String(largura))
       .replace(/altura_total/g, String(altura))
       .replace(/largura/g, String(largura))

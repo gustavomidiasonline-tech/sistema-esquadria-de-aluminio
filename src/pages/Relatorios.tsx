@@ -1,11 +1,14 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area } from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, FileText, CheckSquare, Users, Wrench } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, FileText, CheckSquare, Users, Wrench, MapPin } from "lucide-react";
 import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { parseISO, format, startOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { BOMService } from "@/services/bom.service";
 import type { LucideIcon } from "lucide-react";
 
 const StatCard = ({ icon: Icon, label, value, change, positive }: { icon: LucideIcon; label: string; value: string; change: string; positive: boolean }) => (
@@ -26,292 +29,379 @@ const StatCard = ({ icon: Icon, label, value, change, positive }: { icon: Lucide
 
 const fmtCur = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const BAR_COLORS = ["hsl(var(--primary))", "hsl(142, 72%, 42%)", "hsl(38, 92%, 50%)", "hsl(280, 60%, 55%)", "hsl(0, 72%, 51%)", "hsl(180, 50%, 45%)"];
+
 const Relatorios = () => {
   const { data: pedidos = [] } = useSupabaseQuery("pedidos");
   const { data: orcamentos = [] } = useSupabaseQuery("orcamentos");
   const { data: clientes = [] } = useSupabaseQuery("clientes");
   const { data: servicos = [] } = useSupabaseQuery("servicos");
 
+  const { data: orcItens = [] } = useQuery({
+    queryKey: ["relatorios-orc-itens"],
+    queryFn: async () => {
+      const { data } = await supabase.from("orcamento_itens").select("id, descricao, largura, altura, quantidade, orcamento_id");
+      return data ?? [];
+    },
+  });
+
+  const { data: clientesOrc = [] } = useQuery({
+    queryKey: ["relatorios-clientes-orc"],
+    queryFn: async () => {
+      const { data } = await supabase.from("orcamentos").select("id, cliente_id, valor_total, status, clientes(nome, cidade, estado)");
+      return data ?? [];
+    },
+  });
+
   const totalFaturamento = pedidos.reduce((s: number, p) => s + (Number(p.valor_total) || 0), 0);
   const pedidosConcluidos = pedidos.filter((p) => p.status === "entregue").length;
   const orcAprovados = orcamentos.filter((o) => o.status === "aprovado").length;
-  const orcPendentes = orcamentos.filter((o) => o.status === "enviado" || o.status === "rascunho").length;
-  const orcRejeitados = orcamentos.filter((o) => o.status === "rejeitado").length;
 
-  // Group pedidos by month
-  const pedidosByMonth: Record<string, { total: number; concluidos: number; andamento: number }> = {};
-  pedidos.forEach((p) => {
-    const month = format(parseISO(p.created_at), "MMM");
-    if (!pedidosByMonth[month]) pedidosByMonth[month] = { total: 0, concluidos: 0, andamento: 0 };
-    pedidosByMonth[month].total += Number(p.valor_total) || 0;
-    if (p.status === "entregue") pedidosByMonth[month].concluidos++;
-    else pedidosByMonth[month].andamento++;
-  });
-
-  const vendasMensal = Object.entries(pedidosByMonth).map(([mes, data]) => ({ mes, valor: data.total }));
-  const pedidosMensal = Object.entries(pedidosByMonth).map(([mes, data]) => ({ mes, concluidos: data.concluidos, andamento: data.andamento }));
-
-  const orcamentoStatus = [
-    { name: "Aprovados", value: orcAprovados, color: "hsl(142, 72%, 42%)" },
-    { name: "Pendentes", value: orcPendentes, color: "hsl(38, 92%, 50%)" },
-    { name: "Rejeitados", value: orcRejeitados, color: "hsl(0, 72%, 51%)" },
-  ];
-
-  // ===== SERVIÇOS ANALYTICS =====
-  const servicosAnalytics = useMemo(() => {
+  // ===== FINANCEIRO =====
+  const financeiroData = useMemo(() => {
     const now = new Date();
-    const months = eachMonthOfInterval({ start: subMonths(startOfMonth(now), 11), end: startOfMonth(now) });
+    const months = eachMonthOfInterval({ start: subMonths(startOfMonth(now), 5), end: startOfMonth(now) });
 
-    // Monthly evolution
-    const evolucaoMensal = months.map((month) => {
+    const mensal = months.map((month) => {
       const mesKey = format(month, "yyyy-MM");
       const mesLabel = format(month, "MMM", { locale: ptBR });
-      const doMes = servicos.filter((s) => {
-        const created = format(parseISO(s.created_at), "yyyy-MM");
-        return created === mesKey;
-      });
-      return {
-        mes: mesLabel,
-        total: doMes.length,
-        agendados: doMes.filter((s) => s.status === "agendado").length,
-        em_andamento: doMes.filter((s) => s.status === "em_andamento").length,
-        concluidos: doMes.filter((s) => s.status === "concluido").length,
-        cancelados: doMes.filter((s) => s.status === "cancelado").length,
-        valor: doMes.reduce((sum: number, s) => sum + (Number(s.valor) || 0), 0),
-      };
+      const doMes = pedidos.filter((p) => format(parseISO(p.created_at), "yyyy-MM") === mesKey);
+      const valor = doMes.reduce((s: number, p) => s + (Number(p.valor_total) || 0), 0);
+      return { mes: mesLabel, valor };
     });
 
-    // Status distribution
-    const statusDist = [
-      { name: "Agendados", value: servicos.filter((s) => s.status === "agendado").length, color: "hsl(var(--primary))" },
-      { name: "Em andamento", value: servicos.filter((s) => s.status === "em_andamento").length, color: "hsl(38, 92%, 50%)" },
-      { name: "Concluídos", value: servicos.filter((s) => s.status === "concluido").length, color: "hsl(142, 72%, 42%)" },
-      { name: "Cancelados", value: servicos.filter((s) => s.status === "cancelado").length, color: "hsl(0, 72%, 51%)" },
-    ];
+    const maxValor = Math.max(...mensal.map((m) => m.valor), 1);
+    const ticketMedio = pedidos.length > 0 ? totalFaturamento / pedidos.length : 0;
 
-    // By type
-    const tipoCount: Record<string, number> = {};
-    servicos.forEach((s) => {
-      const tipo = s.tipo || "Não especificado";
-      tipoCount[tipo] = (tipoCount[tipo] || 0) + 1;
+    // Top clientes
+    const clienteValor: Record<string, { nome: string; valor: number; count: number }> = {};
+    clientesOrc.forEach((o) => {
+      const cNome = (o.clientes as { nome: string } | null)?.nome || "Sem cliente";
+      const cId = o.cliente_id || "unknown";
+      if (!clienteValor[cId]) clienteValor[cId] = { nome: cNome, valor: 0, count: 0 };
+      clienteValor[cId].valor += Number(o.valor_total) || 0;
+      clienteValor[cId].count++;
     });
-    const porTipo = Object.entries(tipoCount)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
+    const topClientes = Object.values(clienteValor).sort((a, b) => b.valor - a.valor).slice(0, 5);
 
-    // KPIs
-    const totalValor = servicos.reduce((s: number, sv) => s + (Number(sv.valor) || 0), 0);
-    const concluidos = servicos.filter((s) => s.status === "concluido").length;
-    const taxaConclusao = servicos.length > 0 ? Math.round((concluidos / servicos.length) * 100) : 0;
+    return { mensal, maxValor, ticketMedio, topClientes };
+  }, [pedidos, clientesOrc, totalFaturamento]);
 
-    return { evolucaoMensal, statusDist, porTipo, totalValor, concluidos, taxaConclusao };
-  }, [servicos]);
+  // ===== PRODUCAO =====
+  const producaoData = useMemo(() => {
+    const statusCounts: Record<string, number> = {};
+    orcamentos.forEach((o) => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
+    const totalOrc = orcamentos.length;
+    const maxCount = Math.max(...Object.values(statusCounts), 1);
 
-  const TIPO_COLORS = ["hsl(var(--primary))", "hsl(142, 72%, 42%)", "hsl(38, 92%, 50%)", "hsl(280, 60%, 55%)", "hsl(0, 72%, 51%)", "hsl(180, 50%, 45%)"];
+    const taxaConversao = totalOrc > 0 ? Math.round((orcAprovados / totalOrc) * 100) : 0;
+
+    // Tempo medio
+    const aprovados = orcamentos.filter((o) => o.status === "aprovado" && o.updated_at && o.created_at);
+    let tempoMedio = 0;
+    if (aprovados.length > 0) {
+      const totalDias = aprovados.reduce((s, o) => {
+        const diff = (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24);
+        return s + diff;
+      }, 0);
+      tempoMedio = Math.round(totalDias / aprovados.length);
+    }
+
+    return { statusCounts, maxCount, taxaConversao, tempoMedio };
+  }, [orcamentos, orcAprovados]);
+
+  // ===== MATERIAIS =====
+  const materiaisData = useMemo(() => {
+    const boms = orcItens.map((item) =>
+      BOMService.calcularBOM({
+        id: item.id,
+        descricao: item.descricao,
+        largura: item.largura,
+        altura: item.altura,
+        quantidade: item.quantidade,
+      })
+    );
+
+    const agregados = Array.from(BOMService.agregarMateriais(boms).values());
+    const sorted = agregados.sort((a, b) => b.quantidade - a.quantidade);
+    const maxQtd = Math.max(...sorted.map((m) => m.quantidade), 1);
+
+    return { sorted: sorted.slice(0, 10), maxQtd, totalItens: orcItens.length };
+  }, [orcItens]);
+
+  // ===== CLIENTES =====
+  const clientesData = useMemo(() => {
+    const clienteMap: Record<string, { nome: string; cidade: string; estado: string; valor: number; count: number }> = {};
+    clientesOrc.forEach((o) => {
+      const c = o.clientes as { nome: string; cidade: string | null; estado: string | null } | null;
+      const cId = o.cliente_id || "unknown";
+      if (!clienteMap[cId]) clienteMap[cId] = { nome: c?.nome || "Sem nome", cidade: c?.cidade || "", estado: c?.estado || "", valor: 0, count: 0 };
+      clienteMap[cId].valor += Number(o.valor_total) || 0;
+      clienteMap[cId].count++;
+    });
+
+    const ranking = Object.values(clienteMap).sort((a, b) => b.valor - a.valor);
+    const maxValor = Math.max(...ranking.map((r) => r.valor), 1);
+
+    // Cidades
+    const cidadeMap: Record<string, number> = {};
+    ranking.forEach((c) => {
+      const key = c.cidade ? `${c.cidade}/${c.estado}` : "Nao informado";
+      cidadeMap[key] = (cidadeMap[key] || 0) + 1;
+    });
+    const cidades = Object.entries(cidadeMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const maxCidade = Math.max(...cidades.map((c) => c[1]), 1);
+
+    return { ranking: ranking.slice(0, 10), maxValor, cidades, maxCidade };
+  }, [clientesOrc]);
+
+  const statusColors: Record<string, string> = {
+    aprovado: "bg-emerald-500",
+    enviado: "bg-blue-500",
+    rascunho: "bg-gray-400",
+    rejeitado: "bg-red-500",
+    pendente: "bg-amber-500",
+  };
 
   return (
     <AppLayout>
       <div className="space-y-6 max-w-7xl">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Relatórios</h1>
-          <p className="text-sm text-muted-foreground">Métricas reais de vendas, orçamentos, serviços e desempenho</p>
+          <h1 className="text-2xl font-bold text-foreground">Relatorios</h1>
+          <p className="text-sm text-muted-foreground">Metricas de vendas, producao, materiais e clientes</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard icon={DollarSign} label="Faturamento total" value={fmtCur(totalFaturamento)} change={`${pedidos.length} pedidos`} positive />
-          <StatCard icon={FileText} label="Orçamentos gerados" value={String(orcamentos.length)} change={`${orcAprovados} aprovados`} positive />
-          <StatCard icon={CheckSquare} label="Pedidos concluídos" value={String(pedidosConcluidos)} change={`de ${pedidos.length}`} positive={pedidosConcluidos > 0} />
-          <StatCard icon={Wrench} label="Serviços" value={String(servicos.length)} change={`${servicosAnalytics.taxaConclusao}% concluídos`} positive={servicosAnalytics.taxaConclusao > 50} />
+          <StatCard icon={FileText} label="Orcamentos gerados" value={String(orcamentos.length)} change={`${orcAprovados} aprovados`} positive />
+          <StatCard icon={CheckSquare} label="Pedidos concluidos" value={String(pedidosConcluidos)} change={`de ${pedidos.length}`} positive={pedidosConcluidos > 0} />
+          <StatCard icon={Wrench} label="Servicos" value={String(servicos.length)} change={`${servicos.filter((s) => s.status === "concluido").length} concluidos`} positive />
         </div>
 
-        <Tabs defaultValue="vendas">
+        <Tabs defaultValue="financeiro">
           <TabsList>
-            <TabsTrigger value="vendas">Vendas</TabsTrigger>
-            <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
-            <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
-            <TabsTrigger value="servicos">Serviços</TabsTrigger>
+            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+            <TabsTrigger value="producao">Producao</TabsTrigger>
+            <TabsTrigger value="materiais">Materiais</TabsTrigger>
+            <TabsTrigger value="clientes">Clientes</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="vendas">
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Faturamento por Mês</h3>
-              {vendasMensal.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Sem dados de vendas ainda.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={vendasMensal}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                    <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(v: number) => fmtCur(v)} />
-                    <Bar dataKey="valor" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="orcamentos">
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Status dos Orçamentos</h3>
-              {orcamentos.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Sem orçamentos ainda.</p>
-              ) : (
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                  <ResponsiveContainer width={250} height={250}>
-                    <PieChart>
-                      <Pie data={orcamentoStatus} cx="50%" cy="50%" innerRadius={60} outerRadius={100} dataKey="value" paddingAngle={4}>
-                        {orcamentoStatus.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="space-y-3">
-                    {orcamentoStatus.map((s) => (
-                      <div key={s.name} className="flex items-center gap-3">
-                        <div className="h-3 w-3 rounded-full" style={{ background: s.color }} />
-                        <span className="text-sm text-foreground font-medium">{s.name}</span>
-                        <span className="text-sm text-muted-foreground">{s.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="pedidos">
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Pedidos por Mês</h3>
-              {pedidosMensal.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Sem dados de pedidos ainda.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={pedidosMensal}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="concluidos" stroke="hsl(142, 72%, 42%)" strokeWidth={2} name="Concluídos" />
-                    <Line type="monotone" dataKey="andamento" stroke="hsl(38, 92%, 50%)" strokeWidth={2} name="Em andamento" />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* ===== SERVIÇOS TAB ===== */}
-          <TabsContent value="servicos" className="space-y-4">
-            {/* KPI cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-card border border-border rounded-xl p-4">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase">Total</p>
-                <p className="text-2xl font-bold text-foreground">{servicos.length}</p>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-4">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase">Concluídos</p>
-                <p className="text-2xl font-bold text-foreground">{servicosAnalytics.concluidos}</p>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-4">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase">Taxa Conclusão</p>
-                <p className="text-2xl font-bold text-primary">{servicosAnalytics.taxaConclusao}%</p>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-4">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase">Valor Total</p>
-                <p className="text-xl font-bold text-foreground">{fmtCur(servicosAnalytics.totalValor)}</p>
-              </div>
-            </div>
-
-            {/* Evolução mensal - Stacked Area */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Evolução Mensal de Serviços</h3>
-              {servicosAnalytics.evolucaoMensal.every(m => m.total === 0) ? (
-                <p className="text-center text-muted-foreground py-8">Sem dados de serviços ainda.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={servicosAnalytics.evolucaoMensal}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip />
-                    <Legend />
-                    <Area type="monotone" dataKey="concluidos" stackId="1" stroke="hsl(142, 72%, 42%)" fill="hsl(142, 72%, 42%)" fillOpacity={0.4} name="Concluídos" />
-                    <Area type="monotone" dataKey="em_andamento" stackId="1" stroke="hsl(38, 92%, 50%)" fill="hsl(38, 92%, 50%)" fillOpacity={0.4} name="Em andamento" />
-                    <Area type="monotone" dataKey="agendados" stackId="1" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} name="Agendados" />
-                    <Area type="monotone" dataKey="cancelados" stackId="1" stroke="hsl(0, 72%, 51%)" fill="hsl(0, 72%, 51%)" fillOpacity={0.3} name="Cancelados" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Faturamento mensal de serviços */}
+          {/* FINANCEIRO */}
+          <TabsContent value="financeiro" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="bg-card border border-border rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-foreground mb-4">Faturamento Mensal de Serviços</h3>
-                {servicosAnalytics.evolucaoMensal.every(m => m.valor === 0) ? (
-                  <p className="text-center text-muted-foreground py-8">Sem dados financeiros.</p>
+                <h3 className="text-sm font-semibold text-foreground mb-4">Faturamento Mensal</h3>
+                {financeiroData.mensal.every((m) => m.valor === 0) ? (
+                  <p className="text-center text-muted-foreground py-8">Sem dados de vendas.</p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={servicosAnalytics.evolucaoMensal}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-                      <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => fmtCur(v)} />
-                      <Bar dataKey="valor" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} name="Valor" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div className="space-y-3">
+                    {financeiroData.mensal.map((m) => {
+                      const pct = Math.round((m.valor / financeiroData.maxValor) * 100);
+                      return (
+                        <div key={m.mes} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-foreground w-10">{m.mes}</span>
+                            <span className="text-xs font-bold text-muted-foreground">{fmtCur(m.valor)}</span>
+                          </div>
+                          <div className="h-3 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
 
-              {/* Status distribution + por tipo */}
               <div className="space-y-4">
                 <div className="bg-card border border-border rounded-xl p-6">
-                  <h3 className="text-sm font-semibold text-foreground mb-4">Distribuição por Status</h3>
-                  {servicos.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-4">Sem dados.</p>
-                  ) : (
-                    <div className="flex items-center gap-6">
-                      <ResponsiveContainer width={140} height={140}>
-                        <PieChart>
-                          <Pie data={servicosAnalytics.statusDist.filter(s => s.value > 0)} cx="50%" cy="50%" innerRadius={35} outerRadius={60} dataKey="value" paddingAngle={3}>
-                            {servicosAnalytics.statusDist.filter(s => s.value > 0).map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="space-y-2">
-                        {servicosAnalytics.statusDist.map((s) => (
-                          <div key={s.name} className="flex items-center gap-2">
-                            <div className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
-                            <span className="text-xs text-foreground">{s.name}</span>
-                            <span className="text-xs font-bold text-muted-foreground">{s.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Ticket Medio</h3>
+                  <p className="text-3xl font-bold text-primary">{fmtCur(financeiroData.ticketMedio)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">por pedido</p>
                 </div>
 
-                {servicosAnalytics.porTipo.length > 0 && (
-                  <div className="bg-card border border-border rounded-xl p-6">
-                    <h3 className="text-sm font-semibold text-foreground mb-3">Por Tipo de Serviço</h3>
-                    <div className="space-y-2">
-                      {servicosAnalytics.porTipo.slice(0, 6).map((t, i) => {
-                        const pct = servicos.length > 0 ? Math.round((t.value / servicos.length) * 100) : 0;
-                        return (
-                          <div key={t.name} className="flex items-center gap-3">
-                            <span className="text-xs text-foreground w-28 truncate">{t.name}</span>
-                            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${pct}%`, background: TIPO_COLORS[i % TIPO_COLORS.length] }} />
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Top 5 Clientes por Valor</h3>
+                  <div className="space-y-2">
+                    {financeiroData.topClientes.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Sem dados.</p>
+                    ) : (
+                      financeiroData.topClientes.map((c, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-muted-foreground w-4">{i + 1}</span>
+                            <span className="text-xs font-medium text-foreground truncate max-w-[140px]">{c.nome}</span>
+                          </div>
+                          <span className="text-xs font-bold text-primary">{fmtCur(c.valor)}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* PRODUCAO */}
+          <TabsContent value="producao" className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="bg-card border border-border rounded-xl p-4">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase">Taxa Conversao</p>
+                <p className="text-3xl font-bold text-primary">{producaoData.taxaConversao}%</p>
+                <p className="text-xs text-muted-foreground">orcamentos aprovados</p>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase">Tempo Medio</p>
+                <p className="text-3xl font-bold text-foreground">{producaoData.tempoMedio}d</p>
+                <p className="text-xs text-muted-foreground">para aprovacao</p>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase">Total</p>
+                <p className="text-3xl font-bold text-foreground">{orcamentos.length}</p>
+                <p className="text-xs text-muted-foreground">orcamentos</p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h3 className="text-sm font-semibold text-foreground mb-4">Orcamentos por Status</h3>
+              {Object.keys(producaoData.statusCounts).length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Sem orcamentos.</p>
+              ) : (
+                <div className="space-y-3">
+                  {Object.entries(producaoData.statusCounts).map(([status, count]) => {
+                    const pct = Math.round((count / producaoData.maxCount) * 100);
+                    return (
+                      <div key={status} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={cn("h-2.5 w-2.5 rounded-full", statusColors[status] || "bg-gray-400")} />
+                            <span className="text-xs font-medium text-foreground capitalize">{status}</span>
+                          </div>
+                          <span className="text-xs font-bold text-muted-foreground">{count} ({orcamentos.length > 0 ? Math.round((count / orcamentos.length) * 100) : 0}%)</span>
+                        </div>
+                        <div className="h-3 bg-muted rounded-full overflow-hidden">
+                          <div className={cn("h-full rounded-full transition-all duration-500", statusColors[status] || "bg-primary")} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* MATERIAIS */}
+          <TabsContent value="materiais" className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-card border border-border rounded-xl p-4">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase">Itens Orcados</p>
+                <p className="text-3xl font-bold text-foreground">{materiaisData.totalItens}</p>
+                <p className="text-xs text-muted-foreground">itens com BOM calculado</p>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase">Materiais Distintos</p>
+                <p className="text-3xl font-bold text-primary">{materiaisData.sorted.length}</p>
+                <p className="text-xs text-muted-foreground">tipos de material</p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h3 className="text-sm font-semibold text-foreground mb-4">Materiais Mais Usados</h3>
+              {materiaisData.sorted.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Sem dados de materiais.</p>
+              ) : (
+                <div className="space-y-3">
+                  {materiaisData.sorted.map((m, i) => {
+                    const pct = Math.round((m.quantidade / materiaisData.maxQtd) * 100);
+                    return (
+                      <div key={i} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-foreground">{m.nome}</span>
+                          <span className="text-xs font-bold text-muted-foreground">{m.quantidade.toFixed(2)} {m.unidade}</span>
+                        </div>
+                        <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* CLIENTES */}
+          <TabsContent value="clientes" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-foreground mb-4">Ranking por Valor</h3>
+                {clientesData.ranking.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Sem dados.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {clientesData.ranking.map((c, i) => {
+                      const pct = Math.round((c.valor / clientesData.maxValor) * 100);
+                      return (
+                        <div key={i} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold text-primary bg-primary/10 h-5 w-5 rounded-full flex items-center justify-center">{i + 1}</span>
+                              <span className="text-xs font-medium text-foreground truncate max-w-[120px]">{c.nome}</span>
+                              <span className="text-[10px] text-muted-foreground">{c.count} orc.</span>
                             </div>
-                            <span className="text-[10px] font-bold text-muted-foreground w-8 text-right">{t.value}</span>
+                            <span className="text-xs font-bold text-foreground">{fmtCur(c.valor)}</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Clientes por Cidade</h3>
+                  </div>
+                  {clientesData.cidades.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Sem dados de localizacao.</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {clientesData.cidades.map(([cidade, count], i) => {
+                        const pct = Math.round((count / clientesData.maxCidade) * 100);
+                        return (
+                          <div key={cidade} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-foreground">{cidade}</span>
+                              <span className="text-xs font-bold text-muted-foreground">{count}</span>
+                            </div>
+                            <div className="h-2 bg-muted rounded-full overflow-hidden">
+                              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+                            </div>
                           </div>
                         );
                       })}
                     </div>
+                  )}
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Resumo</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase">Total Clientes</p>
+                      <p className="text-2xl font-bold text-foreground">{clientes.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase">Com Orcamentos</p>
+                      <p className="text-2xl font-bold text-primary">{clientesData.ranking.length}</p>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </TabsContent>

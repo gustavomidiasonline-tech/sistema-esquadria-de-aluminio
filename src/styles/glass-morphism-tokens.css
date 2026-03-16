@@ -1,0 +1,231 @@
+/* Glass Morphism Design Tokens - AIOX Design System */
+/* Reference: Print analysis with dark gradient, neon accents, blur effects */
+
+@layer base {
+  :root {
+    /* === GLASS MORPHISM PALETTE === */
+    /* Primary Gradient Background */
+    --glass-gradient-bg: linear-gradient(135deg, #0f172a 0%, #1e1b4b 25%, #2d1b69 50%, #3d0f4a 75%, #4a0e4e 100%);
+
+    /* Dark Base Colors */
+    --glass-dark-navy: #0f172a;
+    --glass-dark-purple: #1e1b4b;
+    --glass-dark-magenta: #2d1b69;
+
+    /* Neon Accents */
+    --glass-neon-green: #00ff88;
+    --glass-neon-yellow: #ffd700;
+    --glass-neon-cyan: #00d9ff;
+    --glass-neon-pink: #ff006e;
+
+    /* Glass Effect Overlays */
+    --glass-overlay-light: rgba(255, 255, 255, 0.08);
+    --glass-overlay-medium: rgba(255, 255, 255, 0.12);
+    --glass-overlay-dark: rgba(255, 255, 255, 0.04);
+
+    /* Semi-transparent Colors */
+    --glass-purple-30: rgba(189, 116, 216, 0.3);
+    --glass-blue-30: rgba(59, 130, 246, 0.3);
+    --glass-pink-30: rgba(236, 72, 153, 0.3);
+
+    /* Border & Dividers */
+    --glass-border-light: rgba(255, 255, 255, 0.1);
+    --glass-border-medium: rgba(255, 255, 255, 0.15);
+    --glass-border-neon: rgba(0, 255, 136, 0.3);
+
+    /* Backdrop Blur Settings */
+    --glass-blur-sm: blur(10px);
+    --glass-blur-md: blur(16px);
+    --glass-blur-lg: blur(24px);
+
+    /* Saturation & Brightness */
+    --glass-saturation-boost: saturate(1.2);
+    --glass-brightness-boost: brightness(1.1);
+
+    /* Shadows - Glass style */
+    --glass-shadow-sm: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --glass-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.15);
+    --glass-shadow-lg: 0 20px 64px rgba(0, 0, 0, 0.25);
+    --glass-shadow-glow: 0 0 20px rgba(0, 255, 136, 0.15);
+
+    /* Transition Timings */
+    --glass-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --glass-transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --glass-transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Glass Surface Definitions */
+@layer components {
+  /* Premium Glass Card */
+  .glass-card-premium {
+    @apply relative rounded-xl p-4 md:p-6 overflow-hidden;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: var(--glass-blur-md);
+    border: 1px solid var(--glass-border-light);
+    box-shadow: var(--glass-shadow-md);
+    transition: all var(--glass-transition-normal);
+  }
+
+  .glass-card-premium:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  /* Glass Panel - Sidebar/Overlay */
+  .glass-panel {
+    @apply relative rounded-lg overflow-hidden;
+    background: rgba(20, 20, 30, 0.6);
+    backdrop-filter: var(--glass-blur-lg);
+    border: 1px solid var(--glass-border-light);
+    box-shadow: var(--glass-shadow-md);
+  }
+
+  /* Glass Header - Top Bar */
+  .glass-header {
+    @apply relative backdrop-blur-md border-b sticky top-0 z-40;
+    background: rgba(20, 20, 30, 0.5);
+    border-color: var(--glass-border-light);
+    box-shadow: var(--glass-shadow-sm);
+  }
+
+  /* Glass Input/Form Elements */
+  .glass-input-field {
+    @apply relative rounded-lg px-4 py-2.5 transition-all;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: var(--glass-blur-sm);
+    border: 1px solid var(--glass-border-light);
+    color: rgb(229, 231, 235);
+  }
+
+  .glass-input-field:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--glass-neon-green);
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.2);
+    outline: none;
+  }
+
+  /* Glass Button - Primary */
+  .glass-button-primary {
+    @apply relative px-6 py-2.5 rounded-lg font-medium transition-all overflow-hidden;
+    background: linear-gradient(135deg, var(--glass-neon-green) 0%, rgba(0, 255, 136, 0.8) 100%);
+    color: #0f172a;
+    box-shadow: var(--glass-shadow-sm), 0 0 16px rgba(0, 255, 136, 0.3);
+  }
+
+  .glass-button-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow-md), 0 0 24px rgba(0, 255, 136, 0.5);
+    filter: var(--glass-brightness-boost);
+  }
+
+  /* Glass Button - Secondary (Glass with accent) */
+  .glass-button-secondary {
+    @apply relative px-6 py-2.5 rounded-lg font-medium transition-all;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: var(--glass-blur-sm);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    color: var(--glass-neon-green);
+  }
+
+  .glass-button-secondary:hover {
+    background: rgba(0, 255, 136, 0.1);
+    border-color: var(--glass-neon-green);
+    box-shadow: var(--glass-shadow-glow);
+  }
+
+  /* Accent Badge/Badge Neon */
+  .glass-badge-neon {
+    @apply inline-block px-3 py-1 rounded-full text-sm font-semibold;
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    color: var(--glass-neon-green);
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+  }
+
+  /* Stat/Metric Card - Glass */
+  .glass-stat-card {
+    @apply relative rounded-xl p-6 overflow-hidden backdrop-blur-md;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border-light);
+    box-shadow: var(--glass-shadow-md);
+  }
+
+  .glass-stat-card::before {
+    content: '';
+    @apply absolute inset-0 rounded-xl;
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+    pointer-events: none;
+  }
+
+  /* Progress Bar - Neon */
+  .glass-progress-bar {
+    @apply relative h-2 rounded-full overflow-hidden;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-progress-bar::after {
+    content: '';
+    @apply block h-full rounded-full;
+    background: linear-gradient(90deg, var(--glass-neon-yellow), var(--glass-neon-green));
+    box-shadow: 0 0 16px rgba(0, 255, 136, 0.4);
+    width: 100%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* Divider - Subtle */
+  .glass-divider {
+    @apply h-px;
+    background: linear-gradient(90deg, transparent, var(--glass-border-medium), transparent);
+  }
+
+  /* Glow Effect - For special elements */
+  .glass-glow-accent {
+    @apply relative;
+  }
+
+  .glass-glow-accent::after {
+    content: '';
+    @apply absolute inset-0 rounded-lg;
+    background: radial-gradient(ellipse at center, rgba(0, 255, 136, 0.2) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: var(--glass-shadow-sm), 0 0 12px rgba(0, 255, 136, 0.2);
+  }
+  50% {
+    box-shadow: var(--glass-shadow-md), 0 0 24px rgba(0, 255, 136, 0.4);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .glass-card-premium {
+    @apply p-3;
+  }
+
+  .glass-button-primary,
+  .glass-button-secondary {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .glass-stat-card {
+    @apply p-4;
+  }
+}
