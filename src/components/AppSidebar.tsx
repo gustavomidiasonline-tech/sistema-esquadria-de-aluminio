@@ -55,6 +55,11 @@ const pedidosItems = [
   { title: "Workflow", url: "/workflow", icon: GitBranch },
 ];
 
+const materiaisItems = [
+  { title: "Lista de Materiais", url: "/bom", icon: ClipboardList },
+  { title: "Importar Dados", url: "/importar-dados", icon: Upload },
+];
+
 const mainItemsSecondary = [
   { title: "Plano de corte", url: "/plano-de-corte", icon: Scissors },
   { title: "Esquadrias", url: "/esquadrias", icon: Wrench },
@@ -62,8 +67,6 @@ const mainItemsSecondary = [
   { title: "Agenda", url: "/agenda", icon: Calendar },
   { title: "Produtos", url: "/produtos", icon: Package },
   { title: "Estoque", url: "/estoque", icon: Warehouse },
-  { title: "Lista de Materiais", url: "/bom", icon: ClipboardList },
-  { title: "Importar Dados", url: "/importar-dados", icon: Upload },
   { title: "Preço dos itens", url: "/precos", icon: DollarSign },
   { title: "Fornecedores", url: "/fornecedores", icon: Truck },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
@@ -94,6 +97,9 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const [pedidosOpen, setPedidosOpen] = useState(
     location.pathname.startsWith("/pedidos") || location.pathname.startsWith("/workflow")
+  );
+  const [materiaisOpen, setMateriaisOpen] = useState(
+    location.pathname.startsWith("/bom") || location.pathname.startsWith("/importar-dados")
   );
   const [financeiroOpen, setFinanceiroOpen] = useState(
     location.pathname.startsWith("/financeiro")
@@ -254,6 +260,36 @@ export function AppSidebar() {
         )}
 
         {mainItemsSecondary.map((item) => renderNavItem(item))}
+
+        {/* Materiais Section */}
+        {collapsed ? (
+          <NavLink to="/bom" className={linkClass("/bom")} activeClassName="">
+            <ClipboardList className="h-[18px] w-[18px] shrink-0" />
+          </NavLink>
+        ) : (
+          <>
+            <button
+              onClick={() => {
+                setMateriaisOpen(!materiaisOpen);
+              }}
+              className={cn(
+                "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                "text-white/60 hover:bg-white/8 hover:text-white/90"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <ClipboardList className="h-[18px] w-[18px] shrink-0" />
+                <span>Materiais</span>
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${materiaisOpen ? "rotate-180" : ""}`} />
+            </button>
+            {materiaisOpen && (
+              <div className="ml-3 pl-3 border-l border-sidebar-border space-y-0.5">
+                {materiaisItems.map((item) => renderNavItem(item, true))}
+              </div>
+            )}
+          </>
+        )}
 
         {/* Financeiro Section */}
         <div className="pt-5 pb-2">
