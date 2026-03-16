@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Square, Weight, Package, Trash2, TrendingUp, Layers, Wrench, Clock, Settings2, Factory } from "lucide-react";
+import { ChevronDown, ChevronUp, Square, Weight, Package, Trash2, TrendingUp, Layers, Wrench, Clock, Settings2, Factory, Calendar, FileText, Hash, Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { perfisAluminio } from "@/data/perfis-aluminio";
 
@@ -26,7 +26,17 @@ interface OrcamentoItem {
 }
 
 interface OrcamentoDetailProps {
-  orcamento: any;
+  orcamento: {
+    id: string;
+    numero?: number;
+    status?: string;
+    validade?: string | null;
+    created_at?: string;
+    cliente_id?: string | null;
+    descricao?: string | null;
+    valor_total?: number | null;
+    [key: string]: unknown;
+  };
   itens: OrcamentoItem[];
   onDeleteItem?: (id: string) => void;
   onGerarOP?: (orcamentoId: string) => void;
@@ -39,6 +49,41 @@ const VIDRO_LABELS: Record<string, string> = {
   laminado_8mm: "Laminado 8mm",
   comum_4mm: "Comum 4mm",
 };
+
+// ---------------------------------------------------------------------------
+// Status badge configuration
+// ---------------------------------------------------------------------------
+
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-600 border-gray-200" },
+  enviado: { label: "Enviado", className: "bg-yellow-100 text-yellow-700 border-yellow-200" },
+  aprovado: { label: "Aprovado", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  rejeitado: { label: "Rejeitado", className: "bg-red-100 text-red-700 border-red-200" },
+  expirado: { label: "Expirado", className: "bg-slate-100 text-slate-600 border-slate-200" },
+};
+
+function getStatusBadge(status: string) {
+  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.rascunho;
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${config.className}`}>
+      {config.label}
+    </span>
+  );
+}
+
+function getValidadeBadge(validade: string | null | undefined): { label: string; isValid: boolean } {
+  if (!validade) return { label: "Sem validade", isValid: true };
+  const end = new Date(validade);
+  const now = new Date();
+  const isValid = end >= now;
+  const diffDays = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (!isValid) return { label: "Vencido", isValid: false };
+  return { label: `${diffDays}d restantes`, isValid: true };
+}
+
+// ---------------------------------------------------------------------------
+// Main Component
+// ---------------------------------------------------------------------------
 
 export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: OrcamentoDetailProps) {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
@@ -105,8 +150,61 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
         return sum + perim * avgWeight * item.quantidade;
       }, 0);
 
+  // Margin calculation
+  const margemLucro = totals.venda > 0 && totals.custo > 0
+    ? ((totals.lucro / totals.venda) * 100)
+    : 0;
+
+  // Validade info
+  const validadeInfo = getValidadeBadge(orcamento.validade);
+
   return (
     <div className="space-y-4">
+      {/* Orcamento Info Header */}
+      <div className="border border-border rounded-xl p-4 bg-card">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Hash className="h-4 w-4 text-primary" />
+                <span className="text-lg font-bold text-foreground">
+                  ORC-{String(orcamento.numero ?? 0).padStart(3, "0")}
+                </span>
+              </div>
+              {orcamento.status && getStatusBadge(orcamento.status)}
+            </div>
+            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+              {orcamento.created_at && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Criado em {new Date(orcamento.created_at).toLocaleDateString("pt-BR")}
+                </span>
+              )}
+              {orcamento.validade && (
+                <span className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full border font-medium",
+                  validadeInfo.isValid
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-red-50 text-red-700 border-red-200"
+                )}>
+                  <Clock className="h-3 w-3" />
+                  Validade: {new Date(orcamento.validade).toLocaleDateString("pt-BR")} ({validadeInfo.label})
+                </span>
+              )}
+            </div>
+            {orcamento.descricao && (
+              <p className="text-xs text-muted-foreground mt-1">{orcamento.descricao}</p>
+            )}
+          </div>
+          {totals.venda > 0 && (
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">Valor total</p>
+              <p className="text-2xl font-bold text-primary">{fmt(totals.venda)}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Summary KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-muted/30 border border-border rounded-lg p-3">
@@ -121,7 +219,7 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
             <Square className="h-3.5 w-3.5 text-blue-500" />
             <span className="text-[10px] font-medium text-muted-foreground">Vidro total</span>
           </div>
-          <p className="text-lg font-bold text-foreground">{totalM2.toFixed(2)} m²</p>
+          <p className="text-lg font-bold text-foreground">{totalM2.toFixed(2)} m2</p>
         </div>
         <div className="bg-muted/30 border border-border rounded-lg p-3">
           <div className="flex items-center gap-2 mb-1">
@@ -162,11 +260,11 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
           {/* Legend */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             {[
-              { label: "Alumínio", val: totals.aluminio, color: "bg-amber-500", icon: <Weight className="h-3 w-3" /> },
+              { label: "Aluminio", val: totals.aluminio, color: "bg-amber-500", icon: <Weight className="h-3 w-3" /> },
               { label: "Vidro", val: totals.vidro, color: "bg-blue-500", icon: <Layers className="h-3 w-3" /> },
               { label: "Ferragem", val: totals.ferragem, color: "bg-orange-500", icon: <Wrench className="h-3 w-3" /> },
-              { label: "Acessórios", val: totals.acessorios, color: "bg-purple-500", icon: <Settings2 className="h-3 w-3" /> },
-              { label: "Mão de obra", val: totals.maoObra, color: "bg-cyan-500", icon: <Clock className="h-3 w-3" /> },
+              { label: "Acessorios", val: totals.acessorios, color: "bg-purple-500", icon: <Settings2 className="h-3 w-3" /> },
+              { label: "Mao de obra", val: totals.maoObra, color: "bg-cyan-500", icon: <Clock className="h-3 w-3" /> },
               { label: "Lucro", val: totals.lucro, color: "bg-emerald-500", icon: <TrendingUp className="h-3 w-3" /> },
             ].map((seg) => (
               <div key={seg.label} className="flex items-center gap-1.5">
@@ -188,7 +286,7 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
             <tr className="bg-muted/50 border-b border-border">
               <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground w-8"></th>
               <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground">Item</th>
-              <th className="text-center px-4 py-2.5 text-[11px] font-semibold text-muted-foreground">Dimensões</th>
+              <th className="text-center px-4 py-2.5 text-[11px] font-semibold text-muted-foreground">Dimensoes</th>
               <th className="text-center px-4 py-2.5 text-[11px] font-semibold text-muted-foreground">Qtd</th>
               <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-muted-foreground">Custo</th>
               <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-muted-foreground">Lucro</th>
@@ -240,20 +338,20 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
                     <td className="px-4 py-3 text-center">
                       {item.largura && item.altura ? (
                         <span className="text-xs text-foreground font-mono">
-                          {item.largura} × {item.altura}
+                          {item.largura} x {item.altura}
                         </span>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">—</span>
+                        <span className="text-[10px] text-muted-foreground">--</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="bg-muted px-2 py-0.5 rounded text-xs font-medium text-foreground">{item.quantidade}</span>
                     </td>
                     <td className="px-4 py-3 text-right text-xs text-muted-foreground">
-                      {(item.custo_total ?? 0) > 0 ? fmt(item.custo_total!) : "—"}
+                      {(item.custo_total ?? 0) > 0 ? fmt(item.custo_total!) : "--"}
                     </td>
                     <td className="px-4 py-3 text-right text-xs text-emerald-600 font-medium">
-                      {(item.lucro ?? 0) > 0 ? fmt(item.lucro!) : "—"}
+                      {(item.lucro ?? 0) > 0 ? fmt(item.lucro!) : "--"}
                     </td>
                     <td className="px-4 py-3 text-right text-xs font-semibold text-primary">{fmt(item.valor_total)}</td>
                     {onDeleteItem && (
@@ -277,14 +375,14 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
                           {/* Cost breakdown per item */}
                           {hasBreakdown && (
                             <div className="p-3 border border-border rounded-lg bg-card">
-                              <p className="text-[11px] font-semibold text-foreground mb-2">Composição de custo</p>
+                              <p className="text-[11px] font-semibold text-foreground mb-2">Composicao de custo</p>
                               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
                                 {[
-                                  { label: "Alumínio", val: item.custo_aluminio, color: "text-amber-600", icon: <Weight className="h-3 w-3 text-amber-500" /> },
+                                  { label: "Aluminio", val: item.custo_aluminio, color: "text-amber-600", icon: <Weight className="h-3 w-3 text-amber-500" /> },
                                   { label: "Vidro", val: item.custo_vidro, color: "text-blue-600", icon: <Layers className="h-3 w-3 text-blue-500" /> },
                                   { label: "Ferragem", val: item.custo_ferragem, color: "text-orange-600", icon: <Wrench className="h-3 w-3 text-orange-500" /> },
-                                  { label: "Acessórios", val: item.custo_acessorios, color: "text-purple-600", icon: <Settings2 className="h-3 w-3 text-purple-500" /> },
-                                  { label: "Mão de obra", val: item.custo_mao_obra, color: "text-cyan-600", icon: <Clock className="h-3 w-3 text-cyan-500" /> },
+                                  { label: "Acessorios", val: item.custo_acessorios, color: "text-purple-600", icon: <Settings2 className="h-3 w-3 text-purple-500" /> },
+                                  { label: "Mao de obra", val: item.custo_mao_obra, color: "text-cyan-600", icon: <Clock className="h-3 w-3 text-cyan-500" /> },
                                   { label: "Custo total", val: item.custo_total, color: "text-foreground font-bold", icon: <Package className="h-3 w-3 text-muted-foreground" /> },
                                   { label: "Lucro", val: item.lucro, color: "text-emerald-600 font-bold", icon: <TrendingUp className="h-3 w-3 text-emerald-500" /> },
                                 ].map((c) => (
@@ -294,7 +392,7 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
                                       <span className="text-[10px] text-muted-foreground">{c.label}</span>
                                     </div>
                                     <p className={cn("text-xs", c.color)}>
-                                      {(c.val ?? 0) > 0 ? fmt(c.val!) : "—"}
+                                      {(c.val ?? 0) > 0 ? fmt(c.val!) : "--"}
                                     </p>
                                   </div>
                                 ))}
@@ -305,7 +403,7 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
                                   <span>Peso: <b className="text-foreground">{item.peso_total_kg!.toFixed(2)} kg</b></span>
                                 )}
                                 {(item.area_vidro_m2 ?? 0) > 0 && (
-                                  <span>Vidro: <b className="text-blue-600">{item.area_vidro_m2!.toFixed(3)} m²</b></span>
+                                  <span>Vidro: <b className="text-blue-600">{item.area_vidro_m2!.toFixed(3)} m2</b></span>
                                 )}
                                 {item.markup_percentual && (
                                   <span>Markup: <b className="text-emerald-600">{item.markup_percentual}%</b></span>
@@ -317,7 +415,7 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
                           {/* Profile details */}
                           {profiles.length > 0 && (
                             <>
-                              <p className="text-[11px] font-semibold text-foreground">Perfis técnicos</p>
+                              <p className="text-[11px] font-semibold text-foreground">Perfis tecnicos</p>
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                 {profiles.map((perfil) => (
                                   <div
@@ -340,7 +438,7 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
                                       </div>
                                       <p className="text-[10px] text-foreground truncate">{perfil.descricao}</p>
                                       <p className="text-[9px] text-muted-foreground">
-                                        {perfil.largura}×{perfil.altura}mm · {perfil.espessura}mm · {perfil.peso} kg/m
+                                        {perfil.largura}x{perfil.altura}mm - {perfil.espessura}mm - {perfil.peso} kg/m
                                       </p>
                                     </div>
                                   </div>
@@ -354,20 +452,20 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
                             <div className="p-2.5 bg-blue-500/5 border border-blue-500/20 rounded-lg">
                               <div className="flex items-center gap-2">
                                 <Square className="h-3.5 w-3.5 text-blue-500" />
-                                <span className="text-[11px] font-semibold text-foreground">Cálculo do vidro</span>
+                                <span className="text-[11px] font-semibold text-foreground">Calculo do vidro</span>
                               </div>
                               <div className="mt-1 grid grid-cols-3 gap-4 text-[10px]">
                                 <div>
-                                  <span className="text-muted-foreground">Dimensão:</span>
-                                  <span className="ml-1 font-medium text-foreground">{item.largura} × {item.altura} mm</span>
+                                  <span className="text-muted-foreground">Dimensao:</span>
+                                  <span className="ml-1 font-medium text-foreground">{item.largura} x {item.altura} mm</span>
                                 </div>
                                 <div>
-                                  <span className="text-muted-foreground">Área unitária:</span>
-                                  <span className="ml-1 font-medium text-blue-600">{m2.toFixed(3)} m²</span>
+                                  <span className="text-muted-foreground">Area unitaria:</span>
+                                  <span className="ml-1 font-medium text-blue-600">{m2.toFixed(3)} m2</span>
                                 </div>
                                 <div>
                                   <span className="text-muted-foreground">Total ({item.quantidade}x):</span>
-                                  <span className="ml-1 font-bold text-blue-600">{(m2 * item.quantidade).toFixed(3)} m²</span>
+                                  <span className="ml-1 font-bold text-blue-600">{(m2 * item.quantidade).toFixed(3)} m2</span>
                                 </div>
                               </div>
                             </div>
@@ -386,9 +484,21 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
         <div className="border-t border-border bg-muted/30 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6 text-[11px] text-muted-foreground">
             <span>{itens.length} {itens.length === 1 ? "item" : "itens"}</span>
-            {totalM2 > 0 && <span>{totalM2.toFixed(2)} m² de vidro</span>}
+            {totalM2 > 0 && <span>{totalM2.toFixed(2)} m2 de vidro</span>}
             {totalWeight > 0 && <span>~{totalWeight.toFixed(1)} kg</span>}
-            {hasTotalCosts && <span>Lucro: <b className="text-emerald-600">{fmt(totals.lucro)}</b></span>}
+            {hasTotalCosts && (
+              <>
+                <span>Lucro: <b className="text-emerald-600">{fmt(totals.lucro)}</b></span>
+                {margemLucro > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Percent className="h-3 w-3 text-emerald-500" />
+                    Margem: <b className={cn(
+                      margemLucro >= 20 ? "text-emerald-600" : margemLucro >= 10 ? "text-yellow-600" : "text-red-600"
+                    )}>{margemLucro.toFixed(1)}%</b>
+                  </span>
+                )}
+              </>
+            )}
           </div>
           <div className="flex items-center gap-3">
             {onGerarOP && orcamento.status === 'aprovado' && (
