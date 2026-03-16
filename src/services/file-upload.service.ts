@@ -9,7 +9,11 @@ let PDFJS: typeof PDFJSType | null = null;
 const getPDFJS = async () => {
   if (!PDFJS) {
     PDFJS = await import('pdfjs-dist');
-    PDFJS.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS.version}/pdf.worker.min.js`;
+    // Use local worker from node_modules — avoid CDN which fails with Vite ESM
+    PDFJS.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url,
+    ).href;
   }
   return PDFJS;
 };

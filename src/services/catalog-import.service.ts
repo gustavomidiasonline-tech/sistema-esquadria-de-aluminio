@@ -226,23 +226,19 @@ export const CatalogImportService = {
 
     const dados = job.dados_para_import as unknown as CatalogExtractedData;
 
-    // Importar perfis
+    // Importar perfis no catálogo (perfis_catalogo, não perfis_aluminio que é BOM)
     if (dados.perfis?.length) {
       const perfisInsert = dados.perfis.map((p) => ({
         company_id: companyId,
         codigo: p.codigo,
         nome: p.nome,
         peso_kg_m: p.peso_kg_m ?? null,
-        largura_mm: p.largura_mm ?? null,
-        espessura_parede_mm: p.espessura_mm ?? null,
-        liga: p.liga ?? null,
-        acabamento: p.acabamento ?? null,
-        categoria: p.categoria ?? null,
-        fonte_importacao: (job.nome_arquivo as string) ?? 'catalog-import',
+        espessura_mm: p.espessura_mm ?? null,
+        tipo: p.categoria ?? 'perfil',
       }));
 
       await supabase
-        .from('perfis_aluminio')
+        .from('perfis_catalogo')
         .upsert(perfisInsert, { onConflict: 'company_id,codigo', ignoreDuplicates: false });
     }
 
@@ -253,9 +249,7 @@ export const CatalogImportService = {
         codigo: m.codigo,
         nome: m.nome,
         tipo: m.tipo ?? 'correr',
-        serie: m.serie ?? null,
         descricao: m.descricao ?? null,
-        fonte_importacao: (job.nome_arquivo as string) ?? 'catalog-import',
       }));
 
       await supabase

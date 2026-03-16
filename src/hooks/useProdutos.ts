@@ -4,7 +4,7 @@ import type { Tables } from '@/integrations/supabase/types';
 
 export type Produto = Tables<'produtos'>;
 export type ProdutoComPerfil = Produto & {
-  perfis_aluminio: Pick<Tables<'perfis_aluminio'>, 'id' | 'nome' | 'codigo' | 'peso_por_metro'> | null;
+  perfis_aluminio: Pick<Tables<'perfis_aluminio'>, 'id' | 'descricao' | 'codigo' | 'peso_metro'> | null;
 };
 
 export function useProdutos() {

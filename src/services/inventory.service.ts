@@ -250,7 +250,8 @@ export const InventoryService = {
       tipo: 'perfil',
       sourceTable: 'perfis_aluminio',
       sourceIdField: 'perfil_aluminio_id',
-      sourceSelect: 'id, codigo, nome',
+      sourceSelect: 'id, codigo, descricao',
+      sourceNomeField: 'descricao',
       defaultUnidade: 'barra',
     });
   },
@@ -322,6 +323,7 @@ type SyncSourceConfig = {
   sourceTable: 'perfis_aluminio' | 'glass_types' | 'hardware' | 'accessories';
   sourceIdField: 'perfil_aluminio_id' | 'glass_type_id' | 'hardware_id' | 'accessory_id';
   sourceSelect: string;
+  sourceNomeField?: string;
   sourceUnidadeField?: 'unidade';
   defaultUnidade: string;
 };
@@ -333,6 +335,7 @@ async function syncSourceToInventory(config: SyncSourceConfig): Promise<Inventor
     sourceTable,
     sourceIdField,
     sourceSelect,
+    sourceNomeField = 'nome',
     sourceUnidadeField,
     defaultUnidade,
   } = config;
@@ -382,7 +385,7 @@ async function syncSourceToInventory(config: SyncSourceConfig): Promise<Inventor
   for (const src of source) {
     const sourceId = src.id as string;
     const codigo = String(src.codigo ?? '').trim();
-    const nome = String(src.nome ?? '').trim();
+    const nome = String((src as Record<string, unknown>)[sourceNomeField] ?? '').trim();
     const unidade = sourceUnidadeField ? String(src[sourceUnidadeField] ?? '').trim() : '';
     const finalUnidade = unidade || defaultUnidade;
 
