@@ -39,8 +39,7 @@ import Planos from "./pages/Planos";
 import Workflow from "./pages/Workflow";
 import ConfiguracaoModelos from "./pages/ConfiguracaoModelos";
 import BOM from "./pages/BOM";
-import GlassDesignShowcase from "./pages/GlassDesignShowcase";
-import GlassDashboard from "./pages/GlassDashboard";
+import ImportarDados from "./pages/ImportarDados";
 
 const queryClient = new QueryClient();
 
@@ -75,8 +74,7 @@ const App = () => (
             <Route path="/configuracao-modelos" element={<ProtectedRoute><ConfiguracaoModelos /></ProtectedRoute>} />
             <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
             <Route path="/bom" element={<ProtectedRoute><BOM /></ProtectedRoute>} />
-            <Route path="/glass-showcase" element={<GlassDesignShowcase />} />
-            <Route path="/glass-dashboard" element={<GlassDashboard />} />
+            <Route path="/importar-dados" element={<ProtectedRoute><ImportarDados /></ProtectedRoute>} />
             {/* Financeiro */}
             <Route path="/financeiro" element={<ProtectedRoute><FeatureGate feature="financeiro"><FinanceiroVisaoGeral /></FeatureGate></ProtectedRoute>} />
             <Route path="/financeiro/contas-receber" element={<ProtectedRoute><FeatureGate feature="financeiro"><ContasReceber /></FeatureGate></ProtectedRoute>} />

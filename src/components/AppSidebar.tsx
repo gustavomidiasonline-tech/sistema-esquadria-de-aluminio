@@ -32,6 +32,7 @@
   Warehouse,
   ClipboardList,
   Sparkles,
+  Upload,
   type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -62,11 +63,12 @@ const mainItemsSecondary = [
   { title: "Produtos", url: "/produtos", icon: Package },
   { title: "Estoque", url: "/estoque", icon: Warehouse },
   { title: "Lista de Materiais", url: "/bom", icon: ClipboardList },
+  { title: "Importar Dados", url: "/importar-dados", icon: Upload },
   { title: "Preço dos itens", url: "/precos", icon: DollarSign },
   { title: "Fornecedores", url: "/fornecedores", icon: Truck },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "Mapa", url: "/mapa", icon: MapPin },
-  { title: "Design Glass", url: "/glass-dashboard", icon: Sparkles },
+  
 ];
 
 const financeiroItems = [
@@ -104,15 +106,15 @@ export function AppSidebar() {
   const linkClass = (path: string) =>
     `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
       isActive(path)
-        ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+        ? "bg-white/10 text-[#00ff88] font-semibold border-l-2 border-[#00ff88] pl-[10px]"
+        : "text-white/60 hover:bg-white/8 hover:text-white/90"
     }`;
 
   const subLinkClass = (path: string) =>
     `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
       isActive(path)
-        ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-        : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+        ? "bg-white/10 text-[#00ff88] font-semibold border-l-2 border-[#00ff88] pl-[10px]"
+        : "text-white/50 hover:bg-white/8 hover:text-white/85"
     }`;
 
   const isLocked = (url: string): boolean => {
@@ -230,7 +232,7 @@ export function AppSidebar() {
                 "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isLocked("/pedidos")
                   ? "opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                  : "text-white/60 hover:bg-white/8 hover:text-white/90"
               )}
             >
               <div className="flex items-center gap-3">
@@ -288,7 +290,7 @@ export function AppSidebar() {
                 "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isLocked("/financeiro")
                   ? "opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                  : "text-white/60 hover:bg-white/8 hover:text-white/90"
               )}
             >
               <div className="flex items-center gap-3">

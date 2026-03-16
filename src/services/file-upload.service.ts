@@ -1,9 +1,10 @@
 // File Upload Service — Processa PDF/CSV para extrair números e ajustar cálculos
 
 import Papa from 'papaparse';
+import type * as PDFJSType from 'pdfjs-dist';
 
 // Lazy load PDF.js only when needed
-let PDFJS: any = null;
+let PDFJS: typeof PDFJSType | null = null;
 
 const getPDFJS = async () => {
   if (!PDFJS) {
@@ -40,7 +41,7 @@ export class FileUploadService {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        fullText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+        fullText += textContent.items.map((item: { str: string }) => item.str).join(' ') + '\n';
       }
 
       return this.extractNumbers(fullText, 'pdf');
@@ -56,11 +57,11 @@ export class FileUploadService {
     try {
       return new Promise((resolve) => {
         Papa.parse(file, {
-          complete: (results: any) => {
+          complete: (results: Papa.ParseResult<string[]>) => {
             const csvText = this.csvToText(results.data);
             resolve(this.extractNumbers(csvText, 'csv'));
           },
-          error: (error: any) => {
+          error: (error: Papa.ParseError) => {
             resolve({
               success: false,
               error: `Erro ao processar CSV: ${error.message}`,
@@ -76,7 +77,7 @@ export class FileUploadService {
     }
   }
 
-  private static csvToText(data: any[][]): string {
+  private static csvToText(data: string[][]): string {
     return data.map(row => row.join(' ')).join('\n');
   }
 

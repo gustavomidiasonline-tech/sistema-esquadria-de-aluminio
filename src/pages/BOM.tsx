@@ -6,15 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BOMService } from "@/services/bom.service";
 import type { BOMResult } from "@/services/bom.service";
-import { FileUploadDialog } from "@/components/FileUploadDialog";
-import type { ExtractedData } from "@/services/file-upload.service";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 const categoriaBadge: Record<string, string> = {
   aluminio: "bg-amber-100 text-amber-800 border-amber-200",
@@ -27,10 +24,8 @@ const categoriaBadge: Record<string, string> = {
 const BOM = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const orcamentoId = searchParams.get("orcamento_id");
   const [manualId, setManualId] = useState("");
-  const [loadingImport, setLoadingImport] = useState(false);
 
   const { data: orcamento } = useQuery({
     queryKey: ["bom-orcamento", orcamentoId],
@@ -114,37 +109,6 @@ const BOM = () => {
     if (id) navigate(`/bom?orcamento_id=${id}`);
   };
 
-  const handleDataExtracted = async (data: ExtractedData) => {
-    if (!orcamentoId || !data.largura || !data.altura) {
-      toast.error("Dados incompletos. Certifique-se de que largura e altura foram extraídos.");
-      return;
-    }
-
-    setLoadingImport(true);
-    try {
-      // Create new orcamento item with extracted data
-      const { error } = await supabase.from("orcamento_itens").insert({
-        orcamento_id: orcamentoId,
-        descricao: `Importado de arquivo (${data.source.toUpperCase()})`,
-        largura: Math.round(data.largura),
-        altura: Math.round(data.altura),
-        quantidade: data.quantidade || 1,
-        valor_unitario: 0, // Will be calculated separately
-        observacoes: `Dados extraídos com ${Math.round(data.confidence * 100)}% de confiança`,
-      });
-
-      if (error) throw error;
-
-      // Refresh BOM data
-      await queryClient.invalidateQueries({ queryKey: ["bom-itens", orcamentoId] });
-      toast.success(`Item importado com sucesso! Largura: ${data.largura.toFixed(0)}mm, Altura: ${data.altura.toFixed(0)}mm, Qtd: ${data.quantidade}`);
-    } catch (error) {
-      toast.error(`Erro ao salvar item: ${error instanceof Error ? error.message : "Desconhecido"}`);
-    } finally {
-      setLoadingImport(false);
-    }
-  };
-
   // No orcamento_id — show selection
   if (!orcamentoId) {
     return (
@@ -155,7 +119,7 @@ const BOM = () => {
             <p className="text-sm text-muted-foreground">Selecione um orcamento para gerar a lista de materiais</p>
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+          <div className="glass-card-premium p-6 space-y-4">
             <div className="flex items-end gap-3">
               <div className="flex-1">
                 <Label className="text-xs">ID do Orcamento</Label>
@@ -172,7 +136,7 @@ const BOM = () => {
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-xl">
+          <div className="glass-card-premium">
             <div className="p-5 border-b border-border">
               <h3 className="text-base font-semibold text-foreground">Orcamentos recentes</h3>
             </div>
@@ -229,14 +193,6 @@ const BOM = () => {
               {clienteNome} - {itens.length} itens
             </p>
           </div>
-          <FileUploadDialog
-            onDataExtracted={handleDataExtracted}
-            trigger={
-              <Button disabled={loadingImport} variant="outline" size="sm">
-                {loadingImport ? "Importando..." : "Importar PDF/CSV"}
-              </Button>
-            }
-          />
         </div>
 
         {/* KPIs */}
@@ -249,7 +205,7 @@ const BOM = () => {
           ].map((kpi) => {
             const Icon = kpi.icon;
             return (
-              <div key={kpi.label} className="bg-card border border-border rounded-xl p-4">
+              <div key={kpi.label} className="glass-card-premium p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-medium text-muted-foreground uppercase">{kpi.label}</span>
                   <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center", kpi.bg)}>
@@ -269,7 +225,7 @@ const BOM = () => {
           </TabsList>
 
           <TabsContent value="agregado">
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="glass-card-premium overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -307,10 +263,10 @@ const BOM = () => {
 
           <TabsContent value="por-item" className="space-y-4">
             {boms.length === 0 ? (
-              <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground">Nenhum item no orcamento.</div>
+              <div className="glass-card-premium p-8 text-center text-muted-foreground">Nenhum item no orcamento.</div>
             ) : (
               boms.map((bom) => (
-                <div key={bom.orcamento_item_id} className="bg-card border border-border rounded-xl overflow-hidden">
+                <div key={bom.orcamento_item_id} className="glass-card-premium overflow-hidden">
                   <div className="p-4 border-b border-border bg-muted/30">
                     <h4 className="text-sm font-bold text-foreground">{bom.descricao}</h4>
                     <p className="text-xs text-muted-foreground">
