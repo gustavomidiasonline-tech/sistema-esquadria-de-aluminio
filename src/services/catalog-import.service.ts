@@ -8,6 +8,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { eventBus } from '@/services/eventBus';
+import { importError, databaseError, apiError } from '@/lib/error-handler';
 
 export interface PerfilExtraido {
   codigo: string;
@@ -112,7 +113,7 @@ export const CatalogImportService = {
       .select()
       .single();
 
-    if (jobError) throw new Error(`Erro ao criar job: ${jobError.message}`);
+    if (jobError) throw databaseError(`Erro ao criar job: ${jobError.message}`, { service: 'catalog-import', operation: 'iniciarImportacao' });
     const jobId = (job as { id: string }).id;
 
     // 2. Processar em background (sem await — fire and forget)
@@ -193,7 +194,7 @@ export const CatalogImportService = {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Claude API error ${response.status}: ${errorText}`);
+      throw apiError(`Claude API error ${response.status}: ${errorText}`, { service: 'catalog-import', operation: 'extrairComIA' });
     }
 
     const result = await response.json() as {
@@ -204,7 +205,7 @@ export const CatalogImportService = {
 
     // Extrair JSON da resposta (pode vir com texto antes/depois)
     const jsonMatch = textContent.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Claude não retornou JSON válido');
+    if (!jsonMatch) throw importError('Claude não retornou JSON válido', { service: 'catalog-import', operation: 'extrairComIA' });
 
     return JSON.parse(jsonMatch[0]) as CatalogExtractedData;
   },
@@ -220,8 +221,8 @@ export const CatalogImportService = {
       .eq('company_id', companyId)
       .single();
 
-    if (error) throw new Error(`Job não encontrado: ${error.message}`);
-    if (!job.dados_para_import) throw new Error('Job sem dados para importar');
+    if (error) throw databaseError(`Job não encontrado: ${error.message}`, { service: 'catalog-import', operation: 'confirmarImportacao' });
+    if (!job.dados_para_import) throw importError('Job sem dados para importar', { service: 'catalog-import', operation: 'confirmarImportacao' });
 
     const dados = job.dados_para_import as unknown as CatalogExtractedData;
 
@@ -279,7 +280,7 @@ export const CatalogImportService = {
       .eq('company_id', companyId)
       .order('created_at', { ascending: false });
 
-    if (error) throw new Error(`Erro ao listar jobs: ${error.message}`);
+    if (error) throw databaseError(`Erro ao listar jobs: ${error.message}`, { service: 'catalog-import', operation: 'listarJobs' });
     return (data ?? []) as ImportJob[];
   },
 

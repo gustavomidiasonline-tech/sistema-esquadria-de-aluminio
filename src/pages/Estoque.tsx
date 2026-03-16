@@ -1,20 +1,42 @@
 import { AppLayout } from '@/components/AppLayout';
-import { Plus, AlertTriangle, Package, Search, RefreshCw, Pencil, Trash2 } from 'lucide-react';
+import { Plus, AlertTriangle, Package, Search, RefreshCw, Pencil, Trash2, Upload, Link2, Download, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEstoque, TIPO_LABELS, TIPO_COLORS } from '@/hooks/useEstoque';
 import type { InventoryItemTipo, InventoryItem } from '@/services/inventory.service';
 import { DataTable, type ColumnDef } from '@/components/tables';
+import { InventoryImportDialog } from '@/components/inventory/InventoryImportDialog';
 
 export default function Estoque() {
   const { profile } = useAuth();
   const companyId = profile?.company_id ?? '';
   const s = useEstoque(companyId);
+
+  const handleDownloadTemplate = () => {
+    const header = 'codigo,nome,tipo,quantidade,unidade';
+    const example = [
+      'P-001,Perfil 40x60,perfil,20,barra',
+      'V-010,Vidro 4mm,vidro,12,m2',
+      'F-001,Fechadura Premium,ferragem,5,un',
+      'A-002,Borracha de vedacao,acessorio,30,un',
+    ];
+    const csv = [header, ...example].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'modelo-importacao-estoque.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   const estoqueColumns: ColumnDef<InventoryItem>[] = [
     {
@@ -82,21 +104,56 @@ export default function Estoque() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 max-w-7xl w-full">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Estoque</h1>
-            <p className="text-sm text-muted-foreground">Gerencie perfis, vidros, ferragens e acessórios</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Estoque</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Gerencie perfis, vidros, ferragens e acessórios</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => s.refetch()}>
+          <div className="flex flex-wrap items-center gap-2">
+            <InventoryImportDialog
+              companyId={companyId}
+              trigger={(
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                  <Upload className="h-4 w-4 mr-1" /> Importar itens
+                </Button>
+              )}
+            />
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleDownloadTemplate}>
+              <Download className="h-4 w-4 mr-1" /> Baixar modelo CSV
+            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-muted/30 transition-colors"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs text-xs">
+                Tipos aceitos: perfil, vidro, ferragem, acessorio. Arquivo CSV/PDF com colunas
+                codigo, nome, tipo, quantidade, unidade.
+              </TooltipContent>
+            </Tooltip>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={s.syncProdutos}
+              disabled={s.syncMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              <Link2 className="h-4 w-4 mr-1" />
+              {s.syncMutation.isPending ? 'Sincronizando...' : 'Sincronizar materiais'}
+            </Button>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => s.refetch()}>
               <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
             </Button>
-            <Button onClick={s.openNew}><Plus className="h-4 w-4 mr-1" /> Novo Item</Button>
+            <Button className="w-full sm:w-auto" onClick={s.openNew}><Plus className="h-4 w-4 mr-1" /> Novo Item</Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="border border-border rounded-xl p-4 bg-card">
             <div className="flex items-center gap-2 mb-1">
               <Package className="h-4 w-4 text-primary" />
@@ -141,13 +198,13 @@ export default function Estoque() {
           </div>
         )}
 
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative w-full sm:flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar por código ou nome..." value={s.search} onChange={(e) => s.setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={s.tipoFiltro} onValueChange={(v) => s.setTipoFiltro(v as InventoryItemTipo | 'todos')}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os tipos</SelectItem>
               {(Object.keys(TIPO_LABELS) as InventoryItemTipo[]).map(t => (

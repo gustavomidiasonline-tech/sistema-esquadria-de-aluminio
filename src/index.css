@@ -70,11 +70,13 @@
 
   html, body, #root {
     min-height: 100vh;
+    width: 100%;
   }
 
   body {
     @apply text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
     /* Deep gradient — visible through all transparent panels */
     background: linear-gradient(135deg,
       #080c1a 0%,

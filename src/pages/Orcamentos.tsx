@@ -120,13 +120,15 @@ const Orcamentos = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-4 max-w-7xl">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 max-w-7xl w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Orçamentos</h1>
-            <p className="text-sm text-muted-foreground">{(orcamentos as unknown[]).length} orçamentos</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Orçamentos</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">{(orcamentos as unknown[]).length} orçamentos</p>
           </div>
-          <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" /> Novo orçamento</Button>
+          <Button className="gap-2 w-full sm:w-auto" onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4" /> Novo orçamento
+          </Button>
         </div>
         <OrcamentoStats orcamentos={orcamentos as Record<string, unknown>[]} />
         <OrcamentoListView

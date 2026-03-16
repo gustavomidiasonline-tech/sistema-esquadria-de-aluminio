@@ -54,7 +54,7 @@ export function WorkflowCard({ pedido, stages, onClick }: WorkflowCardProps) {
     em_producao: "bg-blue-500/15 text-blue-300",
     pronto: "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400",
     entregue: "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400",
-    cancelado: "bg-red-500/150/15 text-red-400 dark:text-red-400",
+    cancelado: "bg-red-500/15 text-red-400 dark:text-red-400",
   };
 
   return (

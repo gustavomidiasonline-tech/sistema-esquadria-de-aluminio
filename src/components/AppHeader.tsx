@@ -1,4 +1,4 @@
-import { Bell, Search, User, LogOut, AlertTriangle, Clock, CreditCard, Wrench, Package, ChevronRight } from "lucide-react";
+import { Bell, Search, User, LogOut, AlertTriangle, Clock, CreditCard, Wrench, Package, ChevronRight, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -59,7 +59,12 @@ function NotificationItem({ notification, onClick }: { notification: AppNotifica
   );
 }
 
-export function AppHeader() {
+interface AppHeaderProps {
+  onToggleSidebar?: () => void;
+  isMobile?: boolean;
+}
+
+export function AppHeader({ onToggleSidebar, isMobile }: AppHeaderProps) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { notifications, criticalCount, totalCount } = useNotifications();
@@ -72,19 +77,30 @@ export function AppHeader() {
   const badgeCount = totalCount > 99 ? "99+" : totalCount;
 
   return (
-    <header className="h-16 glass-header flex items-center justify-between px-6 shrink-0">
-      <div className="flex items-center gap-3">
-        <div className="relative">
+    <header className="h-14 sm:h-16 glass-header flex items-center justify-between px-3 sm:px-6 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebar}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Abrir menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+        <div className="relative min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar..."
-            className="glass-input-field pl-10 pr-4 py-2 text-sm w-64"
+            className="glass-input-field pl-10 pr-4 py-2 text-xs sm:text-sm w-36 sm:w-64 max-w-[55vw]"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
@@ -102,7 +118,7 @@ export function AppHeader() {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-96 p-0">
+          <PopoverContent align="end" className="w-[90vw] max-w-sm sm:w-96 p-0">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />

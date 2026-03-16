@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { InventoryService, type InventoryItem, type InventoryItemTipo } from '@/services/inventory.service';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +38,7 @@ export function useEstoque(companyId: string) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [form, setForm] = useState<ItemFormValues>(DEFAULT_FORM);
+  const [autoSynced, setAutoSynced] = useState(false);
 
   const { data: itens = [], isLoading, refetch } = useQuery({
     queryKey: ['inventory_items', companyId, tipoFiltro],
@@ -75,6 +76,23 @@ export function useEstoque(companyId: string) {
     onError: (err: unknown) => toast.error((err instanceof Error ? err.message : 'Erro ao remover')),
   });
 
+  const syncMutation = useMutation({
+    mutationFn: () => InventoryService.sincronizarMateriaisDeProdutos(companyId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['inventory_items'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory_alerts'] });
+      toast.success(`Sincronizado: ${result.inserted} novo(s), ${result.updated} vinculado(s)`);
+    },
+    onError: (err: unknown) => toast.error((err instanceof Error ? err.message : 'Erro ao sincronizar')),
+  });
+
+  useEffect(() => {
+    if (!companyId || autoSynced || isLoading) return;
+    syncMutation.mutate(undefined, {
+      onSettled: () => setAutoSynced(true),
+    });
+  }, [companyId, autoSynced, isLoading, syncMutation]);
+
   const itensFiltrados = itens.filter(i => i.nome.toLowerCase().includes(search.toLowerCase()) || i.codigo.toLowerCase().includes(search.toLowerCase()));
 
   const openNew = () => { setEditingItem(null); setForm(DEFAULT_FORM); setDialogOpen(true); };
@@ -97,6 +115,7 @@ export function useEstoque(companyId: string) {
   };
 
   const closeDialog = () => { setDialogOpen(false); setEditingItem(null); setForm(DEFAULT_FORM); };
+  const syncProdutos = () => syncMutation.mutate();
 
   const totalItens = itens.length;
   const totalAlertas = alertas.length;
@@ -106,7 +125,7 @@ export function useEstoque(companyId: string) {
     search, setSearch, tipoFiltro, setTipoFiltro, dialogOpen, setDialogOpen,
     editingItem, form, setForm, openNew, openEdit, handleSave, closeDialog,
     itens, itensFiltrados, isLoading, refetch,
-    alertas, saveMutation, deleteMutation,
+    alertas, saveMutation, deleteMutation, syncMutation, syncProdutos,
     totalItens, totalAlertas, totalValorEstoque,
   };
 }

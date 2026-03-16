@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export function WorkflowDetail({ pedido, onBack }: WorkflowDetailProps) {
   const [progressItems, setProgressItems] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const [stagesRes, progressRes] = await Promise.all([
       supabase.from("workflow_templates").select("*").order("sort_order"),
@@ -50,11 +50,11 @@ export function WorkflowDetail({ pedido, onBack }: WorkflowDetailProps) {
     setStages((stagesRes.data as WorkflowStage[]) || []);
     setProgressItems((progressRes.data as ProgressItem[]) || []);
     setLoading(false);
-  };
+  }, [pedido.id]);
 
   useEffect(() => {
     loadData();
-  }, [pedido.id]);
+  }, [loadData]);
 
   const completedCount = progressItems.filter(p => p.status === "concluido").length;
   const totalSteps = stages.length;

@@ -7,6 +7,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { CuttingService, type PecaCorte } from '@/services/cutting.service';
 import { eventBus, type InventoryGap } from '@/services/eventBus';
+import { pipelineError, databaseError } from '@/lib/error-handler';
 
 export interface PipelineResult {
   cuttingPlanId: string;
@@ -64,8 +65,8 @@ export const PipelineService = {
       `)
       .eq('orcamento_id', orcamentoId);
 
-    if (itensError) throw new Error(`Erro ao buscar itens: ${itensError.message}`);
-    if (!itensOrcamento?.length) throw new Error('Orçamento sem itens');
+    if (itensError) throw databaseError(`Erro ao buscar itens: ${itensError.message}`, { service: 'pipeline', operation: 'runFullPipeline', entityId: orcamentoId });
+    if (!itensOrcamento?.length) throw pipelineError('Orçamento sem itens', { service: 'pipeline', operation: 'runFullPipeline', entityId: orcamentoId });
 
     // 2. Gerar peças de corte a partir dos itens
     const pecas = gerarPecasDeCorte(itensOrcamento);
@@ -92,7 +93,7 @@ export const PipelineService = {
       .select('id')
       .single();
 
-    if (planError) throw new Error(`Erro ao salvar plano de corte: ${planError.message}`);
+    if (planError) throw databaseError(`Erro ao salvar plano de corte: ${planError.message}`, { service: 'pipeline', operation: 'saveCuttingPlan' });
     const cuttingPlanId = cuttingPlan.id as string;
 
     await eventBus.emit('pieces.generated', {
@@ -229,7 +230,7 @@ export const PipelineService = {
       .select('id')
       .single();
 
-    if (poError) throw new Error(`Erro ao criar pedido de compra: ${poError.message}`);
+    if (poError) throw databaseError(`Erro ao criar pedido de compra: ${poError.message}`, { service: 'pipeline', operation: 'createPurchaseOrder' });
     const purchaseOrderId = po.id as string;
 
     const itensInsert = gaps.map((gap) => ({
@@ -289,7 +290,7 @@ export const PipelineService = {
       .select('id, numero')
       .single();
 
-    if (opError) throw new Error(`Erro ao criar ordem de produção: ${opError.message}`);
+    if (opError) throw databaseError(`Erro ao criar ordem de produção: ${opError.message}`, { service: 'pipeline', operation: 'createProductionOrder' });
 
     return {
       productionOrderId: op.id as string,

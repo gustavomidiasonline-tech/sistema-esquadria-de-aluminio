@@ -31,14 +31,13 @@
   Settings,
   Warehouse,
   ClipboardList,
-  Sparkles,
   Upload,
   type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useSubscription, ROUTE_FEATURE_MAP, PLAN_LABELS, type FeatureKey } from "@/hooks/useSubscription";
+import { useSubscription, ROUTE_FEATURE_MAP, PLAN_LABELS } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -70,7 +69,6 @@ const mainItemsSecondary = [
   { title: "Fornecedores", url: "/fornecedores", icon: Truck },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "Mapa", url: "/mapa", icon: MapPin },
-  
 ];
 
 const financeiroItems = [
@@ -90,7 +88,13 @@ const adminItems = [
   { title: "Funcionários", url: "/funcionarios", icon: UserCog },
 ];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  isMobile?: boolean;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -128,6 +132,17 @@ export function AppSidebar() {
     return !hasFeature(feature);
   };
 
+  const handleNavigate = () => {
+    if (isMobile && onMobileClose) {
+      onMobileClose();
+    }
+  };
+
+  const handleNavigateTo = (path: string) => {
+    navigate(path);
+    handleNavigate();
+  };
+
   const renderNavItem = (item: { title: string; url: string; icon: LucideIcon }, isSubItem = false) => {
     const locked = isLocked(item.url);
     const feature = ROUTE_FEATURE_MAP[item.url];
@@ -138,7 +153,7 @@ export function AppSidebar() {
         <Tooltip key={item.url}>
           <TooltipTrigger asChild>
             <button
-              onClick={() => navigate("/planos")}
+              onClick={() => handleNavigateTo("/planos")}
               className={cn(
                 "flex items-center gap-3 w-full rounded-lg text-sm font-medium transition-all duration-200 opacity-40",
                 isSubItem ? "px-3 py-2 text-[13px]" : "px-3 py-2.5",
@@ -146,7 +161,7 @@ export function AppSidebar() {
               )}
             >
               <item.icon className={cn("shrink-0", isSubItem ? "h-4 w-4" : "h-[18px] w-[18px]")} />
-              {!collapsed && (
+              {!isSidebarCollapsed && (
                 <>
                   <span className="flex-1 text-left">{item.title}</span>
                   <Lock className="h-3.5 w-3.5 text-sidebar-muted/60" />
@@ -168,25 +183,31 @@ export function AppSidebar() {
         end={item.url === "/"}
         className={isSubItem ? subLinkClass(item.url) : linkClass(item.url)}
         activeClassName=""
+        onClick={handleNavigate}
       >
         <item.icon className={cn("shrink-0", isSubItem ? "h-4 w-4" : "h-[18px] w-[18px]")} />
-        {!collapsed && <span>{item.title}</span>}
+        {!isSidebarCollapsed && <span>{item.title}</span>}
       </NavLink>
     );
   };
 
+  const isSidebarCollapsed = isMobile ? false : collapsed;
+  const isMobileOpen = Boolean(mobileOpen);
+
+  const sidebarClassName = isMobile
+    ? `glass-sidebar fixed inset-y-0 left-0 z-40 flex h-dvh flex-col transition-transform duration-300 ${
+        isMobileOpen ? "translate-x-0" : "-translate-x-full"
+      } w-[82vw] max-w-[320px]`
+    : `${isSidebarCollapsed ? "w-[72px]" : "w-[240px]"} glass-sidebar flex flex-col h-screen sticky top-0 transition-all duration-300 shrink-0`;
+
   return (
-    <aside
-      className={`${
-        collapsed ? "w-[72px]" : "w-[240px]"
-      } glass-sidebar flex flex-col h-screen sticky top-0 transition-all duration-300 shrink-0`}
-    >
+    <aside className={sidebarClassName}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-xs font-bold text-white">
           PP
         </div>
-        {!collapsed && (
+        {!isSidebarCollapsed && (
           <div>
             <h1 className="text-base font-bold text-sidebar-foreground">PixelPerfect</h1>
             <p className="text-[10px] text-sidebar-muted">Orçamentos</p>
@@ -195,7 +216,7 @@ export function AppSidebar() {
       </div>
 
       {/* Menu label */}
-      {!collapsed && (
+      {!isSidebarCollapsed && (
         <div className="px-5 pt-5 pb-2">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted/60">
             Menu
@@ -208,12 +229,12 @@ export function AppSidebar() {
         {mainItemsPrimary.map((item) => renderNavItem(item))}
 
         {/* Pedidos Section */}
-        {collapsed ? (
+        {isSidebarCollapsed ? (
           isLocked("/pedidos") ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => navigate("/planos")}
+                  onClick={() => handleNavigateTo("/planos")}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30 w-full"
                 >
                   <ListChecks className="h-[18px] w-[18px] shrink-0" />
@@ -224,7 +245,7 @@ export function AppSidebar() {
               </TooltipContent>
             </Tooltip>
           ) : (
-            <NavLink to="/pedidos" className={linkClass("/pedidos")} activeClassName="">
+            <NavLink to="/pedidos" className={linkClass("/pedidos")} activeClassName="" onClick={handleNavigate}>
               <ListChecks className="h-[18px] w-[18px] shrink-0" />
             </NavLink>
           )
@@ -232,7 +253,7 @@ export function AppSidebar() {
           <>
             <button
               onClick={() => {
-                if (isLocked("/pedidos")) { navigate("/planos"); return; }
+                if (isLocked("/pedidos")) { handleNavigateTo("/planos"); return; }
                 setPedidosOpen(!pedidosOpen);
               }}
               className={cn(
@@ -263,8 +284,8 @@ export function AppSidebar() {
         {mainItemsSecondary.map((item) => renderNavItem(item))}
 
         {/* Materiais Section */}
-        {collapsed ? (
-          <NavLink to="/bom" className={linkClass("/bom")} activeClassName="">
+        {isSidebarCollapsed ? (
+          <NavLink to="/bom" className={linkClass("/bom")} activeClassName="" onClick={handleNavigate}>
             <ClipboardList className="h-[18px] w-[18px] shrink-0" />
           </NavLink>
         ) : (
@@ -294,25 +315,25 @@ export function AppSidebar() {
 
         {/* Financeiro Section */}
         <div className="pt-5 pb-2">
-          {!collapsed && (
+          {!isSidebarCollapsed && (
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted/60">
               Financeiro
             </p>
           )}
         </div>
 
-        {collapsed ? (
+        {isSidebarCollapsed ? (
           isLocked("/financeiro") ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <button onClick={() => navigate("/planos")} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30 w-full">
+                <button onClick={() => handleNavigateTo("/planos")} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30 w-full">
                   <Wallet className="h-[18px] w-[18px] shrink-0" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right"><p className="text-xs">Disponível no plano Essencial</p></TooltipContent>
             </Tooltip>
           ) : (
-            <NavLink to="/financeiro" className={linkClass("/financeiro")} activeClassName="">
+            <NavLink to="/financeiro" className={linkClass("/financeiro")} activeClassName="" onClick={handleNavigate}>
               <Wallet className="h-[18px] w-[18px] shrink-0" />
             </NavLink>
           )
@@ -320,7 +341,7 @@ export function AppSidebar() {
           <>
             <button
               onClick={() => {
-                if (isLocked("/financeiro")) { navigate("/planos"); return; }
+                if (isLocked("/financeiro")) { handleNavigateTo("/planos"); return; }
                 setFinanceiroOpen(!financeiroOpen);
               }}
               className={cn(
@@ -350,7 +371,7 @@ export function AppSidebar() {
 
         {/* Gestão Section */}
         <div className="pt-5 pb-2">
-          {!collapsed && (
+          {!isSidebarCollapsed && (
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted/60">
               Gestão
             </p>
@@ -365,33 +386,35 @@ export function AppSidebar() {
             to="/planos"
             className={linkClass("/planos")}
             activeClassName=""
+            onClick={handleNavigate}
           >
             <Crown className="h-[18px] w-[18px] shrink-0" />
-            {!collapsed && <span>Planos</span>}
+            {!isSidebarCollapsed && <span>Planos</span>}
           </NavLink>
         </div>
       </nav>
 
       {/* Plan badge + collapse */}
-      {!collapsed && (
+      {!isSidebarCollapsed && (
         <div className="mx-3 mb-2 p-3 bg-accent rounded-xl border border-border">
           <div className="flex items-center gap-2">
             <Crown className="h-4 w-4 text-primary" />
             <span className="text-xs font-bold text-primary">{PLAN_LABELS[currentPlan]}</span>
           </div>
-          <button onClick={() => navigate("/planos")} className="text-[10px] text-primary/70 hover:text-primary mt-1">
-            Fazer upgrade â†’
+          <button onClick={() => handleNavigateTo("/planos")} className="text-[10px] text-primary/70 hover:text-primary mt-1">
+            Fazer upgrade {"\u2192"}
           </button>
         </div>
       )}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center justify-center py-4 border-t border-sidebar-border text-sidebar-muted hover:text-sidebar-foreground transition-colors"
-      >
-        {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-      </button>
+
+      {!isMobile && (
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="flex items-center justify-center py-4 border-t border-sidebar-border text-sidebar-muted hover:text-sidebar-foreground transition-colors"
+        >
+          {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        </button>
+      )}
     </aside>
   );
 }
-
-

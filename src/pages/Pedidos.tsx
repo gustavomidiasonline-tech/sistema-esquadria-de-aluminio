@@ -125,13 +125,13 @@ const Pedidos = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-4 max-w-[1400px]">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 max-w-[1400px] w-full">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Pedidos</h1>
-            <p className="text-sm text-muted-foreground">{pedidos.length} pedidos</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Pedidos</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">{pedidos.length} pedidos</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center glass-card-premium rounded-lg p-0.5">
               <button onClick={() => setViewMode("kanban")} className={cn("p-1.5 rounded-md transition-colors", viewMode === "kanban" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
                 <LayoutGrid className="h-4 w-4" />
@@ -140,7 +140,9 @@ const Pedidos = () => {
                 <List className="h-4 w-4" />
               </button>
             </div>
-            <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" /> Novo pedido</Button>
+            <Button className="gap-2 w-full sm:w-auto" onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4" /> Novo pedido
+            </Button>
           </div>
         </div>
 
@@ -168,23 +170,23 @@ const Pedidos = () => {
         </div>
 
         {/* Search & Filters */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative w-full sm:flex-1 sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input type="text" placeholder="Buscar pedido..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2.5 text-sm glass-card-premium rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground" />
           </div>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowFilters(!showFilters)}>
+          <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-4 w-4" /> Filtros {activeFilters > 0 && <span className="bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{activeFilters}</span>}
           </Button>
         </div>
 
         {showFilters && (
-          <div className="flex items-end gap-3 flex-wrap glass-card-premium p-4">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3 glass-card-premium p-4">
             <div>
               <Label className="text-xs">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40 mt-1 h-9"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-40 mt-1 h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
                   <SelectItem value="pendente">Pendente</SelectItem>
@@ -197,13 +199,13 @@ const Pedidos = () => {
             </div>
             <div>
               <Label className="text-xs">Data de</Label>
-              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 h-9 w-40" />
+              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 h-9 w-full sm:w-40" />
             </div>
             <div>
               <Label className="text-xs">Data ate</Label>
-              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 h-9 w-40" />
+              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 h-9 w-full sm:w-40" />
             </div>
-            <Button variant="ghost" size="sm" onClick={() => { setStatusFilter("todos"); setDateFrom(""); setDateTo(""); }}>Limpar</Button>
+            <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => { setStatusFilter("todos"); setDateFrom(""); setDateTo(""); }}>Limpar</Button>
           </div>
         )}
 

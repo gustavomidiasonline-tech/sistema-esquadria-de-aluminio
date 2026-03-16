@@ -121,7 +121,7 @@ function EsquadriaModel({ largura, altura, tipo, folhas }: Omit<Props, 'resultad
     }
 
     return els;
-  }, [w, h, tipo, folhas]);
+  }, [w, h, tipo, folhas, pw, pd]);
 
   return <group>{elements}</group>;
 }

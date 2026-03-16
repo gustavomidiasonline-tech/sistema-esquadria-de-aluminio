@@ -62,7 +62,7 @@ export function ServicosKPIs({ servicos }: ServicosKPIsProps) {
               key={kpi.label}
               className={cn(
                 "glass-card-premium p-3 flex flex-col gap-1.5 transition-colors",
-                kpi.alert && "border-orange-500/40 bg-orange-500/150/5"
+                kpi.alert && "border-orange-500/40 bg-orange-500/10"
               )}
             >
               <div className="flex items-center justify-between">

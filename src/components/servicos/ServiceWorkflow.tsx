@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Check, Ruler, ShoppingCart, PackageCheck, Wrench, ClipboardCheck, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,17 +35,17 @@ export function ServiceWorkflow({ servicoId, servicoStatus }: ServiceWorkflowPro
   const [obsDialog, setObsDialog] = useState<string | null>(null);
   const [obsText, setObsText] = useState("");
 
-  useEffect(() => {
-    loadChecklist();
-  }, [servicoId]);
-
-  const loadChecklist = async () => {
+  const loadChecklist = useCallback(async () => {
     const { data } = await supabase
       .from("servico_checklist")
       .select("*")
       .eq("servico_id", servicoId);
     setChecklist(data || []);
-  };
+  }, [servicoId]);
+
+  useEffect(() => {
+    loadChecklist();
+  }, [loadChecklist]);
 
   const getEtapaStatus = (etapaKey: string) => {
     return checklist.find((c) => c.etapa === etapaKey);

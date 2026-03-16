@@ -1,13 +1,26 @@
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const isMobile = useIsMobile();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const handleToggleSidebar = () => {
+    setMobileSidebarOpen((prev) => !prev);
+  };
+
+  const handleCloseSidebar = () => {
+    setMobileSidebarOpen(false);
+  };
+
   return (
-    <div className="flex min-h-screen w-full relative overflow-hidden">
+    <div className="flex min-h-dvh w-full relative overflow-hidden">
       {/* Ambient light orbs — same style as reference image */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         {/* Bottom-left warm glow (red/orange) */}
@@ -24,10 +37,24 @@ export function AppLayout({ children }: AppLayoutProps) {
           style={{ background: 'radial-gradient(circle, rgba(50,80,220,0.5) 0%, transparent 70%)' }} />
       </div>
 
-      <AppSidebar />
+      <AppSidebar
+        isMobile={isMobile}
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={handleCloseSidebar}
+      />
+
+      {isMobile && mobileSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Fechar menu"
+          onClick={handleCloseSidebar}
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-[2px]"
+        />
+      )}
+
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
-        <AppHeader />
-        <main className="flex-1 p-6">
+        <AppHeader onToggleSidebar={handleToggleSidebar} isMobile={isMobile} />
+        <main className="flex-1 px-4 py-4 sm:px-6 sm:py-6">
           {children}
         </main>
       </div>

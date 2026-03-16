@@ -106,13 +106,13 @@ const Index = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6 max-w-7xl">
+      <div className="space-y-6 max-w-7xl w-full">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
             {getGreeting()}, {profile?.nome || "Usuario"}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })} - {clientes.length} clientes cadastrados
           </p>
         </div>
@@ -151,7 +151,7 @@ const Index = () => {
 
         {/* KPI Cards — Glass Morphism */}
         <div
-          className="relative rounded-2xl overflow-hidden p-6"
+          className="relative rounded-2xl overflow-hidden p-4 sm:p-6"
           style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #2d1b69 70%, #3d0f4a 100%)' }}
         >
           {/* animated blobs */}
@@ -209,7 +209,7 @@ const Index = () => {
                 <div className="px-5 py-8 text-center text-muted-foreground text-sm">Nenhum orcamento ainda.</div>
               ) : (
                 recentOrcamentos.map((orc) => (
-                  <div key={orc.id} className="flex items-center justify-between px-5 py-3.5">
+                  <div key={orc.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-bold text-primary">#{orc.numero}</span>
                       <div>
@@ -220,7 +220,7 @@ const Index = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="text-sm font-bold text-foreground">{fmt(Number(orc.valor_total || 0))}</p>
                       <p className="text-[10px] text-muted-foreground">{format(parseISO(orc.created_at), "dd/MM")}</p>
                     </div>
@@ -277,7 +277,7 @@ const Index = () => {
                 recentPedidos.map((p) => {
                   const atrasado = p.data_entrega && isPast(parseISO(p.data_entrega)) && p.status !== "entregue" && p.status !== "cancelado";
                   return (
-                    <div key={p.id} className="flex items-center justify-between px-5 py-3.5">
+                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <span className={cn("text-sm font-bold", atrasado ? "text-destructive" : "text-primary")}>#{p.numero}</span>
                         <div>
@@ -289,7 +289,7 @@ const Index = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="text-sm font-bold text-foreground">{fmt(Number(p.valor_total || 0))}</p>
                         {p.data_entrega && <p className="text-[10px] text-muted-foreground">{format(parseISO(p.data_entrega), "dd/MM")}</p>}
                       </div>
