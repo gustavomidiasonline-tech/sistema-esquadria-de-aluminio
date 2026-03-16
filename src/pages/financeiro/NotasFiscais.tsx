@@ -13,6 +13,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Receipt, Search, FileText, Download } from "lucide-react";
 import { FileUpload } from "@/components/shared/FileUpload";
+import type { Tables } from "@/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
+
+type NotaFiscalWithCliente = Tables<"notas_fiscais"> & { clientes: { nome: string } | null };
+type NfStatus = Database["public"]["Enums"]["nf_status"];
+type NfTipo = Database["public"]["Enums"]["nf_tipo"];
 
 const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "outline" | "secondary" }> = {
   emitida: { label: "Emitida", variant: "default" },
@@ -31,7 +37,7 @@ export default function NotasFiscais() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [detailNF, setDetailNF] = useState<any>(null);
+  const [detailNF, setDetailNF] = useState<NotaFiscalWithCliente | null>(null);
   const [pdfUrl, setPdfUrl] = useState("");
   const [xmlUrl, setXmlUrl] = useState("");
   const [form, setForm] = useState({
@@ -67,12 +73,12 @@ export default function NotasFiscais() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("notas_fiscais").insert({
-        tipo: form.tipo as any,
+        tipo: form.tipo as NfTipo,
         numero: form.numero || null,
         valor: Number(form.valor),
         descricao: form.descricao || null,
         cliente_id: form.cliente_id || null,
-        status: form.status as any,
+        status: form.status as NfStatus,
         data_emissao: form.status === "emitida" ? new Date().toISOString().split("T")[0] : null,
         created_by: user?.id,
         pdf_url: pdfUrl || null,
@@ -94,7 +100,7 @@ export default function NotasFiscais() {
   const emitirMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("notas_fiscais").update({
-        status: "emitida" as any,
+        status: "emitida" as NfStatus,
         data_emissao: new Date().toISOString().split("T")[0],
       }).eq("id", id);
       if (error) throw error;
@@ -108,7 +114,7 @@ export default function NotasFiscais() {
 
   const cancelarMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("notas_fiscais").update({ status: "cancelada" as any }).eq("id", id);
+      const { error } = await supabase.from("notas_fiscais").update({ status: "cancelada" as NfStatus }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -118,7 +124,7 @@ export default function NotasFiscais() {
     },
   });
 
-  const filtered = notas.filter((n: any) =>
+  const filtered = notas.filter((n: NotaFiscalWithCliente) =>
     (n.numero || "").toLowerCase().includes(search.toLowerCase()) ||
     (n.clientes?.nome || "").toLowerCase().includes(search.toLowerCase()) ||
     (n.descricao || "").toLowerCase().includes(search.toLowerCase())
@@ -143,9 +149,9 @@ export default function NotasFiscais() {
         {/* Summary cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: "Emitidas", count: notas.filter((n: any) => n.status === "emitida").length, total: notas.filter((n: any) => n.status === "emitida").reduce((s: number, n: any) => s + Number(n.valor), 0) },
-            { label: "Pendentes", count: notas.filter((n: any) => n.status === "pendente").length, total: notas.filter((n: any) => n.status === "pendente").reduce((s: number, n: any) => s + Number(n.valor), 0) },
-            { label: "Canceladas", count: notas.filter((n: any) => n.status === "cancelada").length, total: notas.filter((n: any) => n.status === "cancelada").reduce((s: number, n: any) => s + Number(n.valor), 0) },
+            { label: "Emitidas", count: notas.filter((n: NotaFiscalWithCliente) => n.status === "emitida").length, total: notas.filter((n: NotaFiscalWithCliente) => n.status === "emitida").reduce((s: number, n: NotaFiscalWithCliente) => s + Number(n.valor), 0) },
+            { label: "Pendentes", count: notas.filter((n: NotaFiscalWithCliente) => n.status === "pendente").length, total: notas.filter((n: NotaFiscalWithCliente) => n.status === "pendente").reduce((s: number, n: NotaFiscalWithCliente) => s + Number(n.valor), 0) },
+            { label: "Canceladas", count: notas.filter((n: NotaFiscalWithCliente) => n.status === "cancelada").length, total: notas.filter((n: NotaFiscalWithCliente) => n.status === "cancelada").reduce((s: number, n: NotaFiscalWithCliente) => s + Number(n.valor), 0) },
           ].map((s) => (
             <div key={s.label} className="bg-card border border-border rounded-xl p-4">
               <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -166,7 +172,7 @@ export default function NotasFiscais() {
           </div>
         ) : (
           <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
-            {filtered.map((nf: any) => {
+            {filtered.map((nf: NotaFiscalWithCliente) => {
               const s = statusMap[nf.status] || statusMap.pendente;
               const hasFiles = nf.pdf_url || nf.xml_url;
               return (
@@ -303,7 +309,7 @@ export default function NotasFiscais() {
                 <Select value={form.cliente_id} onValueChange={(v) => setForm({ ...form, cliente_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {clientes.map((c: any) => (
+                    {clientes.map((c: { id: string; nome: string }) => (
                       <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                     ))}
                   </SelectContent>

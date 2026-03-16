@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      accessories: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          company_id: string | null
+          created_at: string
+          descricao: string | null
+          fornecedor: string | null
+          id: string
+          nome: string
+          peso_unitario_kg: number | null
+          preco_unitario: number
+          tipo: string | null
+          unidade: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          company_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          fornecedor?: string | null
+          id?: string
+          nome: string
+          peso_unitario_kg?: number | null
+          preco_unitario?: number
+          tipo?: string | null
+          unidade?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          company_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          fornecedor?: string | null
+          id?: string
+          nome?: string
+          peso_unitario_kg?: number | null
+          preco_unitario?: number
+          tipo?: string | null
+          unidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accessories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agenda_eventos: {
         Row: {
           cliente_id: string | null
@@ -205,25 +258,52 @@ export type Database = {
       }
       companies: {
         Row: {
-          created_at: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          estado: string | null
           id: string
-          logo_url: string | null
-          name: string
-          settings: Json | null
+          max_usuarios: number | null
+          nome: string
+          plano: string
+          status: string
+          telefone: string | null
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
           id?: string
-          logo_url?: string | null
-          name: string
-          settings?: Json | null
+          max_usuarios?: number | null
+          nome: string
+          plano?: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
           id?: string
-          logo_url?: string | null
-          name?: string
-          settings?: Json | null
+          max_usuarios?: number | null
+          nome?: string
+          plano?: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -774,6 +854,112 @@ export type Database = {
           },
         ]
       }
+      glass_types: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          company_id: string | null
+          cor: string | null
+          created_at: string
+          espessura_mm: number
+          fornecedor: string | null
+          id: string
+          nome: string
+          peso_m2_kg: number | null
+          preco_m2: number
+          tipo: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          company_id?: string | null
+          cor?: string | null
+          created_at?: string
+          espessura_mm?: number
+          fornecedor?: string | null
+          id?: string
+          nome: string
+          peso_m2_kg?: number | null
+          preco_m2?: number
+          tipo?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          company_id?: string | null
+          cor?: string | null
+          created_at?: string
+          espessura_mm?: number
+          fornecedor?: string | null
+          id?: string
+          nome?: string
+          peso_m2_kg?: number | null
+          preco_m2?: number
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "glass_types_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hardware: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          company_id: string | null
+          created_at: string
+          descricao: string | null
+          fornecedor: string | null
+          id: string
+          nome: string
+          peso_unitario_kg: number | null
+          preco_unitario: number
+          tipo: string | null
+          unidade: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          company_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          fornecedor?: string | null
+          id?: string
+          nome: string
+          peso_unitario_kg?: number | null
+          preco_unitario?: number
+          tipo?: string | null
+          unidade?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          company_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          fornecedor?: string | null
+          id?: string
+          nome?: string
+          peso_unitario_kg?: number | null
+          preco_unitario?: number
+          tipo?: string | null
+          unidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       linhas: {
         Row: {
           aplicacao: string | null
@@ -879,6 +1065,108 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos_esquadria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      materials_list: {
+        Row: {
+          accessory_id: string | null
+          company_id: string
+          created_at: string
+          custo_total: number | null
+          custo_unitario: number
+          descricao: string
+          disponivel_estoque: boolean | null
+          glass_type_id: string | null
+          hardware_id: string | null
+          id: string
+          orcamento_id: string | null
+          perfil_aluminio_id: string | null
+          production_order_id: string | null
+          quantidade: number
+          unidade: string
+        }
+        Insert: {
+          accessory_id?: string | null
+          company_id: string
+          created_at?: string
+          custo_unitario?: number
+          descricao: string
+          disponivel_estoque?: boolean | null
+          glass_type_id?: string | null
+          hardware_id?: string | null
+          id?: string
+          orcamento_id?: string | null
+          perfil_aluminio_id?: string | null
+          production_order_id?: string | null
+          quantidade: number
+          unidade?: string
+        }
+        Update: {
+          accessory_id?: string | null
+          company_id?: string
+          created_at?: string
+          custo_unitario?: number
+          descricao?: string
+          disponivel_estoque?: boolean | null
+          glass_type_id?: string | null
+          hardware_id?: string | null
+          id?: string
+          orcamento_id?: string | null
+          perfil_aluminio_id?: string | null
+          production_order_id?: string | null
+          quantidade?: number
+          unidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materials_list_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materials_list_production_order_id_fkey"
+            columns: ["production_order_id"]
+            isOneToOne: false
+            referencedRelation: "production_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materials_list_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materials_list_perfil_aluminio_id_fkey"
+            columns: ["perfil_aluminio_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_aluminio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materials_list_glass_type_id_fkey"
+            columns: ["glass_type_id"]
+            isOneToOne: false
+            referencedRelation: "glass_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materials_list_hardware_id_fkey"
+            columns: ["hardware_id"]
+            isOneToOne: false
+            referencedRelation: "hardware"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materials_list_accessory_id_fkey"
+            columns: ["accessory_id"]
+            isOneToOne: false
+            referencedRelation: "accessories"
             referencedColumns: ["id"]
           },
         ]
@@ -1720,6 +2008,252 @@ export type Database = {
           },
         ]
       }
+      production_order_items: {
+        Row: {
+          comprimento_mm: number
+          created_at: string
+          id: string
+          pedido_item_id: string | null
+          perfil_aluminio_id: string | null
+          posicao: string | null
+          production_order_id: string
+          quantidade: number
+          status: string
+          window_part_id: string | null
+        }
+        Insert: {
+          comprimento_mm: number
+          created_at?: string
+          id?: string
+          pedido_item_id?: string | null
+          perfil_aluminio_id?: string | null
+          posicao?: string | null
+          production_order_id: string
+          quantidade?: number
+          status?: string
+          window_part_id?: string | null
+        }
+        Update: {
+          comprimento_mm?: number
+          created_at?: string
+          id?: string
+          pedido_item_id?: string | null
+          perfil_aluminio_id?: string | null
+          posicao?: string | null
+          production_order_id?: string
+          quantidade?: number
+          status?: string
+          window_part_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_order_items_production_order_id_fkey"
+            columns: ["production_order_id"]
+            isOneToOne: false
+            referencedRelation: "production_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_order_items_pedido_item_id_fkey"
+            columns: ["pedido_item_id"]
+            isOneToOne: false
+            referencedRelation: "pedido_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_order_items_window_part_id_fkey"
+            columns: ["window_part_id"]
+            isOneToOne: false
+            referencedRelation: "window_parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_order_items_perfil_aluminio_id_fkey"
+            columns: ["perfil_aluminio_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_aluminio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_orders: {
+        Row: {
+          company_id: string
+          created_at: string
+          data_conclusao_real: string | null
+          data_entrega_prevista: string | null
+          data_inicio_prevista: string | null
+          data_inicio_real: string | null
+          id: string
+          numero: string
+          observacoes: string | null
+          pedido_id: string
+          plano_corte_gerado: boolean
+          prioridade: string
+          responsavel_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          data_conclusao_real?: string | null
+          data_entrega_prevista?: string | null
+          data_inicio_prevista?: string | null
+          data_inicio_real?: string | null
+          id?: string
+          numero: string
+          observacoes?: string | null
+          pedido_id: string
+          plano_corte_gerado?: boolean
+          prioridade?: string
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          data_conclusao_real?: string | null
+          data_entrega_prevista?: string | null
+          data_inicio_prevista?: string | null
+          data_inicio_real?: string | null
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          pedido_id?: string
+          plano_corte_gerado?: boolean
+          prioridade?: string
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_orders_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_orders_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_stage_progress: {
+        Row: {
+          concluido_em: string | null
+          created_at: string
+          id: string
+          iniciado_em: string | null
+          observacoes: string | null
+          production_order_id: string
+          responsavel_id: string | null
+          stage_id: string
+          status: string
+        }
+        Insert: {
+          concluido_em?: string | null
+          created_at?: string
+          id?: string
+          iniciado_em?: string | null
+          observacoes?: string | null
+          production_order_id: string
+          responsavel_id?: string | null
+          stage_id: string
+          status?: string
+        }
+        Update: {
+          concluido_em?: string | null
+          created_at?: string
+          id?: string
+          iniciado_em?: string | null
+          observacoes?: string | null
+          production_order_id?: string
+          responsavel_id?: string | null
+          stage_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_stage_progress_production_order_id_fkey"
+            columns: ["production_order_id"]
+            isOneToOne: false
+            referencedRelation: "production_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_stage_progress_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "production_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_stage_progress_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_stages: {
+        Row: {
+          ativo: boolean | null
+          company_id: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number
+          requer_confirmacao: boolean | null
+          tempo_previsto_min: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          company_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          requer_confirmacao?: boolean | null
+          tempo_previsto_min?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          company_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          requer_confirmacao?: boolean | null
+          tempo_previsto_min?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_stages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -2059,6 +2593,119 @@ export type Database = {
           },
         ]
       }
+      window_models: {
+        Row: {
+          ativo: boolean
+          altura_max: number | null
+          altura_min: number | null
+          codigo: string
+          company_id: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          imagem_url: string | null
+          largura_max: number | null
+          largura_min: number | null
+          nome: string
+          num_folhas: number
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          altura_max?: number | null
+          altura_min?: number | null
+          codigo: string
+          company_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imagem_url?: string | null
+          largura_max?: number | null
+          largura_min?: number | null
+          nome: string
+          num_folhas?: number
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          altura_max?: number | null
+          altura_min?: number | null
+          codigo?: string
+          company_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imagem_url?: string | null
+          largura_max?: number | null
+          largura_min?: number | null
+          nome?: string
+          num_folhas?: number
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "window_models_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      window_parts: {
+        Row: {
+          created_at: string
+          formula_comprimento: string
+          id: string
+          observacao: string | null
+          perfil_aluminio_id: string | null
+          posicao: string
+          quantidade_formula: string
+          sort_order: number | null
+          window_model_id: string
+        }
+        Insert: {
+          created_at?: string
+          formula_comprimento: string
+          id?: string
+          observacao?: string | null
+          perfil_aluminio_id?: string | null
+          posicao: string
+          quantidade_formula?: string
+          sort_order?: number | null
+          window_model_id: string
+        }
+        Update: {
+          created_at?: string
+          formula_comprimento?: string
+          id?: string
+          observacao?: string | null
+          perfil_aluminio_id?: string | null
+          posicao?: string
+          quantidade_formula?: string
+          sort_order?: number | null
+          window_model_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "window_parts_window_model_id_fkey"
+            columns: ["window_model_id"]
+            isOneToOne: false
+            referencedRelation: "window_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "window_parts_perfil_aluminio_id_fkey"
+            columns: ["perfil_aluminio_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_aluminio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2216,6 +2863,94 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+// ─── Tipos das novas tabelas (pipeline event-driven + AI catalog) ───────────
+
+export interface CuttingPlanRow {
+  id: string;
+  company_id: string;
+  orcamento_id: string | null;
+  numero: string;
+  algoritmo: 'FFD' | 'BFD';
+  aproveitamento_medio: number;
+  total_barras: number;
+  total_pecas: number;
+  comprimento_barra_mm: number;
+  status: 'gerado' | 'aprovado' | 'cancelado';
+  barras_json: Record<string, unknown>[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CuttingBarRow {
+  id: string;
+  cutting_plan_id: string;
+  numero_barra: number;
+  comprimento_total_mm: number;
+  sobra_mm: number;
+  aproveitamento_pct: number;
+  cortes: Record<string, unknown>[] | null;
+  created_at: string;
+}
+
+export interface InventoryItemRow {
+  id: string;
+  company_id: string;
+  codigo: string;
+  nome: string;
+  tipo: 'perfil' | 'vidro' | 'ferragem' | 'acessorio' | 'outro';
+  perfil_aluminio_id: string | null;
+  glass_type_id: string | null;
+  hardware_id: string | null;
+  quantidade_disponivel: number;
+  quantidade_reservada: number;
+  quantidade_minima: number;
+  unidade: string;
+  localizacao: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseOrderRow {
+  id: string;
+  company_id: string;
+  cutting_plan_id: string | null;
+  production_order_id: string | null;
+  numero: string;
+  status: 'rascunho' | 'enviado' | 'confirmado' | 'recebido' | 'cancelado';
+  gerado_automaticamente: boolean;
+  observacoes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseOrderItemRow {
+  id: string;
+  purchase_order_id: string;
+  codigo_material: string | null;
+  descricao: string;
+  quantidade: number;
+  unidade: string;
+  preco_unitario: number | null;
+  preco_total: number | null;  // GENERATED ALWAYS AS (quantidade * preco_unitario)
+  created_at: string;
+}
+
+export interface AiImportJobRow {
+  id: string;
+  company_id: string;
+  nome_arquivo: string;
+  status: 'pendente' | 'processando' | 'concluido' | 'erro';
+  total_perfis: number;
+  total_modelos: number;
+  ai_raw_output: Record<string, unknown> | null;
+  dados_para_import: Record<string, unknown> | null;
+  erro: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const Constants = {
   public: {

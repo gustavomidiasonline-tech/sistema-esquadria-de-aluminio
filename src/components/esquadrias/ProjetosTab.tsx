@@ -9,6 +9,13 @@ import { Trash2, Eye, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { format } from "date-fns";
+import type { Database } from "@/integrations/supabase/types";
+
+type ProjetoRow = Database["public"]["Tables"]["projetos_esquadria"]["Row"];
+type ProjetoWithJoins = ProjetoRow & {
+  modelos_esquadria?: { nome: string; tipo: string; categoria: string } | null;
+  clientes?: { nome: string } | null;
+};
 
 export function ProjetosTab() {
   const queryClient = useQueryClient();
@@ -22,7 +29,7 @@ export function ProjetosTab() {
         .select("*, modelos_esquadria(nome, tipo, categoria), clientes(nome)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as unknown as ProjetoWithJoins[];
     },
   });
 
@@ -73,9 +80,9 @@ export function ProjetosTab() {
             <TableBody>
               {projetos?.map((p) => (
                 <TableRow key={p.id}>
-                  <TableCell className="font-bold">{(p as any).modelos_esquadria?.nome || p.nome}</TableCell>
+                  <TableCell className="font-bold">{p.modelos_esquadria?.nome || p.nome}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{(p as any).modelos_esquadria?.categoria}</Badge>
+                    <Badge variant="outline">{p.modelos_esquadria?.categoria}</Badge>
                   </TableCell>
                   <TableCell className="font-mono text-sm">{p.largura_mm} x {p.altura_mm}</TableCell>
                   <TableCell>{p.quantidade}</TableCell>

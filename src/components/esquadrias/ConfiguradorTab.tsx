@@ -2,6 +2,12 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { calcularComponentes, otimizarBarras, type ResultadoCorte, type ResultadoOtimizacao } from "@/lib/calculo-esquadria";
+import type { Database } from "@/integrations/supabase/types";
+
+type ComponenteRow = Database["public"]["Tables"]["componentes_modelo"]["Row"];
+type ComponenteWithJoins = ComponenteRow & {
+  perfis_catalogo?: { codigo: string; nome: string; peso_kg_m: number | null } | null;
+};
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +46,7 @@ export function ConfiguradorTab() {
         .select("*, perfis_catalogo(codigo, nome, peso_kg_m)")
         .eq("esquadria_id", selectedModelId);
       if (error) throw error;
-      return data;
+      return data as unknown as ComponenteWithJoins[];
     },
     enabled: !!selectedModelId,
   });
@@ -49,12 +55,12 @@ export function ConfiguradorTab() {
     if (!componentes || !selectedModel) return [];
     const comps = componentes.map((c) => ({
       perfil_id: c.perfil_id,
-      perfil_codigo: (c as any).perfis_catalogo?.codigo || "???",
-      perfil_nome: (c as any).perfis_catalogo?.nome || "Desconhecido",
+      perfil_codigo: c.perfis_catalogo?.codigo || "???",
+      perfil_nome: c.perfis_catalogo?.nome || "Desconhecido",
       quantidade: c.quantidade,
       formula_calculo: c.formula_calculo,
       posicao: c.posicao,
-      peso_kg_m: (c as any).perfis_catalogo?.peso_kg_m || 0,
+      peso_kg_m: c.perfis_catalogo?.peso_kg_m || 0,
     }));
     return calcularComponentes(comps, largura, altura, selectedModel.folhas || 2);
   }, [componentes, selectedModel, largura, altura]);

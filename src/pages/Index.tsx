@@ -13,46 +13,46 @@ const Index = () => {
   const { data: contasReceber = [] } = useSupabaseQuery("contas_receber");
   const { data: contasPagar = [] } = useSupabaseQuery("contas_pagar");
 
-  const totalPedidos = pedidos.reduce((sum: number, p: any) => sum + (Number(p.valor_total) || 0), 0);
-  const totalOrcamentos = orcamentos.reduce((sum: number, o: any) => sum + (Number(o.valor_total) || 0), 0);
-  const totalReceber = contasReceber.reduce((s: number, c: any) => s + Number(c.valor || 0), 0);
-  const totalPagar = contasPagar.reduce((s: number, c: any) => s + Number(c.valor || 0), 0);
+  const totalPedidos = pedidos.reduce((sum: number, p) => sum + (Number(p.valor_total) || 0), 0);
+  const totalOrcamentos = orcamentos.reduce((sum: number, o) => sum + (Number(o.valor_total) || 0), 0);
+  const totalReceber = contasReceber.reduce((s: number, c) => s + Number(c.valor || 0), 0);
+  const totalPagar = contasPagar.reduce((s: number, c) => s + Number(c.valor || 0), 0);
   const saldo = totalReceber - totalPagar;
 
   const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
   // Overdue notifications
-  const pedidosAtrasados = pedidos.filter((p: any) => p.data_entrega && isPast(parseISO(p.data_entrega)) && p.status !== "entregue" && p.status !== "cancelado");
+  const pedidosAtrasados = pedidos.filter((p) => p.data_entrega && isPast(parseISO(p.data_entrega)) && p.status !== "entregue" && p.status !== "cancelado");
   const contasVencidas = [
-    ...contasPagar.filter((c: any) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente").map((c: any) => ({ ...c, tipo: "pagar" })),
-    ...contasReceber.filter((c: any) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente").map((c: any) => ({ ...c, tipo: "receber" })),
+    ...contasPagar.filter((c) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente").map((c) => ({ ...c, tipo: "pagar" as const })),
+    ...contasReceber.filter((c) => isPast(parseISO(c.data_vencimento)) && c.status === "pendente").map((c) => ({ ...c, tipo: "receber" as const })),
   ];
-  const servicosAtrasados = servicos.filter((s: any) => s.data_agendada && isPast(parseISO(s.data_agendada)) && s.status !== "concluido" && s.status !== "cancelado");
+  const servicosAtrasados = servicos.filter((s) => s.data_agendada && isPast(parseISO(s.data_agendada)) && s.status !== "concluido" && s.status !== "cancelado");
 
   const notifications = [
-    ...pedidosAtrasados.map((p: any) => ({
+    ...pedidosAtrasados.map((p) => ({
       id: p.id, type: "pedido" as const,
-      message: `Pedido #${p.numero} atrasado ${Math.abs(differenceInDays(parseISO(p.data_entrega), new Date()))} dias`,
-      detail: `Entrega prevista: ${format(parseISO(p.data_entrega), "dd/MM/yyyy")}`,
+      message: `Pedido #${p.numero} atrasado ${Math.abs(differenceInDays(parseISO(p.data_entrega!), new Date()))} dias`,
+      detail: `Entrega prevista: ${format(parseISO(p.data_entrega!), "dd/MM/yyyy")}`,
     })),
-    ...contasVencidas.map((c: any) => ({
+    ...contasVencidas.map((c) => ({
       id: c.id, type: "conta" as const,
       message: `Conta a ${c.tipo} vencida: ${c.descricao}`,
       detail: `Vencimento: ${format(parseISO(c.data_vencimento), "dd/MM/yyyy")} · ${fmt(Number(c.valor))}`,
     })),
-    ...servicosAtrasados.map((s: any) => ({
+    ...servicosAtrasados.map((s) => ({
       id: s.id, type: "servico" as const,
-      message: `Serviço #${s.numero} atrasado ${Math.abs(differenceInDays(parseISO(s.data_agendada), new Date()))} dias`,
-      detail: `Agendado: ${format(parseISO(s.data_agendada), "dd/MM/yyyy")}`,
+      message: `Serviço #${s.numero} atrasado ${Math.abs(differenceInDays(parseISO(s.data_agendada!), new Date()))} dias`,
+      detail: `Agendado: ${format(parseISO(s.data_agendada!), "dd/MM/yyyy")}`,
     })),
   ];
 
   const kpiCards = [
     { title: "Vendas", value: fmt(totalPedidos), change: `${pedidos.length} pedidos`, subtitle: `${clientes.length} clientes`, highlight: true, icon: DollarSign },
-    { title: "Pedidos", value: String(pedidos.length), change: `${pedidos.filter((p: any) => p.status === "entregue").length} entregues`, subtitle: `${pedidos.filter((p: any) => p.status === "pendente").length} pendentes`, highlight: false, icon: Package },
-    { title: "Orçamentos", value: fmt(totalOrcamentos), change: `${orcamentos.length} total`, subtitle: `${orcamentos.filter((o: any) => o.status === "aprovado").length} aprovados`, highlight: false, icon: FileText },
-    { title: "Serviços", value: String(servicos.length), change: `${servicos.filter((s: any) => s.status === "em_andamento").length} em andamento`, subtitle: `${servicos.filter((s: any) => s.status === "concluido").length} concluídos`, highlight: false, icon: Wrench },
-    { title: "A Receber", value: fmt(totalReceber), change: `${contasReceber.length} contas`, subtitle: `${contasReceber.filter((c: any) => c.status === "pago").length} pagas`, highlight: false, icon: TrendingUp },
+    { title: "Pedidos", value: String(pedidos.length), change: `${pedidos.filter((p) => p.status === "entregue").length} entregues`, subtitle: `${pedidos.filter((p) => p.status === "pendente").length} pendentes`, highlight: false, icon: Package },
+    { title: "Orçamentos", value: fmt(totalOrcamentos), change: `${orcamentos.length} total`, subtitle: `${orcamentos.filter((o) => o.status === "aprovado").length} aprovados`, highlight: false, icon: FileText },
+    { title: "Serviços", value: String(servicos.length), change: `${servicos.filter((s) => s.status === "em_andamento").length} em andamento`, subtitle: `${servicos.filter((s) => s.status === "concluido").length} concluídos`, highlight: false, icon: Wrench },
+    { title: "A Receber", value: fmt(totalReceber), change: `${contasReceber.length} contas`, subtitle: `${contasReceber.filter((c) => c.status === "pago").length} pagas`, highlight: false, icon: TrendingUp },
     { title: "Saldo", value: fmt(saldo), change: saldo >= 0 ? "Positivo" : "Negativo", subtitle: `${fmt(totalPagar)} a pagar`, highlight: false, icon: BarChart3 },
   ];
 
@@ -128,7 +128,7 @@ const Index = () => {
             {recentPedidos.length === 0 ? (
               <div className="px-5 py-8 text-center text-muted-foreground text-sm">Nenhum pedido ainda.</div>
             ) : (
-              recentPedidos.map((order: any) => (
+              recentPedidos.map((order) => (
                 <div key={order.id} className="flex items-center justify-between px-5 py-4">
                   <div className="flex items-center gap-4">
                     <span className="text-sm font-bold text-primary">#{order.numero}</span>

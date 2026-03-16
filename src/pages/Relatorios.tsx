@@ -6,8 +6,9 @@ import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
 import { parseISO, format, startOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";
+import type { LucideIcon } from "lucide-react";
 
-const StatCard = ({ icon: Icon, label, value, change, positive }: { icon: any; label: string; value: string; change: string; positive: boolean }) => (
+const StatCard = ({ icon: Icon, label, value, change, positive }: { icon: LucideIcon; label: string; value: string; change: string; positive: boolean }) => (
   <div className="bg-card border border-border rounded-xl p-5">
     <div className="flex items-center justify-between mb-3">
       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -31,15 +32,15 @@ const Relatorios = () => {
   const { data: clientes = [] } = useSupabaseQuery("clientes");
   const { data: servicos = [] } = useSupabaseQuery("servicos");
 
-  const totalFaturamento = pedidos.reduce((s: number, p: any) => s + (Number(p.valor_total) || 0), 0);
-  const pedidosConcluidos = pedidos.filter((p: any) => p.status === "entregue").length;
-  const orcAprovados = orcamentos.filter((o: any) => o.status === "aprovado").length;
-  const orcPendentes = orcamentos.filter((o: any) => o.status === "enviado" || o.status === "rascunho").length;
-  const orcRejeitados = orcamentos.filter((o: any) => o.status === "rejeitado").length;
+  const totalFaturamento = pedidos.reduce((s: number, p) => s + (Number(p.valor_total) || 0), 0);
+  const pedidosConcluidos = pedidos.filter((p) => p.status === "entregue").length;
+  const orcAprovados = orcamentos.filter((o) => o.status === "aprovado").length;
+  const orcPendentes = orcamentos.filter((o) => o.status === "enviado" || o.status === "rascunho").length;
+  const orcRejeitados = orcamentos.filter((o) => o.status === "rejeitado").length;
 
   // Group pedidos by month
   const pedidosByMonth: Record<string, { total: number; concluidos: number; andamento: number }> = {};
-  pedidos.forEach((p: any) => {
+  pedidos.forEach((p) => {
     const month = format(parseISO(p.created_at), "MMM");
     if (!pedidosByMonth[month]) pedidosByMonth[month] = { total: 0, concluidos: 0, andamento: 0 };
     pedidosByMonth[month].total += Number(p.valor_total) || 0;
@@ -65,32 +66,32 @@ const Relatorios = () => {
     const evolucaoMensal = months.map((month) => {
       const mesKey = format(month, "yyyy-MM");
       const mesLabel = format(month, "MMM", { locale: ptBR });
-      const doMes = servicos.filter((s: any) => {
+      const doMes = servicos.filter((s) => {
         const created = format(parseISO(s.created_at), "yyyy-MM");
         return created === mesKey;
       });
       return {
         mes: mesLabel,
         total: doMes.length,
-        agendados: doMes.filter((s: any) => s.status === "agendado").length,
-        em_andamento: doMes.filter((s: any) => s.status === "em_andamento").length,
-        concluidos: doMes.filter((s: any) => s.status === "concluido").length,
-        cancelados: doMes.filter((s: any) => s.status === "cancelado").length,
-        valor: doMes.reduce((sum: number, s: any) => sum + (Number(s.valor) || 0), 0),
+        agendados: doMes.filter((s) => s.status === "agendado").length,
+        em_andamento: doMes.filter((s) => s.status === "em_andamento").length,
+        concluidos: doMes.filter((s) => s.status === "concluido").length,
+        cancelados: doMes.filter((s) => s.status === "cancelado").length,
+        valor: doMes.reduce((sum: number, s) => sum + (Number(s.valor) || 0), 0),
       };
     });
 
     // Status distribution
     const statusDist = [
-      { name: "Agendados", value: servicos.filter((s: any) => s.status === "agendado").length, color: "hsl(var(--primary))" },
-      { name: "Em andamento", value: servicos.filter((s: any) => s.status === "em_andamento").length, color: "hsl(38, 92%, 50%)" },
-      { name: "Concluídos", value: servicos.filter((s: any) => s.status === "concluido").length, color: "hsl(142, 72%, 42%)" },
-      { name: "Cancelados", value: servicos.filter((s: any) => s.status === "cancelado").length, color: "hsl(0, 72%, 51%)" },
+      { name: "Agendados", value: servicos.filter((s) => s.status === "agendado").length, color: "hsl(var(--primary))" },
+      { name: "Em andamento", value: servicos.filter((s) => s.status === "em_andamento").length, color: "hsl(38, 92%, 50%)" },
+      { name: "Concluídos", value: servicos.filter((s) => s.status === "concluido").length, color: "hsl(142, 72%, 42%)" },
+      { name: "Cancelados", value: servicos.filter((s) => s.status === "cancelado").length, color: "hsl(0, 72%, 51%)" },
     ];
 
     // By type
     const tipoCount: Record<string, number> = {};
-    servicos.forEach((s: any) => {
+    servicos.forEach((s) => {
       const tipo = s.tipo || "Não especificado";
       tipoCount[tipo] = (tipoCount[tipo] || 0) + 1;
     });
@@ -99,8 +100,8 @@ const Relatorios = () => {
       .sort((a, b) => b.value - a.value);
 
     // KPIs
-    const totalValor = servicos.reduce((s: number, sv: any) => s + (Number(sv.valor) || 0), 0);
-    const concluidos = servicos.filter((s: any) => s.status === "concluido").length;
+    const totalValor = servicos.reduce((s: number, sv) => s + (Number(sv.valor) || 0), 0);
+    const concluidos = servicos.filter((s) => s.status === "concluido").length;
     const taxaConclusao = servicos.length > 0 ? Math.round((concluidos / servicos.length) * 100) : 0;
 
     return { evolucaoMensal, statusDist, porTipo, totalValor, concluidos, taxaConclusao };

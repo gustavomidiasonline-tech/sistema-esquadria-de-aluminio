@@ -45,8 +45,8 @@ const ResetPassword = () => {
       if (error) throw error;
       toast.success("Senha redefinida com sucesso!");
       navigate("/");
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao redefinir senha.");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Erro ao redefinir senha.");
     } finally {
       setLoading(false);
     }

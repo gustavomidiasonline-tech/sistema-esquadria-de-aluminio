@@ -1,6 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import type { Database } from "@/integrations/supabase/types";
+
+type ConfigPrecosRow = Database["public"]["Tables"]["config_precos"]["Row"];
 
 export interface PricingConfig {
   preco_kg_aluminio: number;
@@ -78,7 +81,7 @@ export function usePricingConfig() {
     queryKey: ["config_precos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("config_precos" as any)
+        .from("config_precos")
         .select("*");
       if (error) return [];
       return data || [];
@@ -87,7 +90,7 @@ export function usePricingConfig() {
 
   const config = useMemo<PricingConfig>(() => {
     const result = { ...DEFAULT_CONFIG };
-    configRows.forEach((row: any) => {
+    configRows.forEach((row: ConfigPrecosRow) => {
       if (row.chave && row.valor !== undefined) {
         result[row.chave] = Number(row.valor);
       }

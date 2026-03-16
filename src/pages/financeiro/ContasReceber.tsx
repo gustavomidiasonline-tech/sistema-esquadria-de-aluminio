@@ -9,6 +9,9 @@ import { useSupabaseQuery, useSupabaseInsert } from "@/hooks/useSupabaseQuery";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
+
+type ContaReceberWithCliente = Tables<"contas_receber"> & { clientes: { nome: string } | null };
 
 const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "outline" }> = {
   pendente: { label: "Pendente", variant: "outline" },
@@ -66,7 +69,7 @@ const ContasReceber = () => {
           <div className="text-center py-12 text-muted-foreground">Nenhuma conta a receber cadastrada.</div>
         ) : (
           <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
-            {contas.map((c: any) => {
+            {contas.map((c: ContaReceberWithCliente) => {
               const s = statusMap[c.status] || statusMap.pendente;
               return (
                 <div key={c.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors">

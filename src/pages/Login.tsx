@@ -29,8 +29,8 @@ const Login = () => {
       if (error) throw error;
       toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
       setIsForgotPassword(false);
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao enviar email de recuperação.");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Erro ao enviar email de recuperação.");
     } finally {
       setLoading(false);
     }
@@ -50,8 +50,8 @@ const Login = () => {
         toast.success("Login realizado com sucesso!");
         navigate("/");
       }
-    } catch (error: any) {
-      const msg = error.message || "";
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "";
       if (msg.includes("already registered") || msg.includes("already_exists")) {
         toast.error("Este email já está cadastrado. Use 'Entrar' para fazer login.");
         setIsSignUp(false);

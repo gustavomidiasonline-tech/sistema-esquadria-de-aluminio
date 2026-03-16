@@ -1,15 +1,20 @@
 import { AppLayout } from "@/components/AppLayout";
 import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, DollarSign } from "lucide-react";
 import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
+import type { Tables } from "@/integrations/supabase/types";
+
+type ContaReceberRow = Tables<"contas_receber">;
+type ContaPagarRow = Tables<"contas_pagar">;
+type ContaComTipo = (ContaReceberRow | ContaPagarRow) & { tipo: string };
 
 const FinanceiroVisaoGeral = () => {
   const { data: contasReceber = [] } = useSupabaseQuery("contas_receber");
   const { data: contasPagar = [] } = useSupabaseQuery("contas_pagar");
 
-  const totalReceber = contasReceber.reduce((s: number, c: any) => s + Number(c.valor || 0), 0);
-  const totalPagar = contasPagar.reduce((s: number, c: any) => s + Number(c.valor || 0), 0);
-  const totalRecebido = contasReceber.filter((c: any) => c.status === "pago").reduce((s: number, c: any) => s + Number(c.valor || 0), 0);
-  const totalPago = contasPagar.filter((c: any) => c.status === "pago").reduce((s: number, c: any) => s + Number(c.valor || 0), 0);
+  const totalReceber = contasReceber.reduce((s: number, c: ContaReceberRow) => s + Number(c.valor || 0), 0);
+  const totalPagar = contasPagar.reduce((s: number, c: ContaPagarRow) => s + Number(c.valor || 0), 0);
+  const totalRecebido = contasReceber.filter((c: ContaReceberRow) => c.status === "pago").reduce((s: number, c: ContaReceberRow) => s + Number(c.valor || 0), 0);
+  const totalPago = contasPagar.filter((c: ContaPagarRow) => c.status === "pago").reduce((s: number, c: ContaPagarRow) => s + Number(c.valor || 0), 0);
   const lucro = totalRecebido - totalPago;
   const saldo = totalReceber - totalPagar;
 
@@ -27,7 +32,7 @@ const FinanceiroVisaoGeral = () => {
           {[
             { label: "Total a Receber", value: fmt(totalReceber), icon: TrendingUp, color: "text-success", count: `${contasReceber.length} contas` },
             { label: "Total a Pagar", value: fmt(totalPagar), icon: TrendingDown, color: "text-destructive", count: `${contasPagar.length} contas` },
-            { label: "Recebido", value: fmt(totalRecebido), icon: Wallet, color: "text-primary", count: `${contasReceber.filter((c: any) => c.status === "pago").length} pagas` },
+            { label: "Recebido", value: fmt(totalRecebido), icon: Wallet, color: "text-primary", count: `${contasReceber.filter((c: ContaReceberRow) => c.status === "pago").length} pagas` },
             { label: "Saldo", value: fmt(saldo), icon: DollarSign, color: saldo >= 0 ? "text-success" : "text-destructive", count: lucro >= 0 ? "Positivo" : "Negativo" },
           ].map((kpi) => (
             <div key={kpi.label} className="bg-card border border-border rounded-xl p-5 space-y-3">
@@ -47,10 +52,10 @@ const FinanceiroVisaoGeral = () => {
             <h2 className="text-sm font-bold text-foreground">Últimas Contas</h2>
           </div>
           <div className="divide-y divide-border">
-            {[...contasReceber.slice(0, 3).map((c: any) => ({ ...c, tipo: "receber" })), ...contasPagar.slice(0, 3).map((c: any) => ({ ...c, tipo: "pagar" }))]
-              .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            {[...contasReceber.slice(0, 3).map((c: ContaReceberRow) => ({ ...c, tipo: "receber" as const })), ...contasPagar.slice(0, 3).map((c: ContaPagarRow) => ({ ...c, tipo: "pagar" as const }))]
+              .sort((a: ContaComTipo, b: ContaComTipo) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
               .slice(0, 5)
-              .map((tx: any) => (
+              .map((tx: ContaComTipo) => (
                 <div key={tx.id} className="flex items-center justify-between px-5 py-3">
                   <div className="flex items-center gap-3">
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center ${tx.tipo === "receber" ? "bg-success/10" : "bg-destructive/10"}`}>

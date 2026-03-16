@@ -13,6 +13,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { FileUpload } from "@/components/shared/FileUpload";
+import type { Tables } from "@/integrations/supabase/types";
+
+type ContratoWithCliente = Tables<"contratos"> & { clientes: { nome: string } | null };
 
 const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "outline" | "secondary" }> = {
   ativo: { label: "Ativo", variant: "default" },
@@ -72,7 +75,7 @@ const Contratos = () => {
           <div className="text-center py-12 text-muted-foreground">Nenhum contrato cadastrado.</div>
         ) : (
           <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
-            {contratos.map((c: any) => {
+            {contratos.map((c: ContratoWithCliente) => {
               const s = statusMap[c.status] || statusMap.rascunho;
               return (
                 <div key={c.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors">
@@ -123,7 +126,7 @@ const Contratos = () => {
               <Label>Cliente</Label>
               <Select value={form.cliente_id} onValueChange={(v) => setForm({ ...form, cliente_id: v })}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                <SelectContent>{clientes.map((c: Tables<"clientes">) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-3 gap-3">

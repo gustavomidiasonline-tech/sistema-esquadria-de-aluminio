@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Ruler, Square, Weight, Package, Trash2, TrendingUp, Layers, Wrench, Clock, Settings2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Square, Weight, Package, Trash2, TrendingUp, Layers, Wrench, Clock, Settings2, Factory } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { perfisAluminio } from "@/data/perfis-aluminio";
 
@@ -29,6 +29,7 @@ interface OrcamentoDetailProps {
   orcamento: any;
   itens: OrcamentoItem[];
   onDeleteItem?: (id: string) => void;
+  onGerarOP?: (orcamentoId: string) => void;
 }
 
 const VIDRO_LABELS: Record<string, string> = {
@@ -39,7 +40,7 @@ const VIDRO_LABELS: Record<string, string> = {
   comum_4mm: "Comum 4mm",
 };
 
-export function OrcamentoDetail({ orcamento, itens, onDeleteItem }: OrcamentoDetailProps) {
+export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: OrcamentoDetailProps) {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
   const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
@@ -389,7 +390,18 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem }: OrcamentoDet
             {totalWeight > 0 && <span>~{totalWeight.toFixed(1)} kg</span>}
             {hasTotalCosts && <span>Lucro: <b className="text-emerald-600">{fmt(totals.lucro)}</b></span>}
           </div>
-          <p className="text-sm font-bold text-primary">{fmt(totals.venda)}</p>
+          <div className="flex items-center gap-3">
+            {onGerarOP && orcamento.status === 'aprovado' && (
+              <button
+                onClick={() => onGerarOP(orcamento.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors"
+              >
+                <Factory className="h-3.5 w-3.5" />
+                Gerar OP
+              </button>
+            )}
+            <p className="text-sm font-bold text-primary">{fmt(totals.venda)}</p>
+          </div>
         </div>
       </div>
     </div>

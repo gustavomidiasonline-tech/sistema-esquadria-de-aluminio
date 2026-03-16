@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Check, Crown, Star, Zap } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSubscription, type PlanType, PLAN_LABELS } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,7 @@ const plans: {
   id: PlanType;
   price: string;
   priceNum: number;
-  icon: any;
+  icon: LucideIcon;
   recommended?: boolean;
   features: string[];
   cumulative?: string;

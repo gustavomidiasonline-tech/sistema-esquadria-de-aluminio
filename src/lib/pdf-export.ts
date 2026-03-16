@@ -4,9 +4,74 @@ import "jspdf-autotable";
 // Extend jsPDF type for autotable
 declare module "jspdf" {
   interface jsPDF {
-    autoTable: (options: any) => jsPDF;
+    autoTable: (options: Record<string, unknown>) => jsPDF;
     lastAutoTable: { finalY: number };
   }
+}
+
+interface OrcamentoData {
+  numero: number;
+  status?: string;
+  clientes?: { nome?: string; telefone?: string; email?: string } | null;
+  created_at: string;
+  validade?: string | null;
+  valor_total?: number | null;
+  descricao?: string | null;
+  observacoes?: string | null;
+}
+
+interface OrcamentoItemData {
+  descricao: string;
+  largura?: number | null;
+  altura?: number | null;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+  tipo_vidro?: string | null;
+  area_vidro_m2?: number | null;
+  custo_aluminio?: number | null;
+  custo_vidro?: number | null;
+  custo_ferragem?: number | null;
+  custo_acessorios?: number | null;
+  custo_mao_obra?: number | null;
+  custo_total?: number | null;
+  lucro?: number | null;
+  markup_percentual?: number | null;
+  peso_total_kg?: number | null;
+}
+
+interface PedidoData {
+  numero: number;
+  status: string;
+  clientes?: { nome?: string; telefone?: string; endereco?: string; cidade?: string; estado?: string } | null;
+  created_at: string;
+  data_entrega?: string | null;
+  valor_total?: number | null;
+  vendedor?: string | null;
+  endereco_entrega?: string | null;
+  observacoes?: string | null;
+}
+
+interface PedidoItemData {
+  descricao: string;
+  largura?: number | null;
+  altura?: number | null;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+}
+
+interface CostAccumulator {
+  aluminio: number;
+  vidro: number;
+  ferragem: number;
+  acessorios: number;
+  maoObra: number;
+  custo: number;
+  lucro: number;
+  peso: number;
+  vidroM2: number;
+  venda: number;
 }
 
 const COLORS = {
@@ -90,7 +155,7 @@ const VIDRO_LABELS: Record<string, string> = {
 };
 
 // ===== ORÇAMENTO PDF =====
-export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
+export function exportOrcamentoPDF(orcamento: OrcamentoData, itens: OrcamentoItemData[]) {
   const doc = new jsPDF();
   let y = addHeader(doc, `ORÇAMENTO #${String(orcamento.numero).padStart(3, "0")}`, `Status: ${orcamento.status?.toUpperCase() || "RASCUNHO"}`);
 
@@ -115,11 +180,11 @@ export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
   }
 
   // Check if items have cost breakdown data
-  const hasCostData = itens.some((i: any) => (Number(i.custo_aluminio) || 0) > 0 || (Number(i.custo_vidro) || 0) > 0);
+  const hasCostData = itens.some((i) => (Number(i.custo_aluminio) || 0) > 0 || (Number(i.custo_vidro) || 0) > 0);
 
   // ── Items table ──
   if (itens.length > 0) {
-    const tableBody = itens.map((i: any) => {
+    const tableBody = itens.map((i) => {
       const m2 = i.area_vidro_m2
         ? Number(i.area_vidro_m2).toFixed(3)
         : i.largura && i.altura
@@ -151,7 +216,7 @@ export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
       },
       alternateRowStyles: { fillColor: [250, 248, 255] },
       margin: { left: 14, right: 14 },
-      foot: [["", "", "", "", "TOTAL:", fmt(itens.reduce((s: number, i: any) => s + Number(i.valor_total), 0))]],
+      foot: [["", "", "", "", "TOTAL:", fmt(itens.reduce((s: number, i: OrcamentoItemData) => s + Number(i.valor_total), 0))]],
       footStyles: { fillColor: COLORS.light, textColor: COLORS.primary, fontSize: 9, fontStyle: "bold", halign: "right" },
     });
 
@@ -172,7 +237,7 @@ export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
     doc.text("DETALHAMENTO DE CUSTOS", 14, y);
     y += 6;
 
-    const costBody = itens.map((i: any) => [
+    const costBody = itens.map((i) => [
       i.descricao.substring(0, 30),
       fmt(Number(i.custo_aluminio) || 0),
       fmt(Number(i.custo_vidro) || 0),
@@ -204,8 +269,8 @@ export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
     y = doc.lastAutoTable.finalY + 8;
 
     // ── Aggregated cost summary ──
-    const totals = itens.reduce(
-      (acc: any, i: any) => ({
+    const totals = itens.reduce<CostAccumulator>(
+      (acc, i) => ({
         aluminio: acc.aluminio + (Number(i.custo_aluminio) || 0),
         vidro: acc.vidro + (Number(i.custo_vidro) || 0),
         ferragem: acc.ferragem + (Number(i.custo_ferragem) || 0),
@@ -291,7 +356,7 @@ export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
     const extraInfo: string[] = [];
     if (totals.peso > 0) extraInfo.push(`Peso total: ${totals.peso.toFixed(2)} kg`);
     if (totals.vidroM2 > 0) extraInfo.push(`Vidro total: ${totals.vidroM2.toFixed(2)} m²`);
-    const avgMarkup = itens.filter((i: any) => i.markup_percentual).map((i: any) => Number(i.markup_percentual));
+    const avgMarkup = itens.filter((i) => i.markup_percentual).map((i) => Number(i.markup_percentual));
     if (avgMarkup.length > 0) {
       const avg = avgMarkup.reduce((a: number, b: number) => a + b, 0) / avgMarkup.length;
       extraInfo.push(`Markup médio: ${avg.toFixed(1)}%`);
@@ -303,7 +368,7 @@ export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
     y += boxH + 8;
   } else {
     // Fallback: simple totals for items without cost data
-    const totalM2 = itens.reduce((s: number, i: any) => {
+    const totalM2 = itens.reduce((s: number, i: OrcamentoItemData) => {
       if (i.largura && i.altura) return s + (i.largura / 1000) * (i.altura / 1000) * i.quantidade;
       return s;
     }, 0);
@@ -343,7 +408,7 @@ export function exportOrcamentoPDF(orcamento: any, itens: any[]) {
 }
 
 // ===== PEDIDO PDF =====
-export function exportPedidoPDF(pedido: any, itens?: any[]) {
+export function exportPedidoPDF(pedido: PedidoData, itens?: PedidoItemData[]) {
   const doc = new jsPDF();
   const statusLabels: Record<string, string> = {
     pendente: "PENDENTE", em_producao: "EM PRODUÇÃO", pronto: "PRONTO", entregue: "ENTREGUE", cancelado: "CANCELADO",
@@ -368,7 +433,7 @@ export function exportPedidoPDF(pedido: any, itens?: any[]) {
   y = addInfoBlock(doc, y, infoItems);
 
   if (itens && itens.length > 0) {
-    const tableBody = itens.map((i: any) => [
+    const tableBody = itens.map((i) => [
       i.descricao,
       i.largura && i.altura ? `${i.largura}×${i.altura}mm` : "—",
       String(i.quantidade),
@@ -391,7 +456,7 @@ export function exportPedidoPDF(pedido: any, itens?: any[]) {
       },
       alternateRowStyles: { fillColor: [250, 248, 255] },
       margin: { left: 14, right: 14 },
-      foot: [["", "", "", "TOTAL:", fmt(itens.reduce((s: number, i: any) => s + Number(i.valor_total), 0))]],
+      foot: [["", "", "", "TOTAL:", fmt(itens.reduce((s: number, i: PedidoItemData) => s + Number(i.valor_total), 0))]],
       footStyles: { fillColor: COLORS.light, textColor: COLORS.primary, fontSize: 9, fontStyle: "bold", halign: "right" },
     });
     y = doc.lastAutoTable.finalY + 8;

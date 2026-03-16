@@ -15,8 +15,14 @@ import { differenceInDays, parseISO, format, isAfter, isBefore } from "date-fns"
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { TrendingUp, CheckCircle2, XCircle, Package, Truck } from "lucide-react";
+import type { Tables } from "@/integrations/supabase/types";
 
-const actionButtons = (pedido: any) => [
+type Pedido = Tables<"pedidos">;
+type PedidoWithCliente = Pedido & {
+  clientes: { nome: string; endereco: string | null; telefone: string | null; cidade: string | null; estado: string | null; cep: string | null } | null;
+};
+
+const actionButtons = (pedido: PedidoWithCliente) => [
   { icon: RotateCcw, label: "Reagendar", action: () => {} },
   { icon: DollarSign, label: "Pagamentos", action: () => {} },
   { icon: FileText, label: "Contrato", action: () => {} },
@@ -69,7 +75,7 @@ const Pedidos = () => {
     } catch {}
   };
 
-  const filteredPedidos = pedidos.filter((p: any) => {
+  const filteredPedidos = (pedidos as PedidoWithCliente[]).filter((p) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch = !term || p.clientes?.nome?.toLowerCase().includes(term) || String(p.numero).includes(term) || p.vendedor?.toLowerCase().includes(term);
     const matchesStatus = statusFilter === "todos" || p.status === statusFilter;
@@ -93,15 +99,15 @@ const Pedidos = () => {
 
   const stats = useMemo(() => {
     const total = pedidos.length;
-    const pendentes = pedidos.filter((p: any) => p.status === "pendente").length;
-    const emProducao = pedidos.filter((p: any) => p.status === "em_producao").length;
-    const prontos = pedidos.filter((p: any) => p.status === "pronto").length;
-    const entregues = pedidos.filter((p: any) => p.status === "entregue").length;
-    const cancelados = pedidos.filter((p: any) => p.status === "cancelado").length;
-    const valorTotal = pedidos.reduce((s: number, p: any) => s + (Number(p.valor_total) || 0), 0);
-    const valorEntregue = pedidos.filter((p: any) => p.status === "entregue").reduce((s: number, p: any) => s + (Number(p.valor_total) || 0), 0);
+    const pendentes = pedidos.filter((p) => p.status === "pendente").length;
+    const emProducao = pedidos.filter((p) => p.status === "em_producao").length;
+    const prontos = pedidos.filter((p) => p.status === "pronto").length;
+    const entregues = pedidos.filter((p) => p.status === "entregue").length;
+    const cancelados = pedidos.filter((p) => p.status === "cancelado").length;
+    const valorTotal = pedidos.reduce((s: number, p) => s + (Number(p.valor_total) || 0), 0);
+    const valorEntregue = pedidos.filter((p) => p.status === "entregue").reduce((s: number, p) => s + (Number(p.valor_total) || 0), 0);
     const taxaEntrega = total > 0 ? Math.round((entregues / total) * 100) : 0;
-    const atrasados = pedidos.filter((p: any) => p.data_entrega && p.status !== "entregue" && p.status !== "cancelado" && differenceInDays(parseISO(p.data_entrega), new Date()) < 0).length;
+    const atrasados = pedidos.filter((p) => p.data_entrega && p.status !== "entregue" && p.status !== "cancelado" && differenceInDays(parseISO(p.data_entrega), new Date()) < 0).length;
     return { total, pendentes, emProducao, prontos, entregues, cancelados, valorTotal, valorEntregue, taxaEntrega, atrasados };
   }, [pedidos]);
 
@@ -187,7 +193,7 @@ const Pedidos = () => {
           <div className="text-center py-12 text-muted-foreground">Nenhum pedido encontrado.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredPedidos.map((pedido: any) => {
+            {filteredPedidos.map((pedido) => {
               const days = getDaysInfo(pedido.data_entrega);
               const cliente = pedido.clientes;
               return (
@@ -250,7 +256,7 @@ const Pedidos = () => {
             <div><Label>Cliente <span className="text-destructive">*</span></Label>
               <Select value={form.cliente_id} onValueChange={(v) => setForm({ ...form, cliente_id: v })}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
-                <SelectContent>{clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                <SelectContent>{(clientes as Tables<"clientes">[]).map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
               </Select></div>
             <div><Label>Vendedor</Label><Input value={form.vendedor} onChange={(e) => setForm({ ...form, vendedor: e.target.value })} className="mt-1" /></div>
             <div className="grid grid-cols-2 gap-3">

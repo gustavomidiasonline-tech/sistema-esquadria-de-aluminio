@@ -4,39 +4,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate, useSupabaseDelete } from "@/hooks/useSupabaseQuery";
+import { useClientes } from "@/hooks/useClientes";
+import type { Cliente } from "@/hooks/useClientes";
+import { useCreateCliente, useUpdateCliente, useDeleteCliente } from "@/hooks/useClienteMutations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
 
-interface Cliente {
-  id: string;
-  nome: string;
-  email: string | null;
-  telefone: string | null;
-  cpf_cnpj: string | null;
-  endereco: string | null;
-  cidade: string | null;
-  estado: string | null;
-  cep: string | null;
-  observacoes: string | null;
-}
+const FORM_VAZIO = {
+  nome: "", email: "", telefone: "", cpf_cnpj: "", endereco: "", cidade: "", estado: "", cep: "", observacoes: "",
+};
+
+type ClienteForm = typeof FORM_VAZIO;
 
 const Clientes = () => {
   const { user } = useAuth();
-  const { data: clientes = [], isLoading } = useSupabaseQuery<Cliente>("clientes", {
-    orderBy: { column: "nome", ascending: true },
-  });
-  const insertMutation = useSupabaseInsert("clientes");
-  const updateMutation = useSupabaseUpdate("clientes");
-  const deleteMutation = useSupabaseDelete("clientes");
+  const { data: clientes = [], isLoading } = useClientes();
+  const createMutation = useCreateCliente();
+  const updateMutation = useUpdateCliente();
+  const deleteMutation = useDeleteCliente();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
-  const [form, setForm] = useState({
-    nome: "", email: "", telefone: "", cpf_cnpj: "", endereco: "", cidade: "", estado: "", cep: "", observacoes: "",
-  });
+  const [form, setForm] = useState<ClienteForm>(FORM_VAZIO);
 
   const filtered = clientes.filter((c) =>
     c.nome.toLowerCase().includes(search.toLowerCase()) ||
@@ -45,7 +36,7 @@ const Clientes = () => {
 
   const openNew = () => {
     setEditingCliente(null);
-    setForm({ nome: "", email: "", telefone: "", cpf_cnpj: "", endereco: "", cidade: "", estado: "", cep: "", observacoes: "" });
+    setForm(FORM_VAZIO);
     setDialogOpen(true);
   };
 
@@ -69,7 +60,7 @@ const Clientes = () => {
         await updateMutation.mutateAsync({ id: editingCliente.id, values: form });
         toast.success("Cliente atualizado!");
       } else {
-        await insertMutation.mutateAsync({ ...form, created_by: user?.id });
+        await createMutation.mutateAsync({ ...form, created_by: user?.id ?? undefined });
         toast.success("Cliente adicionado!");
       }
       setDialogOpen(false);
@@ -189,8 +180,8 @@ const Clientes = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={insertMutation.isPending || updateMutation.isPending}>
-              {insertMutation.isPending || updateMutation.isPending ? "Salvando..." : "Salvar"}
+            <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+              {createMutation.isPending || updateMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>

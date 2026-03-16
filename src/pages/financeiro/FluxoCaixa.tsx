@@ -2,6 +2,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
 import { parseISO, format } from "date-fns";
+import type { Tables } from "@/integrations/supabase/types";
 
 const FluxoCaixa = () => {
   const { data: pagamentos = [], isLoading } = useSupabaseQuery("pagamentos", {
@@ -10,7 +11,7 @@ const FluxoCaixa = () => {
 
   // Group by month
   const byMonth: Record<string, { entradas: number; saidas: number }> = {};
-  pagamentos.forEach((p: any) => {
+  pagamentos.forEach((p: Tables<"pagamentos">) => {
     const month = format(parseISO(p.data_pagamento), "MMMM yyyy");
     if (!byMonth[month]) byMonth[month] = { entradas: 0, saidas: 0 };
     if (p.tipo === "entrada") byMonth[month].entradas += Number(p.valor) || 0;

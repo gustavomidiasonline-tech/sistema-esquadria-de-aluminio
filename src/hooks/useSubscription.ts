@@ -118,7 +118,7 @@ export const PLAN_LABELS: Record<PlanType, string> = {
   avancado: "Avançado",
 };
 
-export const FEATURE_MIN_PLAN: Record<FeatureKey, PlanType> = {} as any;
+export const FEATURE_MIN_PLAN = {} as Record<FeatureKey, PlanType>;
 // Build minimum plan for each feature
 (["basico", "essencial", "avancado"] as PlanType[]).forEach((plan) => {
   PLAN_FEATURES[plan].forEach((feature) => {
@@ -136,7 +136,7 @@ export function useSubscription() {
     queryFn: async () => {
       if (!user) return null;
       const { data, error } = await supabase
-        .from("user_subscriptions" as any)
+        .from("user_subscriptions")
         .select("*")
         .eq("user_id", user.id)
         .single();
@@ -146,7 +146,7 @@ export function useSubscription() {
     enabled: !!user,
   });
 
-  const currentPlan: PlanType = (subscription as any)?.plan || "basico";
+  const currentPlan: PlanType = (subscription as { plan?: PlanType } | null)?.plan || "basico";
 
   const hasFeature = useMemo(() => {
     return (feature: FeatureKey): boolean => {

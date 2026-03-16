@@ -10,6 +10,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
+
+type PerfilRow = Database["public"]["Tables"]["perfis_catalogo"]["Row"];
+type LinhaRow = Database["public"]["Tables"]["linhas"]["Row"];
+type ModeloRow = Database["public"]["Tables"]["modelos_esquadria"]["Row"];
+
+type PerfilWithJoins = PerfilRow & { linhas?: { nome: string } | null };
+type LinhaWithJoins = LinhaRow & { fabricantes?: { nome: string } | null };
+
+const CATEGORIA_LABELS: Record<string, string> = {
+  janela: "Janelas",
+  porta: "Portas",
+  fachada: "Fachadas",
+};
 
 export function CatalogoTab() {
   const [subTab, setSubTab] = useState("perfis");
@@ -45,7 +59,7 @@ function PerfisTable({ search }: { search: string }) {
     queryFn: async () => {
       const { data, error } = await supabase.from("perfis_catalogo").select("*, linhas(nome)").order("codigo");
       if (error) throw error;
-      return data;
+      return data as unknown as PerfilWithJoins[];
     },
   });
 
@@ -73,7 +87,7 @@ function PerfisTable({ search }: { search: string }) {
             <TableRow key={p.id}>
               <TableCell className="font-mono font-bold text-primary">{p.codigo}</TableCell>
               <TableCell>{p.nome}</TableCell>
-              <TableCell>{(p as any).linhas?.nome || "-"}</TableCell>
+              <TableCell>{p.linhas?.nome || "-"}</TableCell>
               <TableCell><Badge variant="outline">{p.tipo}</Badge></TableCell>
               <TableCell>{p.peso_kg_m}</TableCell>
               <TableCell>{p.comprimento_padrao_mm}</TableCell>
@@ -91,7 +105,7 @@ function LinhasTable({ search }: { search: string }) {
     queryFn: async () => {
       const { data, error } = await supabase.from("linhas").select("*, fabricantes(nome)").order("nome");
       if (error) throw error;
-      return data;
+      return data as unknown as LinhaWithJoins[];
     },
   });
 
@@ -118,7 +132,7 @@ function LinhasTable({ search }: { search: string }) {
               <TableCell><Badge variant="outline">{l.categoria}</Badge></TableCell>
               <TableCell>{l.espessura_mm}</TableCell>
               <TableCell className="text-sm">{l.aplicacao}</TableCell>
-              <TableCell>{(l as any).fabricantes?.nome || "-"}</TableCell>
+              <TableCell>{l.fabricantes?.nome || "-"}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -224,7 +238,6 @@ function ModelosTable({ search }: { search: string }) {
   });
 
   const filtered = (modelos || []).filter((m) => m.nome.toLowerCase().includes(search.toLowerCase()));
-  const categorias = { janela: "Janelas", porta: "Portas", fachada: "Fachadas" };
 
   if (isLoading) return <p className="text-muted-foreground p-4">Carregando...</p>;
 
@@ -247,7 +260,7 @@ function ModelosTable({ search }: { search: string }) {
               <TableCell className="font-bold">{m.nome}</TableCell>
               <TableCell>
                 <Badge variant={m.categoria === "janela" ? "default" : m.categoria === "porta" ? "secondary" : "outline"}>
-                  {(categorias as any)[m.categoria] || m.categoria}
+                  {CATEGORIA_LABELS[m.categoria] || m.categoria}
                 </Badge>
               </TableCell>
               <TableCell>{m.tipo}</TableCell>

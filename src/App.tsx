@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { FeatureGate } from "@/components/FeatureGate";
+import { PipelineInitializer } from "@/components/PipelineInitializer";
+import Estoque from "./pages/Estoque";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import Index from "./pages/Index";
@@ -46,6 +48,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <PipelineInitializer />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -67,6 +70,7 @@ const App = () => (
             <Route path="/planos" element={<ProtectedRoute><Planos /></ProtectedRoute>} />
             <Route path="/workflow" element={<ProtectedRoute><FeatureGate feature="pedidos"><Workflow /></FeatureGate></ProtectedRoute>} />
             <Route path="/configuracao-modelos" element={<ProtectedRoute><ConfiguracaoModelos /></ProtectedRoute>} />
+            <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
             {/* Financeiro */}
             <Route path="/financeiro" element={<ProtectedRoute><FeatureGate feature="financeiro"><FinanceiroVisaoGeral /></FeatureGate></ProtectedRoute>} />
             <Route path="/financeiro/contas-receber" element={<ProtectedRoute><FeatureGate feature="financeiro"><ContasReceber /></FeatureGate></ProtectedRoute>} />

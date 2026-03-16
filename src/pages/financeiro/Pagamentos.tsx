@@ -13,6 +13,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, ArrowUpRight, ArrowDownLeft, Search, DollarSign, TrendingUp, TrendingDown } from "lucide-react";
+import type { Tables } from "@/integrations/supabase/types";
+
+type PagamentoRow = Tables<"pagamentos">;
 
 export default function Pagamentos() {
   const { user } = useAuth();
@@ -62,11 +65,11 @@ export default function Pagamentos() {
     onError: () => toast.error("Erro ao registrar pagamento"),
   });
 
-  const totalEntradas = pagamentos.filter((p: any) => p.tipo === "entrada").reduce((s: number, p: any) => s + Number(p.valor), 0);
-  const totalSaidas = pagamentos.filter((p: any) => p.tipo === "saida").reduce((s: number, p: any) => s + Number(p.valor), 0);
+  const totalEntradas = pagamentos.filter((p: PagamentoRow) => p.tipo === "entrada").reduce((s: number, p: PagamentoRow) => s + Number(p.valor), 0);
+  const totalSaidas = pagamentos.filter((p: PagamentoRow) => p.tipo === "saida").reduce((s: number, p: PagamentoRow) => s + Number(p.valor), 0);
   const saldo = totalEntradas - totalSaidas;
 
-  const filtered = pagamentos.filter((p: any) =>
+  const filtered = pagamentos.filter((p: PagamentoRow) =>
     (p.descricao || "").toLowerCase().includes(search.toLowerCase()) ||
     (p.forma_pagamento || "").toLowerCase().includes(search.toLowerCase())
   );
@@ -137,7 +140,7 @@ export default function Pagamentos() {
           </div>
         ) : (
           <div className="bg-card border border-border rounded-xl shadow-sm divide-y divide-border">
-            {filtered.map((p: any) => (
+            {filtered.map((p: PagamentoRow) => (
               <div key={p.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className={`h-10 w-10 rounded-full flex items-center justify-center ${p.tipo === "entrada" ? "bg-success/10" : "bg-destructive/10"}`}>

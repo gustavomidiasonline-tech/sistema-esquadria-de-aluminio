@@ -29,10 +29,14 @@ interface CutRule {
   product_id: string;
   profile_id: string;
   formula: string;
-  quantity: number;
-  angle: string;
+  quantity: number | null;
+  angle: string | null;
   axis: string;
   profile?: CatalogProfile;
+}
+
+interface CutRuleWithProfile extends Omit<CutRule, "profile"> {
+  profile: Pick<CatalogProfile, "id" | "code" | "description"> | null;
 }
 
 const ConfiguracaoModelos = () => {
@@ -87,7 +91,7 @@ const ConfiguracaoModelos = () => {
       .select("*, profile:catalog_profiles(id, code, description)")
       .eq("product_id", productId)
       .order("created_at");
-    setCutRules((data as any[]) || []);
+    setCutRules((data as CutRuleWithProfile[]) || []);
     setLoadingRules(false);
   };
 
@@ -137,8 +141,8 @@ const ConfiguracaoModelos = () => {
 
   const openEditRule = (r: CutRule) => {
     setEditingRule(r);
-    setRuleProfileId(r.profile_id); setRuleFormula(r.formula); setRuleQty(String(r.quantity));
-    setRuleAngle(r.angle); setRuleAxis(r.axis);
+    setRuleProfileId(r.profile_id); setRuleFormula(r.formula); setRuleQty(String(r.quantity ?? 1));
+    setRuleAngle(r.angle ?? "90\u00B0"); setRuleAxis(r.axis);
     setRuleDialog(true);
   };
 
@@ -175,7 +179,7 @@ const ConfiguracaoModelos = () => {
     try {
       const expr = formula.replace(/L/g, String(L)).replace(/H/g, String(H));
       if (!/^[\d\s+\-*/().]+$/.test(expr)) return "—";
-      const result = Function(`"use strict"; return (${expr})`)();
+      const result: unknown = Function(`"use strict"; return (${expr})`)();
       return `${Math.round(Number(result))} mm`;
     } catch {
       return "Erro";
@@ -256,8 +260,8 @@ const ConfiguracaoModelos = () => {
                     {cutRules.map((rule) => (
                       <tr key={rule.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                         <td className="p-3">
-                          <p className="font-semibold text-foreground">{(rule as any).profile?.code || "—"}</p>
-                          <p className="text-[11px] text-muted-foreground">{(rule as any).profile?.description || ""}</p>
+                          <p className="font-semibold text-foreground">{rule.profile?.code ?? "\u2014"}</p>
+                          <p className="text-[11px] text-muted-foreground">{rule.profile?.description || ""}</p>
                         </td>
                         <td className="p-3">
                           <span className={cn(
@@ -268,8 +272,8 @@ const ConfiguracaoModelos = () => {
                           </span>
                         </td>
                         <td className="p-3 font-mono text-xs text-foreground">{rule.formula}</td>
-                        <td className="p-3 text-foreground">{rule.quantity}</td>
-                        <td className="p-3 text-foreground">{rule.angle}</td>
+                        <td className="p-3 text-foreground">{rule.quantity ?? 1}</td>
+                        <td className="p-3 text-foreground">{rule.angle ?? "\u2014"}</td>
                         <td className="p-3 text-right">
                           <span className="font-bold text-primary">
                             {evalFormula(rule.formula, L, H)}

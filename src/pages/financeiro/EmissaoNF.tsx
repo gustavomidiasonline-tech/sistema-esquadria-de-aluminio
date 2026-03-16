@@ -9,6 +9,7 @@ import { useSupabaseQuery, useSupabaseInsert } from "@/hooks/useSupabaseQuery";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
 
 const EmissaoNF = () => {
   const { user } = useAuth();
@@ -48,7 +49,7 @@ const EmissaoNF = () => {
               <Label>Cliente / Destinatário <span className="text-destructive">*</span></Label>
               <Select value={form.cliente_id} onValueChange={(v) => setForm({ ...form, cliente_id: v })}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                <SelectContent>{clientes.map((c: Tables<"clientes">) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>

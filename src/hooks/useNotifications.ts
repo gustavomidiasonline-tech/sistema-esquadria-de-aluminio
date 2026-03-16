@@ -1,6 +1,12 @@
 import { useMemo } from "react";
 import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
 import { isPast, parseISO, differenceInDays, format, addDays, isWithinInterval } from "date-fns";
+import type { Database } from "@/integrations/supabase/types";
+
+type PedidoRow = Database["public"]["Tables"]["pedidos"]["Row"];
+type ContaPagarRow = Database["public"]["Tables"]["contas_pagar"]["Row"];
+type ContaReceberRow = Database["public"]["Tables"]["contas_receber"]["Row"];
+type ServicoRow = Database["public"]["Tables"]["servicos"]["Row"];
 
 export type NotificationType = "pedido_atrasado" | "pedido_proximo" | "conta_vencida" | "conta_vencendo" | "servico_atrasado";
 export type NotificationSeverity = "critical" | "warning" | "info";
@@ -30,7 +36,7 @@ export function useNotifications() {
     const items: AppNotification[] = [];
 
     // Pedidos atrasados
-    pedidos.forEach((p: any) => {
+    pedidos.forEach((p: PedidoRow) => {
       if (!p.data_entrega || p.status === "entregue" || p.status === "cancelado") return;
       const entrega = parseISO(p.data_entrega);
       const dias = differenceInDays(now, entrega);
@@ -45,7 +51,7 @@ export function useNotifications() {
     });
 
     // Pedidos próximos da entrega (3 dias)
-    pedidos.forEach((p: any) => {
+    pedidos.forEach((p: PedidoRow) => {
       if (!p.data_entrega || p.status === "entregue" || p.status === "cancelado") return;
       const entrega = parseISO(p.data_entrega);
       const dias = differenceInDays(entrega, now);
@@ -61,10 +67,10 @@ export function useNotifications() {
 
     // Contas vencidas (pagar + receber)
     const allContas = [
-      ...contasPagar.map((c: any) => ({ ...c, _tipo: "pagar" })),
-      ...contasReceber.map((c: any) => ({ ...c, _tipo: "receber" })),
+      ...contasPagar.map((c: ContaPagarRow) => ({ ...c, _tipo: "pagar" as const })),
+      ...contasReceber.map((c: ContaReceberRow) => ({ ...c, _tipo: "receber" as const })),
     ];
-    allContas.forEach((c: any) => {
+    allContas.forEach((c) => {
       if (c.status !== "pendente" || !c.data_vencimento) return;
       const venc = parseISO(c.data_vencimento);
       const dias = differenceInDays(now, venc);
@@ -89,7 +95,7 @@ export function useNotifications() {
     });
 
     // Serviços atrasados
-    servicos.forEach((s: any) => {
+    servicos.forEach((s: ServicoRow) => {
       if (!s.data_agendada || s.status === "concluido" || s.status === "cancelado") return;
       const agendado = parseISO(s.data_agendada);
       const dias = differenceInDays(now, agendado);

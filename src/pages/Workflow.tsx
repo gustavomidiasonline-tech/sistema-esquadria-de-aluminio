@@ -49,7 +49,7 @@ const Workflow = () => {
         .select("*")
         .order("sort_order"),
     ]);
-    setPedidos((pedidosRes.data as any[]) || []);
+    setPedidos((pedidosRes.data as PedidoWithCliente[]) || []);
     setStages((stagesRes.data as WorkflowStage[]) || []);
     setLoading(false);
   };
@@ -57,7 +57,7 @@ const Workflow = () => {
   const filtered = pedidos.filter((p) => {
     const matchSearch =
       String(p.numero).includes(search) ||
-      (p.cliente as any)?.nome?.toLowerCase().includes(search.toLowerCase()) ||
+      (p.cliente as { nome: string } | null)?.nome?.toLowerCase().includes(search.toLowerCase()) ||
       p.vendedor?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "todos" || p.status === filterStatus;
     return matchSearch && matchStatus;

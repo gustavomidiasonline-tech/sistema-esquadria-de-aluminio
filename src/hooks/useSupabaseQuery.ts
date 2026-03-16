@@ -2,29 +2,28 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import type { Database } from "@/integrations/supabase/types";
 
-type TableName = "clientes" | "produtos" | "planos_de_corte" | "perfis_aluminio" |
-  "orcamentos" | "orcamento_itens" | "pedidos" | "pedido_itens" | "servicos" |
-  "contas_receber" | "contas_pagar" | "notas_fiscais" | "contratos" | "documentos" | "profiles" |
-  "fornecedores" | "pagamentos" | "agenda_eventos" | "servico_checklist";
+type Tables = Database["public"]["Tables"];
+type TableName = keyof Tables & string;
 
-export function useSupabaseQuery<T = any>(
-  table: TableName,
+export function useSupabaseQuery<T extends TableName>(
+  table: T,
   options?: {
     select?: string;
     orderBy?: { column: string; ascending?: boolean };
-    filters?: { column: string; value: any }[];
+    filters?: { column: string; value: unknown }[];
     enabled?: boolean;
   }
 ) {
   return useQuery({
     queryKey: [table, options?.filters],
     queryFn: async () => {
-      let query = (supabase.from(table) as any).select(options?.select || "*");
+      let query = supabase.from(table).select(options?.select || "*");
 
       if (options?.filters) {
         for (const f of options.filters) {
-          query = query.eq(f.column, f.value);
+          query = query.eq(f.column, f.value as string);
         }
       }
 
@@ -38,66 +37,66 @@ export function useSupabaseQuery<T = any>(
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as T[];
+      return data as Tables[T]["Row"][];
     },
     enabled: options?.enabled ?? true,
   });
 }
 
-export function useSupabaseInsert(table: TableName) {
+export function useSupabaseInsert<T extends TableName>(table: T) {
   const queryClient = useQueryClient();
   const { profile } = useAuth();
 
   return useMutation({
-    mutationFn: async (values: Record<string, any>) => {
+    mutationFn: async (values: Tables[T]["Insert"]) => {
       // Auto-inject company_id if not provided and user has one
-      const insertValues = { ...values };
+      const insertValues = { ...values } as Record<string, unknown>;
       if (!insertValues.company_id && profile?.company_id) {
         insertValues.company_id = profile.company_id;
       }
-      const { data, error } = await (supabase.from(table) as any).insert(insertValues).select().single();
+      const { data, error } = await supabase.from(table).insert(insertValues as Tables[T]["Insert"]).select().single();
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [table] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Erro ao salvar");
     },
   });
 }
 
-export function useSupabaseUpdate(table: TableName) {
+export function useSupabaseUpdate<T extends TableName>(table: T) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: Record<string, any> }) => {
-      const { data, error } = await (supabase.from(table) as any).update(values).eq("id", id).select().single();
+    mutationFn: async ({ id, values }: { id: string; values: Tables[T]["Update"] }) => {
+      const { data, error } = await supabase.from(table).update(values as Tables[T]["Update"]).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [table] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Erro ao atualizar");
     },
   });
 }
 
-export function useSupabaseDelete(table: TableName) {
+export function useSupabaseDelete<T extends TableName>(table: T) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase.from(table) as any).delete().eq("id", id);
+      const { error } = await supabase.from(table).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [table] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Erro ao excluir");
     },
   });
