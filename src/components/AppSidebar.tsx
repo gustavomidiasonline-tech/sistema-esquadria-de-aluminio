@@ -31,6 +31,7 @@
   Settings,
   Warehouse,
   ClipboardList,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -65,6 +66,7 @@ const mainItemsSecondary = [
   { title: "Fornecedores", url: "/fornecedores", icon: Truck },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "Mapa", url: "/mapa", icon: MapPin },
+  { title: "Design Glass", url: "/glass-dashboard", icon: Sparkles },
 ];
 
 const financeiroItems = [

@@ -1,4 +1,5 @@
-import { TrendingUp, Package, FileText, BarChart3, DollarSign, AlertTriangle, Clock, Users, ArrowRight } from "lucide-react";
+import { Package, FileText, BarChart3, DollarSign, AlertTriangle, Clock, Users, ArrowRight } from "lucide-react";
+import { GlassDashboardCard } from "@/components/GlassDashboardCard";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -6,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, differenceInDays, isPast } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+
 
 const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
@@ -100,13 +101,6 @@ const Index = () => {
     return "Boa noite";
   };
 
-  const kpiCards: { title: string; value: string; subtitle: string; icon: LucideIcon; color: string; bg: string }[] = [
-    { title: "Faturamento do Mes", value: fmt(faturamentoMes), subtitle: `${orcAprovadosMes.length} orcamentos aprovados`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-500/10" },
-    { title: "Orcamentos Pendentes", value: String(orcPendentes), subtitle: `de ${orcamentos.length} total`, icon: FileText, color: "text-blue-600", bg: "bg-blue-500/10" },
-    { title: "Em Producao", value: String(emProducao), subtitle: `${pedidos.filter((p) => p.status === "entregue").length} entregues`, icon: Package, color: "text-primary", bg: "bg-primary/10" },
-    { title: "Alertas", value: String(totalAlertas), subtitle: `${pedidosAtrasados.length} pedidos atrasados`, icon: AlertTriangle, color: totalAlertas > 0 ? "text-destructive" : "text-emerald-600", bg: totalAlertas > 0 ? "bg-destructive/10" : "bg-emerald-500/10" },
-  ];
-
   const recentOrcamentos = orcamentos.slice(0, 5);
   const recentPedidos = pedidos.slice(0, 5);
 
@@ -155,29 +149,55 @@ const Index = () => {
           </div>
         )}
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpiCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <div key={card.title} className="bg-card border border-border rounded-xl p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", card.bg)}>
-                    <Icon className={cn("h-5 w-5", card.color)} />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-foreground">{card.value}</p>
-                <p className="text-xs text-muted-foreground mt-1">{card.subtitle}</p>
-                <p className="text-[10px] font-medium text-muted-foreground/80 mt-0.5">{card.title}</p>
-              </div>
-            );
-          })}
+        {/* KPI Cards — Glass Morphism */}
+        <div
+          className="relative rounded-2xl overflow-hidden p-6"
+          style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #2d1b69 70%, #3d0f4a 100%)' }}
+        >
+          {/* animated blobs */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <div className="absolute top-0 left-1/4 w-64 h-64 bg-purple-500 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-blue-500 rounded-full blur-3xl" />
+          </div>
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <GlassDashboardCard
+              title="Faturamento do Mês"
+              value={fmt(faturamentoMes)}
+              subtitle={`${orcAprovadosMes.length} orçamentos aprovados`}
+              icon={<DollarSign className="h-5 w-5" />}
+              trend={orcAprovadosMes.length > 0 ? { direction: 'up', value: orcAprovadosMes.length, label: 'aprovados' } : undefined}
+              badge={{ label: 'Este mês', variant: 'success' }}
+              neonAccent
+            />
+            <GlassDashboardCard
+              title="Orçamentos Pendentes"
+              value={String(orcPendentes)}
+              subtitle={`de ${orcamentos.length} total`}
+              icon={<FileText className="h-5 w-5" />}
+              badge={orcPendentes > 0 ? { label: `${orcPendentes} aguardando`, variant: 'warning' } : undefined}
+            />
+            <GlassDashboardCard
+              title="Em Produção"
+              value={String(emProducao)}
+              subtitle={`${pedidos.filter((p) => p.status === "entregue").length} entregues`}
+              icon={<Package className="h-5 w-5" />}
+              badge={{ label: 'Ativo', variant: 'info' }}
+            />
+            <GlassDashboardCard
+              title="Alertas"
+              value={String(totalAlertas)}
+              subtitle={`${pedidosAtrasados.length} pedidos atrasados`}
+              icon={<AlertTriangle className="h-5 w-5" />}
+              badge={totalAlertas > 0 ? { label: `${totalAlertas} atenção`, variant: 'destructive' } : { label: 'Tudo certo', variant: 'success' }}
+              glowEffect={totalAlertas > 0}
+            />
+          </div>
         </div>
 
         {/* Row 2: Ultimos orcamentos + Pipeline */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Ultimos orcamentos */}
-          <div className="bg-card border border-border rounded-xl shadow-sm">
+          <div className="glass-card-premium">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <h3 className="text-base font-semibold text-foreground">Ultimos Orcamentos</h3>
               <button onClick={() => navigate("/orcamentos")} className="text-xs text-primary hover:underline flex items-center gap-1">
@@ -211,7 +231,7 @@ const Index = () => {
           </div>
 
           {/* Pipeline de status */}
-          <div className="bg-card border border-border rounded-xl shadow-sm">
+          <div className="glass-card-premium">
             <div className="p-5 border-b border-border">
               <h3 className="text-base font-semibold text-foreground">Pipeline de Orcamentos</h3>
             </div>
@@ -243,7 +263,7 @@ const Index = () => {
 
         {/* Row 3: Ultimos pedidos + Avisos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-card border border-border rounded-xl shadow-sm">
+          <div className="glass-card-premium">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <h3 className="text-base font-semibold text-foreground">Ultimos Pedidos</h3>
               <button onClick={() => navigate("/pedidos")} className="text-xs text-primary hover:underline flex items-center gap-1">
@@ -281,7 +301,7 @@ const Index = () => {
           </div>
 
           {/* System Alerts */}
-          <div className="bg-card border border-border rounded-xl shadow-sm">
+          <div className="glass-card-premium">
             <div className="p-5 border-b border-border">
               <h3 className="text-base font-semibold text-foreground">Resumo do Sistema</h3>
             </div>

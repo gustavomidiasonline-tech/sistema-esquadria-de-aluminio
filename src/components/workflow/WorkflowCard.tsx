@@ -3,7 +3,7 @@ import { Ruler, ShoppingCart, PackageCheck, Wrench, ClipboardCheck, User, Calend
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-const ICON_MAP: Record<string, any> = {
+const ICON_MAP: Record<string, React.ElementType> = {
   ruler: Ruler,
   "shopping-cart": ShoppingCart,
   "package-check": PackageCheck,
@@ -69,7 +69,7 @@ export function WorkflowCard({ pedido, stages, onClick }: WorkflowCardProps) {
             Pedido #{pedido.numero}
           </p>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {(pedido.cliente as any)?.nome || "Sem cliente"}
+            {pedido.cliente?.nome || "Sem cliente"}
           </p>
         </div>
         <span className={cn(

@@ -1,0 +1,94 @@
+name: pixel-perfect-squad
+version: '2.1.0'
+description: >
+  Squad especializado para o ERP/CRM de vidraçarias e fábricas de esquadrias
+  de alumínio (pixel-perfect-pixels). Foco em refatoração arquitetural,
+  domínio de negócio, qualidade de código e evolução do sistema.
+
+metadata:
+  domain: erp-vidracaria
+  stack:
+    - React 18
+    - TypeScript
+    - Vite
+    - TailwindCSS
+    - shadcn/ui
+    - Supabase (PostgreSQL)
+    - React Query
+    - React Three Fiber
+    - Zod
+  created_at: '2026-03-15'
+  author: Craft (squad-creator)
+  project_path: ./pixel-perfect-pixels
+
+agents:
+  lead: esquadria-engineer
+  members:
+    - id: esquadria-engineer
+      file: agents/esquadria-engineer.md
+      role: Especialista em cálculo de esquadrias, perfis de alumínio e algoritmo FFD
+    - id: supabase-architect
+      file: agents/supabase-architect.md
+      role: Especialista em schema Supabase, RLS policies, migrations e multitenancy
+    - id: react-refactorer
+      file: agents/react-refactorer.md
+      role: Especialista em refatorar componentes React monolíticos e criar arquitetura modular
+    - id: domain-dev
+      file: agents/domain-dev.md
+      role: Desenvolvedor full-stack focado no domínio ERP de vidraçarias
+
+tasks:
+  - id: refactor-component
+    file: tasks/refactor-component.md
+    description: Quebrar componentes monolíticos em sub-componentes reutilizáveis
+    agent: react-refactorer
+  - id: create-service
+    file: tasks/create-service.md
+    description: Criar service layer com lógica de negócio extraída
+    agent: domain-dev
+  - id: create-repository
+    file: tasks/create-repository.md
+    description: Criar repository pattern para acesso a dados Supabase
+    agent: domain-dev
+  - id: migrate-schema
+    file: tasks/migrate-schema.md
+    description: Criar e aplicar migrations Supabase para tabelas faltantes
+    agent: supabase-architect
+  - id: add-unit-tests
+    file: tasks/add-unit-tests.md
+    description: Adicionar testes unitários para services e utilitários
+    agent: domain-dev
+  - id: optimize-cutting-plan
+    file: tasks/optimize-cutting-plan.md
+    description: Otimizar algoritmo FFD de plano de corte
+    agent: esquadria-engineer
+  - id: implement-multitenancy
+    file: tasks/implement-multitenancy.md
+    description: Implementar multitenancy com tabela companies e RLS isolation
+    agent: supabase-architect
+
+workflows:
+  - id: component-refactoring
+    file: workflows/component-refactoring.md
+    description: Fluxo completo para refatoração de componentes monolíticos
+  - id: feature-development
+    file: workflows/feature-development.md
+    description: Fluxo para desenvolvimento de novas features no domínio
+
+checklists:
+  - id: refactoring-gate
+    file: checklists/refactoring-gate.md
+    description: Gate de qualidade para refatorações
+  - id: schema-migration-gate
+    file: checklists/schema-migration-gate.md
+    description: Gate de validação antes de aplicar migrations
+
+config:
+  coding_standards: config/coding-standards.md
+  tech_stack: config/tech-stack.md
+  source_tree: config/source-tree.md
+
+distribution:
+  level: local
+  visibility: private
+  path: ./squads/pixel-perfect-squad

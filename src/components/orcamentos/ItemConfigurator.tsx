@@ -229,7 +229,7 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
     setDescricaoCustom("");
   };
 
-  const activeProducts = produtos.filter((p: any) => p.ativo !== false);
+  const activeProducts = (produtos as ProdutoRecord[]).filter((p) => p.ativo !== false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -254,7 +254,7 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
             <Select value={produtoId} onValueChange={setProdutoId}>
               <SelectTrigger><SelectValue placeholder="Escolha uma esquadria do catálogo..." /></SelectTrigger>
               <SelectContent>
-                {activeProducts.map((p: any) => (
+                {activeProducts.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     <span className="font-medium">{p.nome}</span>
                     <span className="text-muted-foreground ml-2">— {p.tipo}</span>
@@ -371,7 +371,7 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
                       <Icon className={cn("h-3.5 w-3.5 shrink-0", c.color)} />
                       <div className="flex-1">
                         <p className="text-[9px] text-muted-foreground">{c.label}</p>
-                        <p className={cn("text-xs", (c as any).bold ? "font-bold text-foreground" : "font-medium text-foreground")}>{fmt(c.value)}</p>
+                        <p className={cn("text-xs", (c as CostDisplayItem).bold ? "font-bold text-foreground" : "font-medium text-foreground")}>{fmt(c.value)}</p>
                       </div>
                     </div>
                   );

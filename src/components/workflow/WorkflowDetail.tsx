@@ -17,7 +17,7 @@ interface ProgressItem {
   id: string;
   stage_id: string;
   status: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   completed_at: string | null;
 }
 
@@ -66,7 +66,7 @@ export function WorkflowDetail({ pedido, onBack }: WorkflowDetailProps) {
     return {
       id: p.id,
       status: p.status,
-      data: (typeof p.data === "object" && p.data !== null ? p.data : {}) as Record<string, any>,
+      data: (typeof p.data === "object" && p.data !== null ? p.data : {}) as Record<string, unknown>,
       completed_at: p.completed_at,
     };
   };
@@ -83,7 +83,7 @@ export function WorkflowDetail({ pedido, onBack }: WorkflowDetailProps) {
             Pedido #{pedido.numero}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {(pedido.cliente as any)?.nome || "Sem cliente"} • {pedido.vendedor || "Sem vendedor"}
+            {pedido.cliente?.nome || "Sem cliente"} • {pedido.vendedor || "Sem vendedor"}
           </p>
         </div>
       </div>

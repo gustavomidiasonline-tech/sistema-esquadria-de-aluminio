@@ -79,7 +79,7 @@ export function AppHeader() {
           <input
             type="text"
             placeholder="Buscar..."
-            className="pl-10 pr-4 py-2 text-sm bg-muted rounded-lg border-none outline-none focus:ring-2 focus:ring-primary/30 w-64 text-foreground placeholder:text-muted-foreground"
+            className="glass-input-field pl-10 pr-4 py-2 text-sm w-64"
           />
         </div>
       </div>

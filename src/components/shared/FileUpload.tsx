@@ -98,9 +98,9 @@ export function FileUpload({
         setUploadedFile({ name: file.name, url: publicUrl });
         onUploadComplete(publicUrl, file.name, file.size);
         toast.success("Arquivo enviado com sucesso!");
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Upload error:", err);
-        toast.error("Erro ao enviar arquivo: " + (err.message || "tente novamente"));
+        toast.error("Erro ao enviar arquivo: " + (err instanceof Error ? err.message : "tente novamente"));
       } finally {
         setUploading(false);
       }

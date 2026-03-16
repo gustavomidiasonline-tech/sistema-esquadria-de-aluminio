@@ -3,8 +3,15 @@ import { Calendar, Clock, CheckCircle2, XCircle, AlertTriangle, DollarSign, Tren
 import { differenceInDays, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
+interface ServicoRecord {
+  status: string;
+  data_agendada?: string | null;
+  valor?: number | string | null;
+  [key: string]: unknown;
+}
+
 interface ServicosKPIsProps {
-  servicos: any[];
+  servicos: ServicoRecord[];
 }
 
 export function ServicosKPIs({ servicos }: ServicosKPIsProps) {

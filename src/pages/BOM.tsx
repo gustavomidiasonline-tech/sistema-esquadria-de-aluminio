@@ -6,12 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BOMService } from "@/services/bom.service";
 import type { BOMResult } from "@/services/bom.service";
+import { FileUploadDialog } from "@/components/FileUploadDialog";
+import type { ExtractedData } from "@/services/file-upload.service";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const categoriaBadge: Record<string, string> = {
   aluminio: "bg-amber-100 text-amber-800 border-amber-200",
@@ -24,8 +27,10 @@ const categoriaBadge: Record<string, string> = {
 const BOM = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const orcamentoId = searchParams.get("orcamento_id");
   const [manualId, setManualId] = useState("");
+  const [loadingImport, setLoadingImport] = useState(false);
 
   const { data: orcamento } = useQuery({
     queryKey: ["bom-orcamento", orcamentoId],
@@ -107,6 +112,37 @@ const BOM = () => {
   const handleGoToOrcamento = () => {
     const id = manualId.trim();
     if (id) navigate(`/bom?orcamento_id=${id}`);
+  };
+
+  const handleDataExtracted = async (data: ExtractedData) => {
+    if (!orcamentoId || !data.largura || !data.altura) {
+      toast.error("Dados incompletos. Certifique-se de que largura e altura foram extraídos.");
+      return;
+    }
+
+    setLoadingImport(true);
+    try {
+      // Create new orcamento item with extracted data
+      const { error } = await supabase.from("orcamento_itens").insert({
+        orcamento_id: orcamentoId,
+        descricao: `Importado de arquivo (${data.source.toUpperCase()})`,
+        largura: Math.round(data.largura),
+        altura: Math.round(data.altura),
+        quantidade: data.quantidade || 1,
+        valor_unitario: 0, // Will be calculated separately
+        observacoes: `Dados extraídos com ${Math.round(data.confidence * 100)}% de confiança`,
+      });
+
+      if (error) throw error;
+
+      // Refresh BOM data
+      await queryClient.invalidateQueries({ queryKey: ["bom-itens", orcamentoId] });
+      toast.success(`Item importado com sucesso! Largura: ${data.largura.toFixed(0)}mm, Altura: ${data.altura.toFixed(0)}mm, Qtd: ${data.quantidade}`);
+    } catch (error) {
+      toast.error(`Erro ao salvar item: ${error instanceof Error ? error.message : "Desconhecido"}`);
+    } finally {
+      setLoadingImport(false);
+    }
   };
 
   // No orcamento_id — show selection
@@ -193,6 +229,14 @@ const BOM = () => {
               {clienteNome} - {itens.length} itens
             </p>
           </div>
+          <FileUploadDialog
+            onDataExtracted={handleDataExtracted}
+            trigger={
+              <Button disabled={loadingImport} variant="outline" size="sm">
+                {loadingImport ? "Importando..." : "Importar PDF/CSV"}
+              </Button>
+            }
+          />
         </div>
 
         {/* KPIs */}

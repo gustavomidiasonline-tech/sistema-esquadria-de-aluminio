@@ -1,6 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Package, Plus, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const mockProducts = [
   { id: 1, name: "Vidro 6mm Comum Incolor", category: "Vidros", price: "R$ 105,00/m²", stock: 45 },
@@ -18,19 +17,19 @@ const Produtos = () => (
           <h1 className="text-2xl font-bold text-foreground">Produtos</h1>
           <p className="text-sm text-muted-foreground">{mockProducts.length} produtos cadastrados</p>
         </div>
-        <Button className="gap-2">
+        <button className="glass-button-primary gap-2 flex items-center">
           <Plus className="h-4 w-4" /> Novo produto
-        </Button>
+        </button>
       </div>
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input type="text" placeholder="Buscar produto..." className="pl-10 pr-4 py-2.5 text-sm bg-card border border-border rounded-lg w-full outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground" />
+        <input type="text" placeholder="Buscar produto..." className="glass-input-field pl-10 pr-4 py-2.5 text-sm w-full" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {mockProducts.map((product) => (
-          <div key={product.id} className="bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+          <div key={product.id} className="glass-card-premium cursor-pointer">
             <div className="flex items-center gap-3 mb-3">
               <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Package className="h-5 w-5 text-primary" />
@@ -42,7 +41,7 @@ const Produtos = () => (
             </div>
             <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-foreground">{product.price}</p>
-              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
+              <span className="glass-badge-neon text-xs">
                 Estoque: {product.stock}
               </span>
             </div>

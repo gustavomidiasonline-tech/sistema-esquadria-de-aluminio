@@ -21,7 +21,7 @@ interface StepItemProps {
   progress: {
     id?: string;
     status: string;
-    data: Record<string, any>;
+    data: Record<string, unknown>;
     completed_at?: string | null;
   } | null;
   pedidoId: string;
@@ -33,7 +33,7 @@ interface StepItemProps {
 export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdate }: StepItemProps) {
   const { user } = useAuth();
   const [expanded, setExpanded] = useState(false);
-  const [localData, setLocalData] = useState<Record<string, any>>(progress?.data || {});
+  const [localData, setLocalData] = useState<Record<string, unknown>>(progress?.data || {});
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -44,7 +44,7 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
     setHasChanges(false);
   }, [progress]);
 
-  const updateField = useCallback((key: string, value: any) => {
+  const updateField = useCallback((key: string, value: unknown) => {
     setLocalData(prev => ({ ...prev, [key]: value }));
     setHasChanges(true);
   }, []);
