@@ -41,7 +41,7 @@ const PESO_PATTERNS = [
   /(\d+[.,]\d{1,4})\s*g\/m/gi,                    // gramas por metro → converter
   /(\d+[.,]\d{1,4})\s*kg/gi,                      // 0,450 kg
   /\bw\s*=\s*(\d+[.,]\d{1,4})/gi,                 // W = 0.450 (peso linear)
-  /(?:^|\s)(0[.,]\d{2,4}|\d[.,]\d{3,4})(?=\s|$)/gm, // decimal isolado tipo 0,450 ou 1,237 (coluna de peso)
+  // Nota: extração de decimal colunar isolado é feita por extractDadosColunares()
 ];
 
 // ─── Padrões de espessura ────────────────────────────────────────────────────
@@ -75,7 +75,8 @@ const MODELO_KEYWORDS = [
 ];
 
 function normalizeFloat(s: string): number {
-  return parseFloat(s.replace(',', '.'));
+  // Remove separador de milhar (ponto ou espaço antes da vírgula), depois normaliza vírgula decimal
+  return parseFloat(s.replace(/\.(?=\d{3})/g, '').replace(',', '.'));
 }
 
 function detectTipo(text: string): string {

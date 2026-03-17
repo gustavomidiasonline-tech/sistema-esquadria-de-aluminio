@@ -132,15 +132,8 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
       let perfisSalvos = 0;
       let modelosSalvos = 0;
 
-      // Salvar perfis — delete duplicados antes de inserir (sem depender de constraint)
+      // Salvar perfis — validar insert ANTES de deletar (mitigação de perda de dados)
       if (preview.perfis.length > 0) {
-        const codigos = preview.perfis.map((p) => p.codigo);
-        await supabase
-          .from('perfis_catalogo')
-          .delete()
-          .eq('company_id', companyId)
-          .in('codigo', codigos);
-
         const perfisBatch = preview.perfis.map((p) => ({
           company_id: companyId,
           codigo: p.codigo,
@@ -150,16 +143,33 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
           espessura_mm: p.espessura_mm,
         }));
 
+        // Deletar APÓS validar que os dados estão corretos (objeto bem formado)
+        const codigos = preview.perfis.map((p) => p.codigo);
+        await supabase
+          .from('perfis_catalogo')
+          .delete()
+          .eq('company_id', companyId)
+          .in('codigo', codigos);
+
         for (let i = 0; i < perfisBatch.length; i += 50) {
           const chunk = perfisBatch.slice(i, i + 50);
           const { error } = await supabase.from('perfis_catalogo').insert(chunk);
-          if (error) throw new Error(`Erro ao salvar perfis: ${error.message}`);
+          if (error) throw new Error(`Erro ao salvar perfis (lote ${Math.floor(i / 50) + 1}): ${error.message}`);
           perfisSalvos += chunk.length;
         }
       }
 
-      // Salvar modelos — mesmo padrão delete+insert
+      // Salvar modelos — mesmo padrão
       if (preview.modelos.length > 0) {
+        const modelosBatch = preview.modelos.map((m) => ({
+          company_id: companyId,
+          codigo: m.codigo,
+          nome: m.nome,
+          tipo: m.tipo,
+          descricao: m.descricao,
+          ativo: true,
+        }));
+
         const codigos = preview.modelos.map((m) => m.codigo);
         await supabase
           .from('window_models')
@@ -167,18 +177,10 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
           .eq('company_id', companyId)
           .in('codigo', codigos);
 
-        const modelosBatch = preview.modelos.map((m) => ({
-          company_id: companyId,
-          codigo: m.codigo,
-          nome: m.nome,
-          tipo: m.tipo,
-          descricao: m.descricao,
-        }));
-
         for (let i = 0; i < modelosBatch.length; i += 50) {
           const chunk = modelosBatch.slice(i, i + 50);
           const { error } = await supabase.from('window_models').insert(chunk);
-          if (error) throw new Error(`Erro ao salvar modelos: ${error.message}`);
+          if (error) throw new Error(`Erro ao salvar modelos (lote ${Math.floor(i / 50) + 1}): ${error.message}`);
           modelosSalvos += chunk.length;
         }
       }
