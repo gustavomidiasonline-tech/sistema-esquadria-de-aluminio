@@ -162,20 +162,31 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
       let perfisSalvos = preview.perfis.length;
       let modelosSalvos = preview.modelos.length;
 
+      // Tipos válidos conforme constraint window_models_tipo_check
+      const VALID_TIPOS = ['correr', 'basculante', 'maxim-ar', 'fixo', 'pivotante', 'giro', 'balcao', 'camarao'];
+
+      // Validar tipos antes de enviar para RPC
+      const validarTipo = (tipo?: string) => {
+        if (!tipo || !VALID_TIPOS.includes(tipo.toLowerCase())) {
+          return 'fixo'; // Fallback seguro
+        }
+        return tipo.toLowerCase();
+      };
+
       // Tentar importação atômica via RPC (requer migration 20260316020000)
       const { data: rpcData, error: rpcError } = await supabase.rpc('import_catalog_atomic', {
         p_company_id: companyId,
         p_perfis: preview.perfis.map((p) => ({
           codigo: p.codigo,
           nome: p.nome,
-          tipo: p.tipo,
+          tipo: p.tipo || 'perfil',
           peso_kg_m: p.peso_kg_m,
           espessura_mm: p.espessura_mm,
         })),
         p_modelos: preview.modelos.map((m) => ({
           codigo: m.codigo,
           nome: m.nome,
-          tipo: m.tipo,
+          tipo: validarTipo(m.tipo),
           descricao: m.descricao,
         })),
       });

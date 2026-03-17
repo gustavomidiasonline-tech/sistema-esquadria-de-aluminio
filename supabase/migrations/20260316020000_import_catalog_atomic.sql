@@ -67,7 +67,7 @@ BEGIN
       p_company_id,
       (elem->>'codigo')::text,
       (elem->>'nome')::text,
-      COALESCE((elem->>'tipo')::text, 'janela'),
+      COALESCE((elem->>'tipo')::text, 'fixo'),
       (elem->>'descricao')::text,
       true
     FROM jsonb_array_elements(p_modelos) AS elem;
