@@ -7,6 +7,11 @@
 
 @layer base {
   :root {
+    /* === SAFE AREA INSETS === */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
     /* === DARK GLASS SYSTEM === */
     --background: 230 45% 7%;
     --foreground: 210 10% 93%;
@@ -66,10 +71,24 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Scroll behavior with reduced-motion fallback */
+    scroll-behavior: smooth;
+    /* Font smoothing */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Prevent text inflation on mobile */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   html, body, #root {
     min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
     width: 100%;
   }
 
@@ -77,6 +96,11 @@
     @apply text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
+    /* Mobile-first responsive font size */
+    font-size: 16px; /* Prevents iOS zoom on input focus */
+    line-height: 1.6; /* Comfortable reading on mobile */
+    /* Touch-friendly defaults */
+    -webkit-tap-highlight-color: transparent;
     /* Deep gradient — visible through all transparent panels */
     background: linear-gradient(135deg,
       #080c1a 0%,
@@ -89,6 +113,29 @@
     );
     background-attachment: fixed;
     background-size: 100% 100%;
+  }
+
+  /* Responsive font scaling */
+  @media screen and (min-width: 768px) {
+    body {
+      line-height: 1.5;
+    }
+  }
+
+  /* Prefers-reduced-motion fallbacks */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -129,5 +176,35 @@
   .glass-input {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.10);
+  }
+}
+
+/* === PRINT STYLES === */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+
+  .glass-sidebar,
+  .glass-header {
+    display: none !important;
+  }
+
+  .glass-card,
+  .glass-surface {
+    background: white !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
   }
 }

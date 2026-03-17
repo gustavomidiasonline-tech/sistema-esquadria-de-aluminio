@@ -193,7 +193,7 @@ CREATE POLICY "Users can manage company projetos_esquadria" ON public.projetos_e
 DROP POLICY IF EXISTS "Auth view perfis_catalogo" ON public.perfis_catalogo;
 DROP POLICY IF EXISTS "Auth manage perfis_catalogo" ON public.perfis_catalogo;
 
-CREATE POLICY "Users can view company perfis_catalogo" ON public.perfis_catalogo FOR SELECT TO authenticated USING (company_id = get_user_company_id());
+CREATE POLICY "Users can view company perfis_catalogo" ON public.perfis_catalogo FOR SELECT TO authenticated USING (company_id IS NULL OR company_id = get_user_company_id());
 CREATE POLICY "Users can manage company perfis_catalogo" ON public.perfis_catalogo FOR ALL TO authenticated USING (company_id = get_user_company_id()) WITH CHECK (company_id = get_user_company_id());
 
 -- ---- CONFIG_PRECOS ----

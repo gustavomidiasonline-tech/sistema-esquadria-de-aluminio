@@ -1,11 +1,22 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
+import plugin from "tailwindcss/plugin";
+// @ts-expect-error - container-queries plugin is ESM-only
+import containerQueries from "@tailwindcss/container-queries";
 
 export default {
   darkMode: ["class"],
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
+    screens: {
+      xs: "375px",
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
+    },
     container: {
       center: true,
       padding: "2rem",
@@ -14,6 +25,18 @@ export default {
       },
     },
     extend: {
+      spacing: {
+        "safe-top": "env(safe-area-inset-top, 0px)",
+        "safe-bottom": "env(safe-area-inset-bottom, 0px)",
+        "safe-left": "env(safe-area-inset-left, 0px)",
+        "safe-right": "env(safe-area-inset-right, 0px)",
+      },
+      minWidth: {
+        "touch-target": "44px",
+      },
+      minHeight: {
+        "touch-target": "44px",
+      },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
       },
@@ -97,5 +120,43 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimate],
+  plugins: [
+    tailwindcssAnimate,
+    plugin(function ({ addUtilities }) {
+      /* Safe area inset utilities for notch/home indicator */
+      addUtilities({
+        ".pt-safe": {
+          paddingTop: "env(safe-area-inset-top, 0px)",
+        },
+        ".pb-safe": {
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        },
+        ".pl-safe": {
+          paddingLeft: "env(safe-area-inset-left, 0px)",
+        },
+        ".pr-safe": {
+          paddingRight: "env(safe-area-inset-right, 0px)",
+        },
+        ".inset-safe-top": {
+          top: "env(safe-area-inset-top, 0px)",
+        },
+        ".inset-safe-bottom": {
+          bottom: "env(safe-area-inset-bottom, 0px)",
+        },
+        ".inset-safe-left": {
+          left: "env(safe-area-inset-left, 0px)",
+        },
+        ".inset-safe-right": {
+          right: "env(safe-area-inset-right, 0px)",
+        },
+        /* Min touch target (44px per WCAG) */
+        ".min-touch-target": {
+          minWidth: "44px",
+          minHeight: "44px",
+        },
+      });
+    }),
+    /* Container queries plugin */
+    containerQueries,
+  ],
 } satisfies Config;

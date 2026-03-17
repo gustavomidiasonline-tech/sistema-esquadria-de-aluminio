@@ -77,25 +77,25 @@ export function AppHeader({ onToggleSidebar, isMobile }: AppHeaderProps) {
   const badgeCount = totalCount > 99 ? "99+" : totalCount;
 
   return (
-    <header className="h-14 sm:h-16 glass-header flex items-center justify-between px-3 sm:px-6 shrink-0">
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+    <header className="h-14 sm:h-16 glass-header flex items-center justify-between px-3 sm:px-6 shrink-0 pt-safe">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         {isMobile && (
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggleSidebar}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground h-10 w-10 min-touch-target"
             aria-label="Abrir menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
         )}
-        <div className="relative min-w-0">
+        <div className="relative min-w-0 flex-1 sm:flex-none">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar..."
-            className="glass-input-field pl-10 pr-4 py-2 text-xs sm:text-sm w-36 sm:w-64 max-w-[55vw]"
+            className="glass-input-field pl-10 pr-4 py-2 text-xs sm:text-sm w-full xs:w-40 sm:w-56 md:w-80 rounded-lg"
           />
         </div>
       </div>
@@ -104,11 +104,11 @@ export function AppHeader({ onToggleSidebar, isMobile }: AppHeaderProps) {
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground h-10 w-10 min-touch-target">
               <Bell className="h-5 w-5" />
               {totalCount > 0 && (
                 <span className={cn(
-                  "absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full flex items-center justify-center",
+                  "absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 text-xs sm:text-sm font-bold rounded-full flex items-center justify-center text-center leading-tight",
                   criticalCount > 0
                     ? "bg-destructive text-destructive-foreground"
                     : "bg-amber-500 text-white"

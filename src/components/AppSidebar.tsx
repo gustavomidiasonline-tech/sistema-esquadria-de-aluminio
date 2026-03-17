@@ -198,10 +198,10 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
   const isMobileOpen = Boolean(mobileOpen);
 
   const sidebarClassName = isMobile
-    ? `glass-sidebar fixed inset-y-0 left-0 z-40 flex h-dvh flex-col transition-transform duration-300 ${
+    ? `glass-sidebar fixed inset-y-0 left-0 z-40 flex h-[100dvh] flex-col transition-transform duration-300 ${
         isMobileOpen ? "translate-x-0" : "-translate-x-full"
-      } w-[82vw] max-w-[320px]`
-    : `${isSidebarCollapsed ? "w-[72px]" : "w-[240px]"} glass-sidebar flex flex-col h-screen sticky top-0 transition-all duration-300 shrink-0`;
+      } w-[min(80vw,280px)] pb-safe overflow-y-auto -webkit-overflow-scrolling-touch`
+    : `${isSidebarCollapsed ? "w-16" : "w-60"} glass-sidebar flex flex-col h-screen sticky top-0 transition-all duration-300 shrink-0`;
 
   return (
     <aside className={sidebarClassName}>
