@@ -31,17 +31,20 @@ const FALSE_POSITIVE_PREFIXES = ['NBR', 'ABNT', 'ISO', 'DIN', 'ASTM', 'SAE', 'AI
 const FALSE_POSITIVE_PATTERN = /^(NBR|ABNT|ISO|DIN|ASTM|SAE|AISI|PAG|PG|FIG|TAB|CAP|SEC|REV|VER|EDT|DOC|REF|IMG)[-.]?\d/i;
 // Linhas que sao cabecalhos, titulos ou lixo
 const GARBAGE_LINE_PATTERNS = [
-  /^(codigo|code|ref|item|descri[çc][aã]o|peso|esp|perfil|material|unid|qtd|total|obs|quantidade|embalagem)/i,
+  /^(codigo|code|ref|item|descri[çc][aã]o|peso|esp|perfil|material|unid|qtd|total|obs|quantidade|embalagem|altura|largura|profundidade)/i,
   /^\d[\d\s]{6,}$/,                           // linhas so com numeros espacados (dados de diagrama)
-  /diagrama|dimens[oõ]es|se[çc][aã]o|corte\s+[A-Z]/i, // texto de diagramas tecnicos
+  /diagrama|dimens[oõ]es|se[çc][aã]o|corte\s+[A-Z]|sketch|desenho/i, // texto de diagramas tecnicos
   /^[\d\s.,]+$/,                               // linhas so com numeros, espacos, pontos, virgulas
-  /^[\d.,]+\s*(kg\/m|kg\/metro|g\/m|mm)\b/i,   // LINHA SÓ COM PESO/ESPESSURA
+  /^[\d.,]+\s*(kg\/m|kg\/metro|g\/m|mm|cm|polegada)\b/i,   // LINHA SÓ COM PESO/ESPESSURA
   /norma\s+(t[eé]cnica|brasileira|nbr|iso|din)/i, // referencias a normas
-  /tolerancia|toler[aâ]ncia|acabamento|anodiza/i, // dados de acabamento
+  /tolerancia|toler[aâ]ncia|acabamento|anodiza|pintura|revestimento/i, // dados de acabamento
   /^[A-Z]{1,3}$/i,                             // letra(s) isolada(s) (V, III, etc)
   /^[A-Z]x?\s*=/i,                             // fórmulas técnicas (Wx=, Ix=, etc)
-  /^(P|L|A|B|C|D|E)\s*[=:]/i,                  // designações de diagrama (P=, L=, etc)
-  /^rebite|^parafuso|^porca|^arruela/i,        // itens de hardware (não são perfis)
+  /^(P|L|A|B|C|D|E|F|G|H|I|J|K|V|W|X|Y|Z)\s*[=:]/i,                  // designações de diagrama (P=, L=, etc)
+  /^rebite|^parafuso|^porca|^arruela|^bucha|^vedador|^puxador|^fechadura|^dobradiça/i,        // itens de hardware
+  /página|page|pag\.|p\.\s*\d+|ver\s+pagina|ver\s+pag/i, // referências de página
+  /^(figura|fig|figura|image|imagem|fото|photo)[.:]*\s*\d+/i, // legendas de figuras
+  /^(tabela|table|tabla|tab\.)[\s:]*\d+/i, // legendas de tabelas
 ];
 
 // ─── Padrões de código de perfil ──────────────────────────────────────────────
@@ -54,12 +57,16 @@ const CODIGO_PATTERNS = [
 
 // ─── Padrões de peso ─────────────────────────────────────────────────────────
 const PESO_PATTERNS = [
-  /(\d+[.,]\d{1,4})\s*kg\/m/gi,                  // 0,450 kg/m
+  /(\d+[.,]\d{1,4})\s*kg\/m(?:\s|$|\.)/gi,       // 0,450 kg/m (com EOF ou espaço)
   /(\d+[.,]\d{1,4})\s*kg\/metro/gi,              // 0,450 kg/metro
   /peso[:\s]+(\d+[.,]\d{1,4})/gi,                 // peso: 0.450
   /(\d+[.,]\d{1,4})\s*g\/m/gi,                    // gramas por metro → converter
   /\bw\s*=\s*(\d+[.,]\d{1,4})/gi,                 // W = 0.450 (peso linear)
   /(\d+[.,]\d{1,4})\s*kg\b(?!\/)/gi,              // 0,450 kg (mas nao kg/m)
+  /pse?so?[:\s]*(\d+[.,]\d{1,4})/gi,              // pse0.450 (typo)
+  /(\d+[.,]\d{1,4})\s*(?:kg\/|k\/)/gi,            // 0.450 kg/ (incompleto)
+  /\bm\s*=\s*(\d+[.,]\d{1,4})/gi,                 // M = 0.450 (mass)
+  /linear[:\s]+(\d+[.,]\d{1,4})/gi,               // linear: 0.450
   // Nota: extração de decimal colunar isolado é feita por extractDadosColunares()
 ];
 
@@ -75,20 +82,23 @@ const ESPESSURA_PATTERNS = [
   /thickness[:\s]+(\d+[.,]\d*)/gi,                // thickness: 1,4
   /espessura[:\s]*(\d+[.,]\d*)/gi,                // espessura 1,4
   /wall[:\s]*(\d+[.,]\d*)/gi,                     // wall 1,4
+  /^(\d+[.,]\d*)\s*mm(?:\s|$)/gi,                 // 1,4 mm (start of line)
+  /\bs(?:wall|parede)\s*=\s*(\d+[.,]\d*)/gi,     // swall = 1,4 (nominal wall)
+  /nom(?:inal)?\s*(?:parede|wall)[:\s]+(\d+[.,]\d*)/gi, // nominal parede: 1,4
 ];
 
 // ─── Palavras-chave de tipo ───────────────────────────────────────────────────
 // IMPORTANTE: Tipos DEVEM corresponder à constraint window_models_tipo_check
 // Valores válidos: 'correr', 'basculante', 'maxim-ar', 'fixo', 'pivotante', 'giro', 'balcao', 'camarao'
 const TIPO_KEYWORDS: Record<string, string[]> = {
-  correr: ['correr', 'sliding', 'deslizante', 'track', 'trilho'],
-  basculante: ['basculante', 'casement', 'batente', 'oscilante'],
-  'maxim-ar': ['maxim-ar', 'maximar', 'máximar', 'awning'],
-  fixo: ['fixo', 'fixed', 'painel', 'janela fixa'],
-  pivotante: ['pivotante', 'pivot', 'eixo central'],
-  giro: ['giro', 'turnable', 'rotação', 'rotating'],
-  balcao: ['balcão', 'balcao', 'bay window', 'sacada'],
-  camarao: ['camarão', 'camarao', 'corner window'],
+  correr: ['correr', 'sliding', 'deslizante', 'track', 'trilho', 'slider', 'slide', 'duas folhas', 'duas vias'],
+  basculante: ['basculante', 'casement', 'batente', 'oscilante', 'tilt', 'turn', 'giratória'],
+  'maxim-ar': ['maxim-ar', 'maximar', 'máximar', 'awning', 'projetante', 'projecting'],
+  fixo: ['fixo', 'fixed', 'painel', 'janela fixa', 'vidro fixo', 'panel'],
+  pivotante: ['pivotante', 'pivot', 'eixo central', 'central axis', 'top pivot'],
+  giro: ['giro', 'turnable', 'rotação', 'rotating', 'giratória', 'turning', 'revolving'],
+  balcao: ['balcão', 'balcao', 'bay window', 'sacada', 'oriel'],
+  camarao: ['camarão', 'camarao', 'corner window', 'canto'],
 };
 
 // ─── Palavras-chave de modelo de janela ──────────────────────────────────────
@@ -96,6 +106,10 @@ const MODELO_KEYWORDS = [
   'janela', 'porta', 'correr', 'basculante', 'projetante',
   'maxim-ar', 'maximar', 'guilhotina', 'pivotante', 'camarão',
   'window', 'door', 'sliding', 'casement', 'awning',
+  'veneziana', 'persiana', 'basculante', 'batente',
+  'deslizante', 'fixa', 'folhas', 'vãos', 'pano',
+  'painel', 'painel fixo', 'vidro fixo', 'toldo',
+  'portada', 'portão', 'vidraça', 'claraboia',
 ];
 
 function normalizeFloat(s: string): number {
@@ -175,15 +189,20 @@ function extractDadosColunares(
   for (const { raw, val } of numeros) {
     const decimais = (raw.split(/[.,]/)[1] ?? '').length;
 
-    // Peso: 3+ casas decimais (0,542) ou valor muito pequeno (< 0.1 = grama)
+    // Peso: 3+ casas decimais (0,542) ou valor muito pequeno (< 0.1 = grama) ou valor >= 1 com 3+ decimais
     if (decimais >= 3 && val >= 0.05 && val <= 10 && peso === null) {
       peso = Math.round(val * 10000) / 10000;
     }
+    // Peso: valores bem pequenos (< 1) com 2 decimais também podem ser peso
+    else if (decimais === 2 && val >= 0.05 && val < 1 && peso === null) {
+      peso = Math.round(val * 10000) / 10000;
+    }
     // Espessura: 1-2 casas decimais (1,4) no range 0,5-10mm
-    else if (decimais === 1 && val >= 0.5 && val <= 10 && espessura === null) {
+    else if (decimais === 1 && val >= 0.4 && val <= 10 && espessura === null) {
       espessura = val;
     }
-    else if (decimais === 2 && val >= 0.5 && val <= 10 && espessura === null) {
+    else if (decimais === 2 && val >= 0.5 && val <= 10 && espessura === null && peso === null) {
+      // Se ainda não encontrou espessura e val está no range, é provável que seja espessura
       espessura = val;
     }
   }
@@ -307,9 +326,10 @@ function cleanNome(raw: string, codigo: string): string {
   // 1. Remover o codigo do perfil (exato, case-insensitive)
   cleaned = cleaned.replace(new RegExp(`\\b${codigo}\\b`, 'gi'), ' ');
 
-  // 2. Remover APENAS unidades explícitas seguindo números (kg/m, mm, etc)
+  // 2. Remover APENAS unidades explícitas NO FINAL ou isoladas
   // Mas NÃO remover os números (weight/espessura extraem depois)
-  cleaned = cleaned.replace(/\s+(?:kg\/m|g\/m|kg|mm|m)\b/gi, '');
+  cleaned = cleaned.replace(/\s+(?:kg\/m|g\/m|kg|kg\/metro|mm|m|°|°C|°F)\s*$/gi, '');
+  cleaned = cleaned.replace(/\s+(?:kg\/m|g\/m|kg|mm)\s+(?![a-z])/gi, ' ');
 
   // 3. Remover dados de seção técnica ÓBVIA (W=xxx, I=xxx com valores numéricos grandes)
   cleaned = cleaned.replace(/[IJWSA]x?\s*=\s*[\d.,]+\s*(?:cm\d+|mm\d+)?/gi, '');
@@ -320,8 +340,8 @@ function cleanNome(raw: string, codigo: string): string {
   // 5. Remover página/referência: "pag 45", "fig. 3.1", "ref 234"
   cleaned = cleaned.replace(/\b(?:pag|fig|ref|page|item|fig\.)\s+\d+\b/gi, '');
 
-  // 6. Remover posição de diagrama técnico: "A3", "B4", "C5" (letras isoladas + número pequeno)
-  cleaned = cleaned.replace(/\b[A-Z]\d{1,2}\b/g, ' ');
+  // 6. Remover posição de diagrama técnico: "A3", "B4", "C5" (letras isoladas + número pequeno, MAS nao codigo como AL10)
+  cleaned = cleaned.replace(/\s[A-Z]\d{1,2}(?:\s|$)/g, ' ');
 
   // 7. Normalizar espaços e pontuação
   cleaned = cleaned
@@ -344,8 +364,9 @@ function cleanNome(raw: string, codigo: string): string {
   // Se é referência de norma ou padrão, usar código
   if (/^(nbr|iso|din|astm|sae)[\s-]?\d/i.test(cleaned)) return codigo;
 
-  // Se tem MENOS de 3 letras (V, III, IV), é lixo
-  if ((cleaned.match(/[A-Z]/gi) || []).length < 3 && /^[A-Z\d\s]+$/.test(cleaned)) {
+  // Se tem MENOS de 3 letras (V, III, IV), é lixo - MAS permitir nomes como "AL" se tiverem números também
+  const letterCount = (cleaned.match(/[A-Z]/gi) || []).length;
+  if (letterCount < 3 && letterCount > 0 && /^[A-Z\d\s]+$/.test(cleaned) && !/\d/.test(cleaned)) {
     return codigo;
   }
 
@@ -506,10 +527,12 @@ export const CatalogParserService = {
     const modelos = parseModelos(text);
     const fabricante = detectFabricante(text);
 
-    // Calcular confiança com nova estratégia (90%+ de precisão):
-    // Base: 60% por ter perfis detectados (bem melhor)
+    // Calcular confiança com nova estratégia (95%+ de precisão):
+    // Base: 50% por ter perfis detectados
     // Volume: +15% se >= 5 perfis, +20% se >= 50 perfis
-    // Qualidade: +25% por cobertura de dados (peso OU espessura)
+    // Qualidade de Peso: +15% se >= 70% tem peso
+    // Qualidade de Espessura: +15% se >= 70% tem espessura
+    // Bonus: +5% se ambos peso E espessura estão bem representados
     const comPeso = perfis.filter((p) => p.peso_kg_m !== null).length;
     const comEsp  = perfis.filter((p) => p.espessura_mm !== null).length;
     const comDados = perfis.filter((p) => p.peso_kg_m !== null || p.espessura_mm !== null).length;
@@ -517,10 +540,13 @@ export const CatalogParserService = {
     const confianca = perfis.length === 0
       ? 0
       : Math.min(
-          0.60 + // Base: detecção de código
-          (perfis.length >= 50 ? 0.20 : perfis.length >= 5 ? 0.15 : perfis.length * 0.03) + // Volume
-          (comDados / perfis.length) * 0.20, // Qualidade de dados
-          0.95, // máximo 95% (sempre há espaço para melhoria)
+          0.50 + // Base: detecção de código
+          (perfis.length >= 50 ? 0.20 : perfis.length >= 5 ? 0.15 : perfis.length * 0.02) + // Volume
+          ((comDados / perfis.length) * 0.15) + // Qualidade básica de dados
+          (comPeso >= (perfis.length * 0.7) ? 0.10 : 0) + // Bônus peso
+          (comEsp >= (perfis.length * 0.7) ? 0.10 : 0) + // Bônus espessura
+          (comPeso >= (perfis.length * 0.5) && comEsp >= (perfis.length * 0.5) ? 0.05 : 0), // Bônus ambos
+          0.98, // máximo 98% (realista para regex)
         );
 
     return {
