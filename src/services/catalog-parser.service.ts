@@ -330,17 +330,24 @@ function cleanNome(raw: string, codigo: string): string {
     .trim()
     .slice(0, 80);
 
-  // Rejeitar nomes que são claramente lixo mesmo após limpeza
-  if (cleaned.length < 2) return codigo;
+  // REJEIÇÃO AGRESSIVA: nome deve ter pelo menos 4 caracteres com conteúdo real
+
+  // Se é muito curto, usar código
+  if (cleaned.length < 4) return codigo;
 
   // Se é só números/decimais (peso que não foi removido), usar código
   if (/^[\d.,\s]+$/.test(cleaned)) return codigo;
 
   // Se é fórmula técnica que restou, usar código
-  if (/^[A-Z]{1,3}\s*=|^(wx|ix|jx)\s*=|^(p|l|a)\s*=/i.test(cleaned)) return codigo;
+  if (/^[A-Z]{1,3}\s*=|^(wx|ix|jx)\s*=|^(p|l|a|w|i|j)\s*=/i.test(cleaned)) return codigo;
 
   // Se é referência de norma ou padrão, usar código
   if (/^(nbr|iso|din|astm|sae)[\s-]?\d/i.test(cleaned)) return codigo;
+
+  // Se tem MENOS de 3 letras (V, III, IV), é lixo
+  if ((cleaned.match(/[A-Z]/gi) || []).length < 3 && /^[A-Z\d\s]+$/.test(cleaned)) {
+    return codigo;
+  }
 
   return cleaned;
 }
