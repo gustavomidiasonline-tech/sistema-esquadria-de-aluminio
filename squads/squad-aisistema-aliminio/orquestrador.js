@@ -9,15 +9,15 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-// Configuração de squads
+// Configuração de squads (usando localhost para ambiente local)
 const SQUADS = {
-  'producao': 'http://squad-producao:3002',
-  'estoque': 'http://squad-estoque:3003',
-  'crm': 'http://squad-crm:3004',
-  'financeiro': 'http://squad-financeiro:3005',
-  'dashboard': 'http://squad-dashboard:3006',
-  'qualidade': 'http://squad-qualidade:3007',
-  'integradores': 'http://squad-integradores:3008'
+  'producao': 'http://localhost:3002',
+  'estoque': 'http://localhost:3003',
+  'crm': 'http://localhost:3004',
+  'financeiro': 'http://localhost:3005',
+  'dashboard': 'http://localhost:3006',
+  'qualidade': 'http://localhost:3007',
+  'integradores': 'http://localhost:3008'
 };
 
 const processosEmExecutacao = new Map();
