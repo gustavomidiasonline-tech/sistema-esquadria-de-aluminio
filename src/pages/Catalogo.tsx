@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CatalogImportDialog } from '@/components/catalog/CatalogImportDialog';
 import { CatalogDebug } from '@/components/debug/CatalogDebug';
+import { GetUserCompanyIdDebug } from '@/components/debug/GetUserCompanyIdDebug';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Package, Layers, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -94,6 +95,7 @@ export default function Catalogo() {
     <AppLayout>
       <div className="space-y-6">
         {/* Debug */}
+        <GetUserCompanyIdDebug />
         <CatalogDebug />
 
         {/* Header */}
