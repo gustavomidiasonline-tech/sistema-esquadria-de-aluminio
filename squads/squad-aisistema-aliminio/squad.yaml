@@ -1,28 +1,25 @@
 name: squad-aisistema-aliminio
-version: 1.0.0
+version: 2.0.0
 description: Sistema completo ERP que compila vários sistemas do mercado de esquadrias de aluminio e vidraçarias em um só, com plano de corte, CRM, estoque de peças, catalogos de produtos, controle financeiro, nota fiscal, dashboard em tempo real, orçamentos, check, tipologias de esquadrias
 author: gustavopelicioniii-rgb
 license: MIT
 slashPrefix: squad-aisistema-aliminio
+role: orchestrator
 
 aios:
   minVersion: "2.1.0"
   type: squad
+  integration: "full"
 
 components:
-  tasks:
-    - extract-data.md
-    - transform-data.md
-    - load-data.md
   agents:
-    - data-extractor.md
-    - data-transformer.md
+    - orquestrador.md
+  tasks: []
   workflows: []
   checklists: []
   templates: []
   tools: []
-  scripts:
-    - utils.js
+  scripts: []
 
 config:
   extends: extend
@@ -31,9 +28,46 @@ config:
   source-tree: config/source-tree.md
 
 dependencies:
-  node: []
-  python: []
-  squads: []
+  squads:
+    - squad-producao
+    - squad-estoque
+    - squad-financeiro
+    - squad-crm
+    - squad-dashboard
+    - squad-qualidade
+    - squad-integradores
+
+subdomain-mapping:
+  producao:
+    squad: squad-producao
+    agents: [corte-optimizer, typology-manager]
+    primary-task: plan-cut
+  estoque:
+    squad: squad-estoque
+    agents: [inventory-tracker, catalog-manager]
+    primary-task: track-inventory
+  financeiro:
+    squad: squad-financeiro
+    agents: [finance-controller, nfe-processor]
+    primary-task: process-invoice
+  crm:
+    squad: squad-crm
+    agents: [client-manager, budget-generator]
+    primary-task: manage-clients
+  dashboard:
+    squad: squad-dashboard
+    agents: [dashboard-orchestrator, realtime-data-feeder]
+    primary-task: null
+  qualidade:
+    squad: squad-qualidade
+    agents: [quality-checker, validation-engine]
+    primary-task: run-checklist
+  integradores:
+    squad: squad-integradores
+    agents: [integration-hub, api-connector]
+    primary-task: null
 
 tags:
   - custom
+  - orchestrator
+  - full-erp

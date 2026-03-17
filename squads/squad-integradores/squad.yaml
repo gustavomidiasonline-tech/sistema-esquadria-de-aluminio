@@ -1,0 +1,35 @@
+name: squad-integradores
+version: 1.0.0
+description: Integrações com APIs Externas e Conectores
+author: gustavopelicioniii-rgb
+license: MIT
+slashPrefix: squad-integradores
+
+aios:
+  minVersion: "2.1.0"
+  type: squad
+
+components:
+  tasks: []
+  agents:
+    - primary-agent.md
+    - helper-agent.md
+  workflows: []
+  checklists: []
+  templates: []
+  tools: []
+  scripts: []
+
+config:
+  extends: extend
+  coding-standards: config/coding-standards.md
+  tech-stack: config/tech-stack.md
+  source-tree: config/source-tree.md
+
+dependencies:
+  node: []
+  python: []
+  squads: []
+
+tags:
+  - custom

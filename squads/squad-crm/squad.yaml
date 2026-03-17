@@ -1,0 +1,39 @@
+name: squad-crm
+version: 1.0.0
+description: Gestão de Clientes, Relacionamento e Orçamentos
+author: gustavopelicioniii-rgb
+license: MIT
+slashPrefix: squad-crm
+
+aios:
+  minVersion: "2.1.0"
+  type: squad
+
+components:
+  tasks:
+    - extract-data.md
+    - transform-data.md
+    - load-data.md
+  agents:
+    - data-extractor.md
+    - data-transformer.md
+  workflows: []
+  checklists: []
+  templates: []
+  tools: []
+  scripts:
+    - utils.js
+
+config:
+  extends: extend
+  coding-standards: config/coding-standards.md
+  tech-stack: config/tech-stack.md
+  source-tree: config/source-tree.md
+
+dependencies:
+  node: []
+  python: []
+  squads: []
+
+tags:
+  - custom
