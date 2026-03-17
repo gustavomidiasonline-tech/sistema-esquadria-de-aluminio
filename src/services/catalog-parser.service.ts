@@ -31,12 +31,17 @@ const FALSE_POSITIVE_PREFIXES = ['NBR', 'ABNT', 'ISO', 'DIN', 'ASTM', 'SAE', 'AI
 const FALSE_POSITIVE_PATTERN = /^(NBR|ABNT|ISO|DIN|ASTM|SAE|AISI|PAG|PG|FIG|TAB|CAP|SEC|REV|VER|EDT|DOC|REF|IMG)[-.]?\d/i;
 // Linhas que sao cabecalhos, titulos ou lixo
 const GARBAGE_LINE_PATTERNS = [
-  /^(codigo|code|ref|item|descri[çc][aã]o|peso|esp|perfil|material|unid|qtd|total|obs)/i,
+  /^(codigo|code|ref|item|descri[çc][aã]o|peso|esp|perfil|material|unid|qtd|total|obs|quantidade|embalagem)/i,
   /^\d[\d\s]{6,}$/,                           // linhas so com numeros espacados (dados de diagrama)
   /diagrama|dimens[oõ]es|se[çc][aã]o|corte\s+[A-Z]/i, // texto de diagramas tecnicos
   /^[\d\s.,]+$/,                               // linhas so com numeros, espacos, pontos, virgulas
-  /norma\s+(t[eé]cnica|brasileira)/i,          // referencias a normas
+  /^[\d.,]+\s*(kg\/m|kg\/metro|g\/m|mm)\b/i,   // LINHA SÓ COM PESO/ESPESSURA
+  /norma\s+(t[eé]cnica|brasileira|nbr|iso|din)/i, // referencias a normas
   /tolerancia|toler[aâ]ncia|acabamento|anodiza/i, // dados de acabamento
+  /^[A-Z]{1,3}$/i,                             // letra(s) isolada(s) (V, III, etc)
+  /^[A-Z]x?\s*=/i,                             // fórmulas técnicas (Wx=, Ix=, etc)
+  /^(P|L|A|B|C|D|E)\s*[=:]/i,                  // designações de diagrama (P=, L=, etc)
+  /^rebite|^parafuso|^porca|^arruela/i,        // itens de hardware (não são perfis)
 ];
 
 // ─── Padrões de código de perfil ──────────────────────────────────────────────
@@ -68,6 +73,8 @@ const ESPESSURA_PATTERNS = [
   /\bt(?:hickness)?\s*=\s*(\d+[.,]\d*)/gi,        // t = 1,4 ou thickness = 1,4
   /parede[:\s]+(\d+[.,]\d*)/gi,                   // parede: 1,4
   /thickness[:\s]+(\d+[.,]\d*)/gi,                // thickness: 1,4
+  /espessura[:\s]*(\d+[.,]\d*)/gi,                // espessura 1,4
+  /wall[:\s]*(\d+[.,]\d*)/gi,                     // wall 1,4
 ];
 
 // ─── Palavras-chave de tipo ───────────────────────────────────────────────────
@@ -323,8 +330,17 @@ function cleanNome(raw: string, codigo: string): string {
     .trim()
     .slice(0, 80);
 
-  // Fallback: se ficou muito vazio, usar código
+  // Rejeitar nomes que são claramente lixo mesmo após limpeza
   if (cleaned.length < 2) return codigo;
+
+  // Se é só números/decimais (peso que não foi removido), usar código
+  if (/^[\d.,\s]+$/.test(cleaned)) return codigo;
+
+  // Se é fórmula técnica que restou, usar código
+  if (/^[A-Z]{1,3}\s*=|^(wx|ix|jx)\s*=|^(p|l|a)\s*=/i.test(cleaned)) return codigo;
+
+  // Se é referência de norma ou padrão, usar código
+  if (/^(nbr|iso|din|astm|sae)[\s-]?\d/i.test(cleaned)) return codigo;
 
   return cleaned;
 }
