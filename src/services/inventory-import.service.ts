@@ -1,4 +1,4 @@
-import Papa from 'papaparse';
+﻿import Papa from 'papaparse';
 import type { InventoryItemTipo } from '@/services/inventory.service';
 import type * as PDFJSType from 'pdfjs-dist';
 
@@ -46,7 +46,10 @@ let PDFJS: typeof PDFJSType | null = null;
 const getPDFJS = async () => {
   if (!PDFJS) {
     PDFJS = await import('pdfjs-dist');
-    PDFJS.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS.version}/pdf.worker.min.js`;
+    PDFJS.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url,
+    ).href;
   }
   return PDFJS;
 };

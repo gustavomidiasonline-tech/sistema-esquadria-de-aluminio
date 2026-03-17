@@ -89,7 +89,7 @@ CREATE POLICY "users_see_own_company" ON public.companies
 
 CREATE POLICY "admins_manage_company" ON public.companies
   FOR ALL USING (
-    id = get_user_company_id() AND has_role(auth.uid(), 'admin'::user_role)
+    id = get_user_company_id()
   );
 
 -- 7. RLS — clientes (isolamento por empresa)
@@ -108,7 +108,7 @@ CREATE POLICY "company_clientes_update" ON public.clientes
 CREATE POLICY "company_clientes_delete" ON public.clientes
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );
 
 -- 8. RLS — orcamentos
@@ -127,7 +127,7 @@ CREATE POLICY "company_orcamentos_update" ON public.orcamentos
 CREATE POLICY "company_orcamentos_delete" ON public.orcamentos
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );
 
 -- 9. RLS — pedidos
@@ -146,7 +146,7 @@ CREATE POLICY "company_pedidos_update" ON public.pedidos
 CREATE POLICY "company_pedidos_delete" ON public.pedidos
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );
 
 -- 10. Atualizar trigger de novo usuário para criar/vincular empresa

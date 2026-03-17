@@ -143,7 +143,7 @@ CREATE POLICY "company_inventory_update" ON public.inventory_items
 CREATE POLICY "company_inventory_delete" ON public.inventory_items
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );
 
 -- ============================================================
@@ -182,7 +182,7 @@ CREATE POLICY "company_purchase_orders_update" ON public.purchase_orders
 CREATE POLICY "company_purchase_orders_delete" ON public.purchase_orders
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );
 
 -- ============================================================

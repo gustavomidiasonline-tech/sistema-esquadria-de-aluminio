@@ -32,6 +32,7 @@
   Warehouse,
   ClipboardList,
   Upload,
+  Radio,
   type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -46,6 +47,7 @@ const mainItemsPrimary = [
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Orçamentos", url: "/orcamentos", icon: FileText },
   { title: "Serviços", url: "/servicos", icon: CheckSquare },
+  { title: "Redes Sociais", url: "/redes-sociais", icon: Radio },
 ];
 
 const pedidosItems = [
@@ -206,12 +208,12 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-xs font-bold text-white">
-          PP
+          EA
         </div>
         {!isSidebarCollapsed && (
           <div>
-            <h1 className="text-base font-bold text-sidebar-foreground">PixelPerfect</h1>
-            <p className="text-[10px] text-sidebar-muted">Orçamentos</p>
+            <h1 className="text-base font-bold text-sidebar-foreground">Esquadria Al.</h1>
+            <p className="text-[10px] text-sidebar-muted">Sistema de Gestão</p>
           </div>
         )}
       </div>

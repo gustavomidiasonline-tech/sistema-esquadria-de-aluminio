@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
-import { UserCog, Plus, Search, Mail, Phone, Briefcase, UserCheck, UserX } from "lucide-react";
+import { UserCog, Plus, Search, Mail, Phone, Briefcase, UserCheck, UserX, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
@@ -57,12 +57,37 @@ const mockFuncionarios: Funcionario[] = [
   { id: 7, nome: "André Costa", email: "andre@alumy.com", telefone: "(11) 93777-8899", funcao: "instalador", status: "desligado", dataAdmissao: "2022-06-10", salario: 0 },
 ];
 
+type FormState = { nome: string; email: string; telefone: string; funcao: string; status: string; salario: string };
+
+const emptyForm: FormState = { nome: "", email: "", telefone: "", funcao: "instalador", status: "ativo", salario: "" };
+
+function usePersistedFuncionarios() {
+  const key = 'alumy_funcionarios';
+  const [funcionarios, setFuncionariosState] = useState<Funcionario[]>(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored ? (JSON.parse(stored) as Funcionario[]) : mockFuncionarios;
+    } catch {
+      return mockFuncionarios;
+    }
+  });
+
+  function setFuncionarios(next: Funcionario[]) {
+    setFuncionariosState(next);
+    localStorage.setItem(key, JSON.stringify(next));
+  }
+
+  return [funcionarios, setFuncionarios] as const;
+}
+
 const Funcionarios = () => {
-  const [funcionarios, setFuncionarios] = useState<Funcionario[]>(mockFuncionarios);
+  const [funcionarios, setFuncionarios] = usePersistedFuncionarios();
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [novo, setNovo] = useState({ nome: "", email: "", telefone: "", funcao: "instalador", salario: "" });
+  const [editando, setEditando] = useState<Funcionario | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [confirmDelete, setConfirmDelete] = useState<Funcionario | null>(null);
 
   const filtrados = funcionarios.filter((f) => {
     const matchBusca = f.nome.toLowerCase().includes(busca.toLowerCase()) || f.email.toLowerCase().includes(busca.toLowerCase());
@@ -70,27 +95,63 @@ const Funcionarios = () => {
     return matchBusca && matchStatus;
   });
 
-  const handleCriar = () => {
-    const novoFunc: Funcionario = {
-      id: Date.now(),
-      nome: novo.nome,
-      email: novo.email,
-      telefone: novo.telefone,
-      funcao: novo.funcao as Funcionario["funcao"],
-      status: "ativo",
-      dataAdmissao: new Date().toISOString().split("T")[0],
-      salario: parseFloat(novo.salario) || 0,
-    };
-    setFuncionarios([novoFunc, ...funcionarios]);
-    setNovo({ nome: "", email: "", telefone: "", funcao: "instalador", salario: "" });
-    setDialogOpen(false);
-  };
-
   const totais = {
     ativos: funcionarios.filter((f) => f.status === "ativo").length,
     ferias: funcionarios.filter((f) => f.status === "ferias").length,
     afastados: funcionarios.filter((f) => f.status === "afastado").length,
   };
+
+  function abrirNovo() {
+    setEditando(null);
+    setForm(emptyForm);
+    setDialogOpen(true);
+  }
+
+  function abrirEditar(func: Funcionario) {
+    setEditando(func);
+    setForm({
+      nome: func.nome,
+      email: func.email,
+      telefone: func.telefone,
+      funcao: func.funcao,
+      status: func.status,
+      salario: func.salario > 0 ? String(func.salario) : "",
+    });
+    setDialogOpen(true);
+  }
+
+  function handleSalvar() {
+    const salarioNum = parseFloat(form.salario) || 0;
+    if (editando) {
+      setFuncionarios(funcionarios.map((f) =>
+        f.id === editando.id
+          ? { ...f, nome: form.nome, email: form.email, telefone: form.telefone, funcao: form.funcao as Funcionario["funcao"], status: form.status as Funcionario["status"], salario: salarioNum }
+          : f
+      ));
+    } else {
+      const novoFunc: Funcionario = {
+        id: Date.now(),
+        nome: form.nome,
+        email: form.email,
+        telefone: form.telefone,
+        funcao: form.funcao as Funcionario["funcao"],
+        status: form.status as Funcionario["status"],
+        dataAdmissao: new Date().toISOString().split("T")[0],
+        salario: salarioNum,
+      };
+      setFuncionarios([novoFunc, ...funcionarios]);
+    }
+    setDialogOpen(false);
+    setEditando(null);
+    setForm(emptyForm);
+  }
+
+  function handleExcluir() {
+    if (confirmDelete) {
+      setFuncionarios(funcionarios.filter((f) => f.id !== confirmDelete.id));
+      setConfirmDelete(null);
+    }
+  }
 
   return (
     <AppLayout>
@@ -100,7 +161,7 @@ const Funcionarios = () => {
             <h1 className="text-2xl font-bold text-foreground">Funcionários</h1>
             <p className="text-sm text-muted-foreground">Cadastre e gerencie os funcionários da empresa</p>
           </div>
-          <Button className="gap-2" onClick={() => setDialogOpen(true)}>
+          <Button className="gap-2" onClick={abrirNovo}>
             <Plus className="h-4 w-4" /> Novo funcionário
           </Button>
         </div>
@@ -188,6 +249,12 @@ const Funcionarios = () => {
                         R$ {func.salario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </span>
                     )}
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEditar(func)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDelete(func)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               );
@@ -196,28 +263,29 @@ const Funcionarios = () => {
         </div>
       </div>
 
+      {/* Dialog Criar / Editar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo Funcionário</DialogTitle>
+            <DialogTitle>{editando ? "Editar Funcionário" : "Novo Funcionário"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Nome completo</Label>
-              <Input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} placeholder="Nome do funcionário" />
+              <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Nome do funcionário" />
             </div>
             <div>
               <Label>E-mail</Label>
-              <Input type="email" value={novo.email} onChange={(e) => setNovo({ ...novo, email: e.target.value })} placeholder="email@empresa.com" />
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@empresa.com" />
+            </div>
+            <div>
+              <Label>Telefone</Label>
+              <Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Telefone</Label>
-                <Input value={novo.telefone} onChange={(e) => setNovo({ ...novo, telefone: e.target.value })} placeholder="(00) 00000-0000" />
-              </div>
-              <div>
                 <Label>Função</Label>
-                <Select value={novo.funcao} onValueChange={(v) => setNovo({ ...novo, funcao: v })}>
+                <Select value={form.funcao} onValueChange={(v) => setForm({ ...form, funcao: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="instalador">Instalador</SelectItem>
@@ -229,15 +297,52 @@ const Funcionarios = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="ferias">Férias</SelectItem>
+                    <SelectItem value="afastado">Afastado</SelectItem>
+                    <SelectItem value="desligado">Desligado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
               <Label>Salário (R$)</Label>
-              <Input type="number" value={novo.salario} onChange={(e) => setNovo({ ...novo, salario: e.target.value })} placeholder="0,00" />
+              <Input
+                type="number"
+                min="0"
+                step="100"
+                value={form.salario}
+                onChange={(e) => setForm({ ...form, salario: e.target.value })}
+                placeholder="0,00"
+              />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCriar} disabled={!novo.nome || !novo.email}>Criar funcionário</Button>
+            <Button onClick={handleSalvar} disabled={!form.nome || !form.email}>
+              {editando ? "Salvar alterações" : "Criar funcionário"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Confirmar Exclusão */}
+      <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir funcionário</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Tem certeza que deseja excluir <strong>{confirmDelete?.nome}</strong>? Esta ação não pode ser desfeita.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleExcluir}>Excluir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

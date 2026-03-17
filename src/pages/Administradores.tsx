@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
-import { ShieldCheck, Plus, Search, Mail, Phone, MoreVertical, Shield, UserCheck } from "lucide-react";
+import { ShieldCheck, Plus, Search, Mail, Phone, Pencil, Trash2, Shield, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
@@ -49,35 +49,88 @@ const mockAdmins: Administrador[] = [
   { id: 4, nome: "Mariana Costa", email: "mariana@alumy.com", telefone: "(11) 96666-3456", cargo: "admin", status: "inativo", dataCadastro: "2024-02-05" },
 ];
 
+type FormState = { nome: string; email: string; telefone: string; cargo: string; status: string };
+
+const emptyForm: FormState = { nome: "", email: "", telefone: "", cargo: "admin", status: "ativo" };
+
+function usePersistedAdmins() {
+  const key = 'alumy_admins';
+  const [admins, setAdminsState] = useState<Administrador[]>(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored ? (JSON.parse(stored) as Administrador[]) : mockAdmins;
+    } catch {
+      return mockAdmins;
+    }
+  });
+
+  function setAdmins(next: Administrador[]) {
+    setAdminsState(next);
+    localStorage.setItem(key, JSON.stringify(next));
+  }
+
+  return [admins, setAdmins] as const;
+}
+
 const Administradores = () => {
-  const [admins, setAdmins] = useState<Administrador[]>(mockAdmins);
+  const [admins, setAdmins] = usePersistedAdmins();
   const [busca, setBusca] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [novo, setNovo] = useState({ nome: "", email: "", telefone: "", cargo: "admin" });
+  const [editando, setEditando] = useState<Administrador | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [confirmDelete, setConfirmDelete] = useState<Administrador | null>(null);
 
   const filtrados = admins.filter(
     (a) => a.nome.toLowerCase().includes(busca.toLowerCase()) || a.email.toLowerCase().includes(busca.toLowerCase())
   );
 
-  const handleCriar = () => {
-    const novoAdmin: Administrador = {
-      id: Date.now(),
-      nome: novo.nome,
-      email: novo.email,
-      telefone: novo.telefone,
-      cargo: novo.cargo as Administrador["cargo"],
-      status: "ativo",
-      dataCadastro: new Date().toISOString().split("T")[0],
-    };
-    setAdmins([novoAdmin, ...admins]);
-    setNovo({ nome: "", email: "", telefone: "", cargo: "admin" });
-    setDialogOpen(false);
-  };
-
   const totais = {
     ativos: admins.filter((a) => a.status === "ativo").length,
     inativos: admins.filter((a) => a.status === "inativo").length,
   };
+
+  function abrirNovo() {
+    setEditando(null);
+    setForm(emptyForm);
+    setDialogOpen(true);
+  }
+
+  function abrirEditar(admin: Administrador) {
+    setEditando(admin);
+    setForm({ nome: admin.nome, email: admin.email, telefone: admin.telefone, cargo: admin.cargo, status: admin.status });
+    setDialogOpen(true);
+  }
+
+  function handleSalvar() {
+    if (editando) {
+      setAdmins(admins.map((a) =>
+        a.id === editando.id
+          ? { ...a, nome: form.nome, email: form.email, telefone: form.telefone, cargo: form.cargo as Administrador["cargo"], status: form.status as Administrador["status"] }
+          : a
+      ));
+    } else {
+      const novoAdmin: Administrador = {
+        id: Date.now(),
+        nome: form.nome,
+        email: form.email,
+        telefone: form.telefone,
+        cargo: form.cargo as Administrador["cargo"],
+        status: form.status as Administrador["status"],
+        dataCadastro: new Date().toISOString().split("T")[0],
+      };
+      setAdmins([novoAdmin, ...admins]);
+    }
+    setDialogOpen(false);
+    setEditando(null);
+    setForm(emptyForm);
+  }
+
+  function handleExcluir() {
+    if (confirmDelete) {
+      setAdmins(admins.filter((a) => a.id !== confirmDelete.id));
+      setConfirmDelete(null);
+    }
+  }
 
   return (
     <AppLayout>
@@ -87,7 +140,7 @@ const Administradores = () => {
             <h1 className="text-2xl font-bold text-foreground">Administradores</h1>
             <p className="text-sm text-muted-foreground">Gerencie os administradores do sistema e suas permissões</p>
           </div>
-          <Button className="gap-2" onClick={() => setDialogOpen(true)}>
+          <Button className="gap-2" onClick={abrirNovo}>
             <Plus className="h-4 w-4" /> Novo administrador
           </Button>
         </div>
@@ -156,6 +209,12 @@ const Administradores = () => {
                   <Badge variant={admin.status === "ativo" ? "default" : "outline"}>
                     {admin.status === "ativo" ? "Ativo" : "Inativo"}
                   </Badge>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEditar(admin)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setConfirmDelete(admin)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))
@@ -163,28 +222,29 @@ const Administradores = () => {
         </div>
       </div>
 
+      {/* Dialog Criar / Editar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo Administrador</DialogTitle>
+            <DialogTitle>{editando ? "Editar Administrador" : "Novo Administrador"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Nome completo</Label>
-              <Input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} placeholder="Nome do administrador" />
+              <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Nome do administrador" />
             </div>
             <div>
               <Label>E-mail</Label>
-              <Input type="email" value={novo.email} onChange={(e) => setNovo({ ...novo, email: e.target.value })} placeholder="email@empresa.com" />
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@empresa.com" />
+            </div>
+            <div>
+              <Label>Telefone</Label>
+              <Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Telefone</Label>
-                <Input value={novo.telefone} onChange={(e) => setNovo({ ...novo, telefone: e.target.value })} placeholder="(00) 00000-0000" />
-              </div>
-              <div>
-                <Label>Cargo</Label>
-                <Select value={novo.cargo} onValueChange={(v) => setNovo({ ...novo, cargo: v })}>
+                <Label>Cargo / Função</Label>
+                <Select value={form.cargo} onValueChange={(v) => setForm({ ...form, cargo: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="super_admin">Super Admin</SelectItem>
@@ -193,11 +253,39 @@ const Administradores = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="inativo">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCriar} disabled={!novo.nome || !novo.email}>Criar administrador</Button>
+            <Button onClick={handleSalvar} disabled={!form.nome || !form.email}>
+              {editando ? "Salvar alterações" : "Criar administrador"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Confirmar Exclusão */}
+      <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir administrador</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Tem certeza que deseja excluir <strong>{confirmDelete?.nome}</strong>? Esta ação não pode ser desfeita.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleExcluir}>Excluir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

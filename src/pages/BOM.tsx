@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
-import { ClipboardList, Package, Layers, Wrench, Search, ArrowLeft } from "lucide-react";
+import { ClipboardList, Package, Layers, Wrench, Search, ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BOMService } from "@/services/bom.service";
 import type { BOMResult } from "@/services/bom.service";
+import { exportMateriaisPDF } from "@/lib/pdf-export";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const categoriaBadge: Record<string, string> = {
@@ -26,6 +28,9 @@ const BOM = () => {
   const navigate = useNavigate();
   const orcamentoId = searchParams.get("orcamento_id");
   const [manualId, setManualId] = useState("");
+  const [printPerfis, setPrintPerfis] = useState(true);
+  const [printComponentes, setPrintComponentes] = useState(true);
+  const [printVidros, setPrintVidros] = useState(true);
 
   const { data: orcamento } = useQuery({
     queryKey: ["bom-orcamento", orcamentoId],
@@ -192,6 +197,43 @@ const BOM = () => {
             <p className="text-sm text-muted-foreground ml-12">
               {clienteNome} - {itens.length} itens
             </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-xs">
+              <label className="flex items-center gap-1 cursor-pointer">
+                <input type="checkbox" checked={printPerfis} onChange={(e) => setPrintPerfis(e.target.checked)} className="rounded border-border" />
+                <span className="text-muted-foreground">Perfis</span>
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <input type="checkbox" checked={printComponentes} onChange={(e) => setPrintComponentes(e.target.checked)} className="rounded border-border" />
+                <span className="text-muted-foreground">Componentes</span>
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <input type="checkbox" checked={printVidros} onChange={(e) => setPrintVidros(e.target.checked)} className="rounded border-border" />
+                <span className="text-muted-foreground">Vidros</span>
+              </label>
+            </div>
+            <Button
+              className="gap-2"
+              onClick={() => {
+                exportMateriaisPDF(
+                  orcamento?.numero ?? 0,
+                  clienteNome,
+                  agregados,
+                  boms.map((b) => ({
+                    descricao: b.descricao,
+                    largura: b.largura,
+                    altura: b.altura,
+                    quantidade: b.quantidade,
+                    materiais: b.materiais,
+                  })),
+                  { perfis: printPerfis, componentes: printComponentes, vidros: printVidros }
+                );
+                toast.success("PDF de materiais gerado!");
+              }}
+            >
+              <Printer className="h-4 w-4" /> Imprimir
+            </Button>
           </div>
         </div>
 

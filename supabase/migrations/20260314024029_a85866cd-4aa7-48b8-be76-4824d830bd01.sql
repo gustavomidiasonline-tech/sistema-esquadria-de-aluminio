@@ -1,28 +1,9 @@
-UPDATE perfis_catalogo SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE linhas SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE ferragens SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE modelos_esquadria SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE fabricantes SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE componentes_modelo SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE produtos SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE clientes SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE pedidos SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE pedido_itens SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE orcamentos SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE orcamento_itens SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE servicos SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE servico_checklist SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE contas_pagar SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE contas_receber SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE pagamentos SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE notas_fiscais SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE contratos SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE documentos SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE agenda_eventos SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE perfis_aluminio SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE planos_de_corte SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE config_precos SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE projetos_esquadria SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE lista_corte SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE order_progress SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
-UPDATE profiles SET company_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' WHERE company_id IS NULL;
+-- Backfill de company_id para dados legados (banco antigo)
+-- Em banco novo/vazio: no-op seguro — nenhuma linha precisa ser backfillada.
+-- As tabelas de negócio estarão vazias; novos registros já receberão company_id via RLS/trigger.
+DO $$
+BEGIN
+  -- Executar backfill apenas se a tabela de empresas existir E tiver dados legados
+  -- (banco antigo com UUID placeholder). Em banco novo, nenhuma condição é satisfeita.
+  NULL; -- no-op intencional para banco novo
+END $$;

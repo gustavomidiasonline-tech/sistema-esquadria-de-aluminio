@@ -39,7 +39,8 @@ interface PreviewData {
 }
 
 export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogImportDialogProps) {
-  const { companyId } = useAuth();
+  const { profile } = useAuth();
+  const companyId = profile?.company_id;
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -129,60 +130,70 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
     setLoading(true);
 
     try {
-      let perfisSalvos = 0;
-      let modelosSalvos = 0;
+      let perfisSalvos = preview.perfis.length;
+      let modelosSalvos = preview.modelos.length;
 
-      // Salvar perfis — validar insert ANTES de deletar (mitigação de perda de dados)
-      if (preview.perfis.length > 0) {
-        const perfisBatch = preview.perfis.map((p) => ({
-          company_id: companyId,
+      // Tentar importação atômica via RPC (requer migration 20260316020000)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('import_catalog_atomic', {
+        p_company_id: companyId,
+        p_perfis: preview.perfis.map((p) => ({
           codigo: p.codigo,
           nome: p.nome,
           tipo: p.tipo,
           peso_kg_m: p.peso_kg_m,
           espessura_mm: p.espessura_mm,
-        }));
-
-        // Deletar APÓS validar que os dados estão corretos (objeto bem formado)
-        const codigos = preview.perfis.map((p) => p.codigo);
-        await supabase
-          .from('perfis_catalogo')
-          .delete()
-          .eq('company_id', companyId)
-          .in('codigo', codigos);
-
-        for (let i = 0; i < perfisBatch.length; i += 50) {
-          const chunk = perfisBatch.slice(i, i + 50);
-          const { error } = await supabase.from('perfis_catalogo').insert(chunk);
-          if (error) throw new Error(`Erro ao salvar perfis (lote ${Math.floor(i / 50) + 1}): ${error.message}`);
-          perfisSalvos += chunk.length;
-        }
-      }
-
-      // Salvar modelos — mesmo padrão
-      if (preview.modelos.length > 0) {
-        const modelosBatch = preview.modelos.map((m) => ({
-          company_id: companyId,
+        })),
+        p_modelos: preview.modelos.map((m) => ({
           codigo: m.codigo,
           nome: m.nome,
           tipo: m.tipo,
           descricao: m.descricao,
-          ativo: true,
-        }));
+        })),
+      });
 
-        const codigos = preview.modelos.map((m) => m.codigo);
-        await supabase
-          .from('window_models')
-          .delete()
-          .eq('company_id', companyId)
-          .in('codigo', codigos);
+      const rpcAvailable = !rpcError || !rpcError.message.includes('function') && !rpcError.message.includes('does not exist') && !rpcError.message.includes('42883');
 
-        for (let i = 0; i < modelosBatch.length; i += 50) {
-          const chunk = modelosBatch.slice(i, i + 50);
-          const { error } = await supabase.from('window_models').insert(chunk);
-          if (error) throw new Error(`Erro ao salvar modelos (lote ${Math.floor(i / 50) + 1}): ${error.message}`);
-          modelosSalvos += chunk.length;
+      if (!rpcError) {
+        // RPC funcionou — usar contagens retornadas
+        const result = rpcData as { perfis_salvos: number; modelos_salvos: number };
+        perfisSalvos = result.perfis_salvos;
+        modelosSalvos = result.modelos_salvos;
+      } else if (!rpcAvailable) {
+        // RPC não existe ainda — fallback delete+insert
+        if (preview.perfis.length > 0) {
+          const perfisBatch = preview.perfis.map((p) => ({
+            company_id: companyId,
+            codigo: p.codigo,
+            nome: p.nome,
+            tipo: p.tipo,
+            peso_kg_m: p.peso_kg_m,
+            espessura_mm: p.espessura_mm,
+          }));
+          const codigos = preview.perfis.map((p) => p.codigo);
+          await supabase.from('perfis_catalogo').delete().eq('company_id', companyId).in('codigo', codigos);
+          for (let i = 0; i < perfisBatch.length; i += 50) {
+            const { error } = await supabase.from('perfis_catalogo').insert(perfisBatch.slice(i, i + 50));
+            if (error) throw new Error(`Erro ao salvar perfis: ${error.message}`);
+          }
         }
+        if (preview.modelos.length > 0) {
+          const modelosBatch = preview.modelos.map((m) => ({
+            company_id: companyId,
+            codigo: m.codigo,
+            nome: m.nome,
+            tipo: m.tipo,
+            descricao: m.descricao,
+            ativo: true,
+          }));
+          const codigos = preview.modelos.map((m) => m.codigo);
+          await supabase.from('window_models').delete().eq('company_id', companyId).in('codigo', codigos);
+          for (let i = 0; i < modelosBatch.length; i += 50) {
+            const { error } = await supabase.from('window_models').insert(modelosBatch.slice(i, i + 50));
+            if (error) throw new Error(`Erro ao salvar modelos: ${error.message}`);
+          }
+        }
+      } else {
+        throw new Error(rpcError.message);
       }
 
       setStep('done');

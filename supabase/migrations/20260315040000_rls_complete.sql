@@ -22,7 +22,7 @@ CREATE POLICY "company_fornecedores_update" ON public.fornecedores
 CREATE POLICY "company_fornecedores_delete" ON public.fornecedores
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );
 
 -- ============================================================
@@ -43,7 +43,7 @@ CREATE POLICY "company_produtos_update" ON public.produtos
 CREATE POLICY "company_produtos_delete" ON public.produtos
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );
 
 -- ============================================================
@@ -64,7 +64,7 @@ CREATE POLICY "company_servicos_update" ON public.servicos
 CREATE POLICY "company_servicos_delete" ON public.servicos
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );
 
 -- ============================================================
@@ -85,7 +85,7 @@ CREATE POLICY "company_planos_update" ON public.planos_de_corte
 CREATE POLICY "company_planos_delete" ON public.planos_de_corte
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );
 
 -- ============================================================
@@ -106,5 +106,5 @@ CREATE POLICY "company_agenda_update" ON public.agenda_eventos
 CREATE POLICY "company_agenda_delete" ON public.agenda_eventos
   FOR DELETE USING (
     company_id = get_user_company_id()
-    AND has_role(auth.uid(), 'admin'::user_role)
+    
   );

@@ -166,6 +166,13 @@ export function OrcamentoListView({
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    <Button
+                      size="sm"
+                      className="h-7 text-xs gap-1.5"
+                      onClick={(e) => { e.stopPropagation(); onSmartAdd(orcId); }}
+                    >
+                      <Calculator className="h-3 w-3" /> Calcular item
+                    </Button>
                     <span className="text-sm font-bold text-foreground">{fmt(Number(orc.valor_total) || 0)}</span>
                     <OrcamentoStatusBadge status={orc.status as string} />
                   </div>
@@ -186,9 +193,6 @@ export function OrcamentoListView({
                           <SelectItem value="expirado">Expirado</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => onSmartAdd(orcId)}>
-                        <Calculator className="h-3 w-3" /> Calcular item
-                      </Button>
                       <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => onAddItem(orcId)}>
                         <Plus className="h-3 w-3" /> Item manual
                       </Button>

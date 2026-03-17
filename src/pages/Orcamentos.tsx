@@ -103,6 +103,17 @@ const Orcamentos = () => {
     } catch (e: unknown) { toast.error('Erro ao gerar OP: ' + (e instanceof Error ? e.message : String(e))); }
   };
 
+  const handleCreateCliente = async (nome: string): Promise<string> => {
+    const { data, error } = await supabase
+      .from('clientes')
+      .insert({ nome, created_by: user?.id })
+      .select('id')
+      .single();
+    if (error) throw new Error(`Erro ao criar cliente: ${error.message}`);
+    queryClient.invalidateQueries({ queryKey: ['clientes'] });
+    return data.id as string;
+  };
+
   const handleConverterPedido = async (orc: Record<string, unknown>) => {
     try {
       const { error } = await supabase.from('pedidos').insert({
@@ -143,6 +154,7 @@ const Orcamentos = () => {
         open={dialogOpen} onOpenChange={setDialogOpen}
         clientes={clientes as { id: string; nome: string }[]}
         isPending={insertMutation.isPending} onSave={handleSave}
+        onCreateCliente={handleCreateCliente}
       />
       <OrcamentoItemDialog
         open={itemDialogOpen} onClose={closeAddItem}

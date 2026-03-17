@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { calcularComponentes, otimizarBarras, type ResultadoCorte, type ResultadoOtimizacao } from "@/lib/calculo-esquadria";
+import { calcularComponentes, otimizarBarrasPorPerfil, calcularVidros, calcularFerragens, calcularMateriaisAuxiliares, type ResultadoCorte, type GrupoCorteOtimizado, type ItemVidro, type ItemFerragem } from "@/lib/calculo-esquadria";
 import type { Database } from "@/integrations/supabase/types";
 
 type ComponenteRow = Database["public"]["Tables"]["componentes_modelo"]["Row"];
@@ -65,10 +65,25 @@ export function ConfiguradorTab() {
     return calcularComponentes(comps, largura, altura, selectedModel.folhas || 2);
   }, [componentes, selectedModel, largura, altura]);
 
-  const otimizacao: ResultadoOtimizacao | null = useMemo(() => {
-    if (resultados.length === 0) return null;
-    return otimizarBarras(resultados, 6000);
+  const planoCorte: GrupoCorteOtimizado[] = useMemo(() => {
+    if (resultados.length === 0) return [];
+    return otimizarBarrasPorPerfil(resultados, 6000);
   }, [resultados]);
+
+  const vidros: ItemVidro[] = useMemo(() => {
+    if (!selectedModel) return [];
+    return calcularVidros(selectedModel.tipo || 'correr', largura, altura, selectedModel.folhas || 2);
+  }, [selectedModel, largura, altura]);
+
+  const ferragens: ItemFerragem[] = useMemo(() => {
+    if (!selectedModel) return [];
+    return calcularFerragens(selectedModel.tipo || 'correr', largura, altura, selectedModel.folhas || 2);
+  }, [selectedModel, largura, altura]);
+
+  const materiaisAux: ItemFerragem[] = useMemo(() => {
+    if (!selectedModel) return [];
+    return calcularMateriaisAuxiliares(selectedModel.tipo || 'correr', largura, altura);
+  }, [selectedModel, largura, altura]);
 
   const pesoTotal = resultados.reduce((s, r) => s + r.peso_total_kg, 0);
   const totalPecas = resultados.reduce((s, r) => s + r.quantidade, 0);
@@ -187,7 +202,7 @@ export function ConfiguradorTab() {
       {resultados.length > 0 && (
         <>
           {/* KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <Card className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground text-xs"><Ruler className="h-4 w-4" /> Peças</div>
               <p className="text-2xl font-bold mt-1">{totalPecas}</p>
@@ -198,11 +213,23 @@ export function ConfiguradorTab() {
             </Card>
             <Card className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground text-xs"><BarChart3 className="h-4 w-4" /> Barras (6m)</div>
-              <p className="text-2xl font-bold mt-1">{otimizacao?.total_barras || 0}</p>
+              <p className="text-2xl font-bold mt-1">{planoCorte.reduce((s, g) => s + g.otimizacao.total_barras, 0)}</p>
             </Card>
             <Card className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground text-xs"><Calculator className="h-4 w-4" /> Aproveitamento</div>
-              <p className="text-2xl font-bold mt-1">{otimizacao?.aproveitamento_medio || 0}%</p>
+              <p className="text-2xl font-bold mt-1">
+                {planoCorte.length > 0
+                  ? Math.round(planoCorte.reduce((s, g) => s + g.otimizacao.aproveitamento_medio, 0) / planoCorte.length)
+                  : 0}%
+              </p>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs"><Box className="h-4 w-4" /> Vidro</div>
+              <p className="text-2xl font-bold mt-1">{vidros.reduce((s, v) => s + v.area_m2, 0).toFixed(2)} m²</p>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs"><BarChart3 className="h-4 w-4" /> Ferragens</div>
+              <p className="text-2xl font-bold mt-1">{ferragens.length} itens</p>
             </Card>
           </div>
 
@@ -249,53 +276,150 @@ export function ConfiguradorTab() {
             </CardContent>
           </Card>
 
-          {/* Bar optimization */}
-          {otimizacao && otimizacao.barras.length > 0 && (
+          {/* Plano de corte por perfil */}
+          {planoCorte.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">4. Otimização de Barras (6000mm)</CardTitle>
+                <CardTitle className="text-base">4. Plano de Corte por Perfil (Barra 6000mm — Kerf: 3mm/corte)</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {otimizacao.barras.map((barra, bi) => (
-                  <div key={bi} className="border border-border rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold">Barra {bi + 1}</span>
+              <CardContent className="space-y-6">
+                {planoCorte.map((grupo, gi) => (
+                  <div key={gi} className="border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <span className="font-mono font-bold text-primary text-sm">{grupo.perfil_codigo}</span>
+                        <span className="text-sm text-muted-foreground ml-2">{grupo.perfil_nome}</span>
+                      </div>
                       <div className="flex gap-2">
-                        <Badge variant="outline">{barra.aproveitamento_pct}% uso</Badge>
-                        <Badge variant="secondary">Sobra: {barra.sobra_mm}mm</Badge>
+                        <Badge variant="outline">{grupo.otimizacao.total_barras} barra(s)</Badge>
+                        <Badge variant="secondary">{grupo.otimizacao.aproveitamento_medio}% uso</Badge>
+                        <Badge variant="outline" className="text-orange-600">Sobra: {grupo.otimizacao.sobra_total_mm}mm</Badge>
                       </div>
                     </div>
-                    {/* Visual bar */}
-                    <div className="h-8 bg-muted rounded flex overflow-hidden">
-                      {barra.cortes.map((c, ci) => {
-                        const pct = (c.comprimento / 6000) * 100;
-                        const colors = [
-                          "bg-primary", "bg-blue-500", "bg-emerald-500",
-                          "bg-amber-500", "bg-purple-500", "bg-rose-500",
-                        ];
-                        return (
-                          <div
-                            key={ci}
-                            className={`${colors[ci % colors.length]} flex items-center justify-center text-[10px] text-white font-bold border-r border-background`}
-                            style={{ width: `${pct}%` }}
-                            title={`${c.codigo} - ${c.comprimento}mm`}
-                          >
-                            {c.comprimento > 300 ? `${c.comprimento}` : ""}
+                    <div className="space-y-2">
+                      {grupo.otimizacao.barras.map((barra, bi) => (
+                        <div key={bi} className="bg-muted/30 rounded p-2">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <span className="font-semibold">Barra {bi + 1}</span>
+                            <span>{barra.aproveitamento_pct}% | Sobra {barra.sobra_mm}mm</span>
                           </div>
-                        );
-                      })}
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {barra.cortes.map((c, ci) => (
-                        <span key={ci} className="text-[11px] text-muted-foreground">
-                          {c.codigo} ({c.comprimento}mm){ci < barra.cortes.length - 1 ? " +" : ""}
-                        </span>
+                          <div className="h-6 bg-muted rounded flex overflow-hidden">
+                            {barra.cortes.map((c, ci) => {
+                              const pct = (c.comprimento / 6000) * 100;
+                              const colors = ['bg-primary', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-rose-500'];
+                              return (
+                                <div
+                                  key={ci}
+                                  className={`${colors[ci % colors.length]} flex items-center justify-center text-[9px] text-white font-bold border-r border-background`}
+                                  style={{ width: `${pct}%` }}
+                                  title={`${c.posicao} — ${c.comprimento}mm`}
+                                >
+                                  {c.comprimento > 400 ? `${c.comprimento}` : ''}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {barra.cortes.map((c, ci) => (
+                              <span key={ci} className="text-[10px] text-muted-foreground">
+                                {c.posicao} ({c.comprimento}mm){ci < barra.cortes.length - 1 ? ' + ' : ''}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
                 ))}
               </CardContent>
             </Card>
+          )}
+
+          {/* Vidros */}
+          {vidros.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">5. Cálculo de Vidros</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead className="text-right">Largura (mm)</TableHead>
+                        <TableHead className="text-right">Altura (mm)</TableHead>
+                        <TableHead className="text-right">Qtd</TableHead>
+                        <TableHead className="text-right">Área Total (m²)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {vidros.map((v, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{v.descricao}</TableCell>
+                          <TableCell className="text-right font-mono">{v.largura_mm}</TableCell>
+                          <TableCell className="text-right font-mono">{v.altura_mm}</TableCell>
+                          <TableCell className="text-right font-bold">{v.quantidade}</TableCell>
+                          <TableCell className="text-right font-bold text-primary">{v.area_m2} m²</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Ferragens e Materiais */}
+          {(ferragens.length > 0 || materiaisAux.length > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {ferragens.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">6. Lista de Ferragens</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1">
+                      {ferragens.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                          <div>
+                            <span className="text-sm">{f.nome}</span>
+                            {f.observacao && <span className="text-xs text-muted-foreground ml-1">({f.observacao})</span>}
+                          </div>
+                          <div className="flex items-center gap-1 font-bold text-sm">
+                            <span className="text-primary">{f.quantidade}</span>
+                            <span className="text-muted-foreground text-xs">{f.unidade}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {materiaisAux.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">7. Materiais Auxiliares</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1">
+                      {materiaisAux.map((m, i) => (
+                        <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                          <div>
+                            <span className="text-sm">{m.nome}</span>
+                            {m.observacao && <span className="text-xs text-muted-foreground ml-1">({m.observacao})</span>}
+                          </div>
+                          <div className="flex items-center gap-1 font-bold text-sm">
+                            <span className="text-primary">{m.quantidade}</span>
+                            <span className="text-muted-foreground text-xs">{m.unidade}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
 
           {/* 3D Viewer */}

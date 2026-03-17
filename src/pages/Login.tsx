@@ -71,10 +71,10 @@ const Login = () => {
           <div className="glass-card-premium p-8">
             <div className="flex flex-col items-center mb-8">
               <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-lg font-bold text-white mb-3">
-                PP
+                EA
               </div>
-              <h1 className="text-2xl font-bold text-foreground">PixelPerfect</h1>
-              <p className="text-sm text-muted-foreground">Gestão de Orçamentos</p>
+              <h1 className="text-2xl font-bold text-foreground">Sistema Esquadria</h1>
+              <p className="text-sm text-muted-foreground">Gestão de Esquadrias de Alumínio</p>
             </div>
             <h2 className="text-lg font-semibold text-foreground text-center mb-2">Recuperar senha</h2>
             <p className="text-sm text-muted-foreground text-center mb-6">
@@ -114,9 +114,11 @@ const Login = () => {
         <div className="glass-card-premium p-8">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <img src={manageasyLogo} alt="Alumy" className="h-14 w-14 rounded-xl object-contain mb-3" />
-            <h1 className="text-2xl font-bold text-foreground">Alumy</h1>
-            <p className="text-sm text-muted-foreground">by Manageasy</p>
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-lg font-bold text-white mb-3">
+              EA
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">Sistema Esquadria</h1>
+            <p className="text-sm text-muted-foreground">Gestão de Esquadrias de Alumínio</p>
           </div>
 
           <h2 className="text-lg font-semibold text-foreground text-center mb-6">

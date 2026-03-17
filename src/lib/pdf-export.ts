@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import type { ItemVidro, ItemFerragem } from "@/lib/calculo-esquadria";
 
 // Extend jsPDF type for autotable
 declare module "jspdf" {
@@ -104,7 +105,7 @@ function addHeader(doc: jsPDF, title: string, subtitle?: string) {
 
   // Company info
   doc.setFontSize(8);
-  doc.text("ManagEasy", 196, 10, { align: "right" });
+  doc.text("Sistema Esquadria de Alumínio", 196, 10, { align: "right" });
   doc.text(`Gerado em ${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`, 196, 16, { align: "right" });
 
   doc.setTextColor(...COLORS.dark);
@@ -481,22 +482,33 @@ export function exportListaCortePDF(
   produtoNome: string,
   largura: number,
   altura: number,
-  perfis: { codigo: string; descricao?: string; posicao: string; medida: number; quantidade: number; pesoMetro?: number; anguloEsq?: number; anguloDir?: number }[]
+  perfis: { codigo: string; descricao?: string; posicao: string; medida: number; quantidade: number; pesoMetro?: number; anguloEsq?: number; anguloDir?: number }[],
+  vidros?: ItemVidro[],
+  ferragens?: ItemFerragem[],
+  materiaisAux?: ItemFerragem[]
 ) {
   const doc = new jsPDF();
   let y = addHeader(doc, "LISTA DE CORTE", produtoNome);
 
   const m2 = ((largura / 1000) * (altura / 1000)).toFixed(3);
   const pesoTotal = perfis.reduce((s, p) => s + (p.medida / 1000) * (p.pesoMetro || 0) * p.quantidade, 0);
+  const areaVidroTotal = vidros ? vidros.reduce((s, v) => s + v.area_m2, 0).toFixed(2) : m2;
 
   y = addInfoBlock(doc, y, [
     { label: "Produto", value: produtoNome },
     { label: "Dimensões", value: `${largura} × ${altura} mm` },
-    { label: "Área do Vidro", value: `${m2} m²` },
+    { label: "Área de Vidro", value: `${areaVidroTotal} m²` },
     { label: "Peso Estimado", value: `${pesoTotal.toFixed(2)} kg` },
   ]);
 
+  // ── Perfis ──
   if (perfis.length > 0) {
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.dark);
+    doc.text("LISTA DE PERFIS", 14, y);
+    y += 5;
+
     const tableBody = perfis.map((p) => [
       p.codigo,
       p.descricao || "—",
@@ -531,7 +543,91 @@ export function exportListaCortePDF(
     y = doc.lastAutoTable.finalY + 8;
   }
 
+  // ── Vidros ──
+  if (vidros && vidros.length > 0) {
+    if (y > 220) { doc.addPage(); y = 20; }
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.dark);
+    doc.text("VIDROS", 14, y);
+    y += 5;
+
+    doc.autoTable({
+      startY: y,
+      head: [["Descrição", "Largura (mm)", "Altura (mm)", "Qtd", "Área (m²)"]],
+      body: vidros.map((v) => [v.descricao, String(v.largura_mm), String(v.altura_mm), String(v.quantidade), `${v.area_m2} m²`]),
+      theme: "grid",
+      headStyles: { fillColor: [16, 185, 129] as [number, number, number], textColor: COLORS.white, fontSize: 7, fontStyle: "bold", halign: "center" },
+      bodyStyles: { fontSize: 7.5, textColor: COLORS.dark },
+      columnStyles: { 1: { halign: "center" }, 2: { halign: "center" }, 3: { halign: "center" }, 4: { halign: "right", fontStyle: "bold" } },
+      margin: { left: 14, right: 14 },
+    });
+
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  // ── Ferragens e Materiais Auxiliares (side by side) ──
+  const temFerragens = ferragens && ferragens.length > 0;
+  const temMateriais = materiaisAux && materiaisAux.length > 0;
+
+  if (temFerragens || temMateriais) {
+    if (y > 200) { doc.addPage(); y = 20; }
+
+    if (temFerragens) {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...COLORS.dark);
+      doc.text("FERRAGENS", 14, y);
+      y += 5;
+
+      doc.autoTable({
+        startY: y,
+        head: [["Item", "Qtd", "Un."]],
+        body: ferragens.map((f) => [
+          f.nome + (f.observacao ? ` (${f.observacao})` : ""),
+          String(f.quantidade),
+          f.unidade,
+        ]),
+        theme: "grid",
+        headStyles: { fillColor: [245, 158, 11] as [number, number, number], textColor: COLORS.white, fontSize: 7, fontStyle: "bold", halign: "center" },
+        bodyStyles: { fontSize: 7.5, textColor: COLORS.dark },
+        columnStyles: { 0: { cellWidth: 110 }, 1: { halign: "center", cellWidth: 20 }, 2: { halign: "center" } },
+        margin: { left: 14, right: 14 },
+      });
+
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    if (temMateriais) {
+      if (y > 230) { doc.addPage(); y = 20; }
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...COLORS.dark);
+      doc.text("MATERIAIS AUXILIARES", 14, y);
+      y += 5;
+
+      doc.autoTable({
+        startY: y,
+        head: [["Item", "Qtd", "Un."]],
+        body: materiaisAux.map((m) => [
+          m.nome + (m.observacao ? ` (${m.observacao})` : ""),
+          String(m.quantidade),
+          m.unidade,
+        ]),
+        theme: "grid",
+        headStyles: { fillColor: COLORS.muted, textColor: COLORS.white, fontSize: 7, fontStyle: "bold", halign: "center" },
+        bodyStyles: { fontSize: 7.5, textColor: COLORS.dark },
+        columnStyles: { 0: { cellWidth: 110 }, 1: { halign: "center", cellWidth: 20 }, 2: { halign: "center" } },
+        alternateRowStyles: { fillColor: [250, 248, 255] },
+        margin: { left: 14, right: 14 },
+      });
+
+      y = doc.lastAutoTable.finalY + 8;
+    }
+  }
+
   // Summary
+  if (y > 255) { doc.addPage(); y = 20; }
   doc.setFillColor(...COLORS.light);
   doc.roundedRect(14, y, 182, 14, 3, 3, "F");
   doc.setFontSize(8);
@@ -539,8 +635,154 @@ export function exportListaCortePDF(
   doc.text(`${perfis.length} perfis · ${perfis.reduce((s, p) => s + p.quantidade, 0)} peças`, 18, y + 6);
   doc.setTextColor(...COLORS.primary);
   doc.setFont("helvetica", "bold");
-  doc.text(`Peso total: ${pesoTotal.toFixed(2)} kg`, 18, y + 11);
+  doc.text(`Peso total: ${pesoTotal.toFixed(2)} kg  ·  Vidro: ${areaVidroTotal} m²`, 18, y + 11);
 
   addFooter(doc);
   doc.save(`lista-corte-${produtoNome.replace(/\s+/g, "-").toLowerCase()}-${largura}x${altura}.pdf`);
+}
+
+// ===== MATERIAIS (BOM) PDF =====
+interface MaterialItem {
+  nome: string;
+  categoria: string;
+  quantidade: number;
+  unidade: string;
+}
+
+interface BOMItemData {
+  descricao: string;
+  largura: number;
+  altura: number;
+  quantidade: number;
+  materiais: MaterialItem[];
+}
+
+export function exportMateriaisPDF(
+  orcamentoNumero: number,
+  clienteNome: string,
+  agregados: MaterialItem[],
+  bomsPorItem: BOMItemData[],
+  opcoes: { perfis?: boolean; componentes?: boolean; vidros?: boolean } = { perfis: true, componentes: true, vidros: true }
+) {
+  const doc = new jsPDF();
+  let y = addHeader(doc, "LISTA DE MATERIAIS", `Orcamento #${String(orcamentoNumero).padStart(3, "0")}`);
+
+  y = addInfoBlock(doc, y, [
+    { label: "Orcamento", value: `#${String(orcamentoNumero).padStart(3, "0")}` },
+    { label: "Cliente", value: clienteNome },
+    { label: "Itens", value: `${bomsPorItem.length}` },
+    { label: "Materiais", value: `${agregados.length} tipos` },
+  ]);
+
+  const categorias = [
+    { key: "aluminio", label: "PERFIS DE ALUMINIO", color: [245, 158, 11] as [number, number, number], enabled: opcoes.perfis !== false },
+    { key: "vidro", label: "VIDROS", color: [59, 130, 246] as [number, number, number], enabled: opcoes.vidros !== false },
+    { key: "ferragem", label: "FERRAGENS / COMPONENTES", color: [249, 115, 22] as [number, number, number], enabled: opcoes.componentes !== false },
+    { key: "acessorio", label: "ACESSORIOS", color: [168, 85, 247] as [number, number, number], enabled: opcoes.componentes !== false },
+    { key: "borracha", label: "BORRACHAS / VEDACAO", color: [6, 182, 212] as [number, number, number], enabled: opcoes.componentes !== false },
+  ];
+
+  for (const cat of categorias) {
+    if (!cat.enabled) continue;
+    const items = agregados.filter((m) => m.categoria === cat.key);
+    if (items.length === 0) continue;
+
+    if (y > 230) { doc.addPage(); y = 20; }
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.dark);
+    doc.text(cat.label, 14, y);
+    y += 5;
+
+    doc.autoTable({
+      startY: y,
+      head: [["Material", "Quantidade", "Unidade"]],
+      body: items.map((m) => [
+        m.nome,
+        typeof m.quantidade === "number" && m.unidade === "m2"
+          ? m.quantidade.toFixed(3)
+          : typeof m.quantidade === "number" && (m.unidade === "metro" || m.unidade === "m")
+            ? m.quantidade.toFixed(2)
+            : String(m.quantidade),
+        m.unidade,
+      ]),
+      theme: "grid",
+      headStyles: { fillColor: cat.color, textColor: COLORS.white, fontSize: 7.5, fontStyle: "bold", halign: "center" },
+      bodyStyles: { fontSize: 7.5, textColor: COLORS.dark },
+      columnStyles: {
+        0: { cellWidth: 100 },
+        1: { halign: "center", fontStyle: "bold", cellWidth: 35 },
+        2: { halign: "center" },
+      },
+      alternateRowStyles: { fillColor: [250, 248, 255] },
+      margin: { left: 14, right: 14 },
+    });
+
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  // Detalhamento por item
+  if (bomsPorItem.length > 0) {
+    if (y > 200) { doc.addPage(); y = 20; }
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.dark);
+    doc.text("DETALHAMENTO POR ITEM", 14, y);
+    y += 6;
+
+    for (const bom of bomsPorItem) {
+      if (y > 240) { doc.addPage(); y = 20; }
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...COLORS.primary);
+      doc.text(`${bom.descricao} (${bom.largura}x${bom.altura}mm - Qtd: ${bom.quantidade})`, 14, y);
+      y += 5;
+
+      const filteredMats = bom.materiais.filter((m) => {
+        if (m.categoria === "aluminio" && opcoes.perfis === false) return false;
+        if (m.categoria === "vidro" && opcoes.vidros === false) return false;
+        if ((m.categoria === "ferragem" || m.categoria === "acessorio" || m.categoria === "borracha") && opcoes.componentes === false) return false;
+        return true;
+      });
+
+      if (filteredMats.length === 0) continue;
+
+      doc.autoTable({
+        startY: y,
+        head: [["Material", "Categoria", "Qtd", "Un."]],
+        body: filteredMats.map((m) => [
+          m.nome,
+          m.categoria,
+          typeof m.quantidade === "number" ? (m.unidade === "m2" ? m.quantidade.toFixed(3) : m.quantidade.toFixed(2)) : String(m.quantidade),
+          m.unidade,
+        ]),
+        theme: "grid",
+        headStyles: { fillColor: [80, 80, 95], textColor: COLORS.white, fontSize: 7, fontStyle: "bold", halign: "center" },
+        bodyStyles: { fontSize: 7, textColor: COLORS.dark },
+        columnStyles: { 0: { cellWidth: 80 }, 2: { halign: "center", fontStyle: "bold" }, 3: { halign: "center" } },
+        margin: { left: 14, right: 14 },
+      });
+
+      y = doc.lastAutoTable.finalY + 6;
+    }
+  }
+
+  // Summary
+  if (y > 260) { doc.addPage(); y = 20; }
+  doc.setFillColor(...COLORS.light);
+  doc.roundedRect(14, y, 182, 14, 3, 3, "F");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.muted);
+  doc.text(`${agregados.length} materiais distintos · ${bomsPorItem.length} itens`, 18, y + 6);
+  doc.setTextColor(...COLORS.primary);
+  doc.setFont("helvetica", "bold");
+  const totalPerfis = agregados.filter((m) => m.categoria === "aluminio").reduce((s, m) => s + m.quantidade, 0);
+  const totalVidro = agregados.filter((m) => m.categoria === "vidro").reduce((s, m) => s + m.quantidade, 0);
+  doc.text(`Perfis: ${totalPerfis.toFixed(2)} m  ·  Vidro: ${totalVidro.toFixed(3)} m²`, 18, y + 11);
+
+  addFooter(doc);
+  doc.save(`materiais-orcamento-${String(orcamentoNumero).padStart(3, "0")}.pdf`);
 }

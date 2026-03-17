@@ -26,10 +26,23 @@ export interface CatalogParseResult {
   confianca: number; // 0-1
 }
 
+// ─── Falsos positivos conhecidos ─────────────────────────────────────────────
+const FALSE_POSITIVE_PREFIXES = ['NBR', 'ABNT', 'ISO', 'DIN', 'ASTM', 'SAE', 'AISI'];
+const FALSE_POSITIVE_PATTERN = /^(NBR|ABNT|ISO|DIN|ASTM|SAE|AISI|PAG|PG|FIG|TAB|CAP|SEC|REV|VER|EDT|DOC|REF|IMG)[-.]?\d/i;
+// Linhas que sao cabecalhos, titulos ou lixo
+const GARBAGE_LINE_PATTERNS = [
+  /^(codigo|code|ref|item|descri[çc][aã]o|peso|esp|perfil|material|unid|qtd|total|obs)/i,
+  /^\d[\d\s]{6,}$/,                           // linhas so com numeros espacados (dados de diagrama)
+  /diagrama|dimens[oõ]es|se[çc][aã]o|corte\s+[A-Z]/i, // texto de diagramas tecnicos
+  /^[\d\s.,]+$/,                               // linhas so com numeros, espacos, pontos, virgulas
+  /norma\s+(t[eé]cnica|brasileira)/i,          // referencias a normas
+  /tolerancia|toler[aâ]ncia|acabamento|anodiza/i, // dados de acabamento
+];
+
 // ─── Padrões de código de perfil ──────────────────────────────────────────────
-// Exemplos: A1234, PRF-456, 200.10, H-45, 1.1.4.01, AL123456
+// Exemplos: A1234, PRF-456, 200.10, H-45, AL123456
 const CODIGO_PATTERNS = [
-  /\b([A-Z]{1,4}[-.]?\d{2,6}(?:[-/]\w{1,4})?)\b/g,           // A1234, PRF-456, H-45-X
+  /\b([A-Z]{1,4}[-.]?\d{2,6})\b/g,                            // A1234, PRF-456, SU-0041 (sem sufixo /xxx)
   /\b(\d{1,4}\.\d{1,4}(?:\.\d{1,4})*)\b/g,                   // 1.1.4.01 (formato numérico hierárquico)
   /\b(\d{4,8})\b/g,                                            // 12345678 (códigos numéricos puros)
 ];
@@ -39,8 +52,8 @@ const PESO_PATTERNS = [
   /(\d+[.,]\d{1,4})\s*kg\/m/gi,                  // 0,450 kg/m
   /peso[:\s]+(\d+[.,]\d{1,4})/gi,                 // peso: 0.450
   /(\d+[.,]\d{1,4})\s*g\/m/gi,                    // gramas por metro → converter
-  /(\d+[.,]\d{1,4})\s*kg/gi,                      // 0,450 kg
   /\bw\s*=\s*(\d+[.,]\d{1,4})/gi,                 // W = 0.450 (peso linear)
+  /(\d+[.,]\d{1,4})\s*kg(?!\/)/gi,                // 0,450 kg (mas nao kg/m, ja coberto)
   // Nota: extração de decimal colunar isolado é feita por extractDadosColunares()
 ];
 
@@ -169,14 +182,29 @@ function extractDadosColunares(
   return { peso, espessura };
 }
 
+function isFalsePositive(code: string): boolean {
+  // Anos, paginas, numeros pequenos
+  if (/^(20\d{2}|19\d{2}|\d{1,2})$/.test(code)) return true;
+  // Normas tecnicas (NBR-6123, ISO-9001, etc.)
+  if (FALSE_POSITIVE_PATTERN.test(code)) return true;
+  // Prefixos conhecidos de normas
+  if (FALSE_POSITIVE_PREFIXES.some((p) => code.toUpperCase().startsWith(p))) return true;
+  // Codigos combinados com barra (SU-0039/0291)
+  if (/\//.test(code)) return true;
+  return false;
+}
+
+function isGarbageLine(line: string): boolean {
+  return GARBAGE_LINE_PATTERNS.some((p) => p.test(line));
+}
+
 function extractCodigo(text: string): string | null {
   for (const pattern of CODIGO_PATTERNS) {
     pattern.lastIndex = 0;
     const match = pattern.exec(text);
     if (match) {
       const code = match[1];
-      // Filtrar falsos positivos: anos, páginas, etc.
-      if (/^(20\d{2}|19\d{2}|\d{1,2})$/.test(code)) continue;
+      if (isFalsePositive(code)) continue;
       if (code.length >= 3) return code;
     }
   }
@@ -184,47 +212,115 @@ function extractCodigo(text: string): string | null {
 }
 
 /**
- * Estratégia 1: Linha a linha (CSV ou texto tabular)
- * Assume que cada linha tem: código, nome, [espessura], [peso]
+ * Estrategia para linhas tabulares (tab-separated) extraidas do PDF.
+ * Quando a extracao de PDF preserva posicao de colunas com tabs,
+ * cada campo esta claramente separado.
  */
+function parseTabular(line: string, codigo: string): { nome: string; peso: number | null; espessura: number | null } {
+  const cols = line.split('\t').map((c) => c.trim()).filter(Boolean);
+  let nome = '';
+  let peso: number | null = null;
+  let espessura: number | null = null;
+
+  for (const col of cols) {
+    // Pular a coluna que e so o codigo
+    if (col === codigo) continue;
+
+    // Tentar extrair peso/espessura da coluna
+    const pesoMatch = extractPeso(col);
+    if (pesoMatch !== null && peso === null) {
+      peso = pesoMatch;
+      continue;
+    }
+    const espMatch = extractEspessura(col);
+    if (espMatch !== null && espessura === null) {
+      espessura = espMatch;
+      continue;
+    }
+
+    // Se e texto (nao so numeros), pode ser o nome
+    if (/[a-zA-ZÀ-ÿ]/.test(col) && !nome) {
+      nome = col.slice(0, 80);
+    }
+  }
+
+  return { nome: nome || codigo, peso, espessura };
+}
+
+/**
+ * Limpa o nome extraido removendo lixo numerico e tecnico
+ */
+function cleanNome(raw: string, codigo: string): string {
+  const cleaned = raw
+    // Remover o codigo do perfil
+    .replace(new RegExp(codigo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '')
+    // Remover dados com unidades
+    .replace(/\d+[.,]\d+\s*(?:kg\/m|g\/m|mm|kg|m)\b/gi, '')
+    // Remover dados de secao tecnica (Jx, Wx, Ix etc. com valores)
+    .replace(/[IJWSA]x?[xt]?\s*=\s*[\d\s]+(?:mm\d*)?/gi, '')
+    // Remover sequencias de numeros pequenos separados por espaco (dados de diagrama: "4 3 4 3 4 3")
+    .replace(/(?:\b\d{1,2}\b[\s,]+){3,}/g, '')
+    // Remover numeros isolados grandes
+    .replace(/\b\d[\d\s]{3,}\b/g, '')
+    // Remover numeros decimais soltos
+    .replace(/\b\d+[.,]\d+\b/g, '')
+    // Remover numeros inteiros soltos (exceto se parte de palavra)
+    .replace(/(?<![A-Za-z])\b\d{1,5}\b(?![A-Za-z])/g, '')
+    // Remover pontuacao solta
+    .replace(/[()[\]{}<>|\\]/g, '')
+    // Normalizar espacos
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[\s.,;:-]+|[\s.,;:-]+$/g, '')
+    .trim()
+    .slice(0, 80);
+
+  // Se o nome resultante e muito curto ou so tem numeros, usar codigo
+  if (cleaned.length < 2 || /^\d+$/.test(cleaned)) return codigo;
+  return cleaned;
+}
+
 function parseLinhaALinha(text: string): ParsedPerfil[] {
   const lines = text.split(/\n|\r\n/).map((l) => l.trim()).filter(Boolean);
   const perfis: ParsedPerfil[] = [];
   const seenCodigos = new Set<string>();
 
   for (const line of lines) {
-    // Ignorar cabeçalhos e linhas muito curtas
+    // Ignorar cabecalhos, linhas curtas e lixo
     if (line.length < 4) continue;
-    if (/^(codigo|code|ref|item|descrição|peso|esp)/i.test(line)) continue;
+    if (isGarbageLine(line)) continue;
 
     const codigo = extractCodigo(line);
     if (!codigo || seenCodigos.has(codigo)) continue;
 
-    let peso = extractPeso(line);
-    let espessura = extractEspessura(line);
+    let peso: number | null = null;
+    let espessura: number | null = null;
+    let nome: string;
 
-    // Fallback colunar: detecta por casas decimais quando não há unidade explícita
+    // Se a linha tem tabs, usar parsing tabular (colunas bem definidas)
+    if (line.includes('\t')) {
+      const tabData = parseTabular(line, codigo);
+      nome = tabData.nome;
+      peso = tabData.peso;
+      espessura = tabData.espessura;
+    } else {
+      nome = cleanNome(line, codigo);
+    }
+
+    // Fallback: extracao direta de peso/espessura da linha inteira
+    if (peso === null) peso = extractPeso(line);
+    if (espessura === null) espessura = extractEspessura(line);
+
+    // Fallback colunar: detecta por casas decimais quando nao ha unidade explicita
     if (peso === null || espessura === null) {
       const colunar = extractDadosColunares(line, codigo);
       if (peso === null) peso = colunar.peso;
       if (espessura === null) espessura = colunar.espessura;
     }
 
-    // Nome: tudo que não é o código, dados técnicos ou unidades
-    const nome = line
-      .replace(codigo, '')
-      .replace(/\d+[.,]\d+\s*(?:kg\/m|g\/m|mm|kg|m)/gi, '')
-      // Remover dados de seção técnica (Jx, Wx, Ix etc. com valores)
-      .replace(/[IJWSA]x?[xt]?\s*=\s*[\d\s]+(?:mm\d*)?/gi, '')
-      .replace(/\b\d[\d\s]{3,}\b/g, '') // números grandes (separador de milhar europeu)
-      .replace(/\s{2,}/g, ' ')
-      .trim()
-      .slice(0, 80);
-
     seenCodigos.add(codigo);
     perfis.push({
       codigo,
-      nome: nome || codigo,
+      nome,
       tipo: detectTipo(line),
       peso_kg_m: peso,
       espessura_mm: espessura,
@@ -242,14 +338,14 @@ function parsePorBlocos(text: string): ParsedPerfil[] {
   const perfis: ParsedPerfil[] = [];
   const seenCodigos = new Set<string>();
 
-  // Divide em blocos por código detectado
-  const codePattern = /\b([A-Z]{1,4}[-.]?\d{2,6}(?:[-/]\w{1,4})?)\b/g;
+  // Divide em blocos por codigo detectado (sem barras para evitar codigos combinados)
+  const codePattern = /\b([A-Z]{1,4}[-.]?\d{2,6})\b/g;
   let match: RegExpExecArray | null;
   const positions: Array<{ code: string; index: number }> = [];
 
   while ((match = codePattern.exec(text)) !== null) {
     const code = match[1];
-    if (!/^(20\d{2}|19\d{2}|\d{1,2})$/.test(code) && code.length >= 3) {
+    if (!isFalsePositive(code) && code.length >= 3) {
       positions.push({ code, index: match.index });
     }
   }
@@ -268,18 +364,12 @@ function parsePorBlocos(text: string): ParsedPerfil[] {
       if (peso === null) peso = colunar.peso;
       if (espessura === null) espessura = colunar.espessura;
     }
-    const nome = bloco
-      .replace(code, '')
-      .replace(/\d+[.,]\d+\s*(?:kg\/m|g\/m|mm|kg|m)/gi, '')
-      .replace(/[IJWSA]x?[xt]?\s*=\s*[\d\s]+(?:mm\d*)?/gi, '')
-      .replace(/\s{2,}/g, ' ')
-      .trim()
-      .slice(0, 80);
+    const nome = cleanNome(bloco, code);
 
     seenCodigos.add(code);
     perfis.push({
       codigo: code,
-      nome: nome || code,
+      nome,
       tipo: detectTipo(bloco),
       peso_kg_m: peso,
       espessura_mm: espessura,
@@ -298,6 +388,7 @@ function parseModelos(text: string): ParsedModelo[] {
   const lines = text.split(/\n|\r\n/).filter(Boolean);
 
   for (const line of lines) {
+    if (isGarbageLine(line)) continue;
     const lower = line.toLowerCase();
     const isModelo = MODELO_KEYWORDS.some((kw) => lower.includes(kw));
     if (!isModelo) continue;
@@ -305,12 +396,13 @@ function parseModelos(text: string): ParsedModelo[] {
     const codigo = extractCodigo(line);
     if (!codigo || seenCodigos.has(codigo)) continue;
 
+    const nome = cleanNome(line, codigo);
     seenCodigos.add(codigo);
     modelos.push({
       codigo,
-      nome: line.replace(codigo, '').replace(/\s{2,}/g, ' ').trim().slice(0, 80) || codigo,
+      nome,
       tipo: lower.includes('porta') ? 'porta' : 'janela',
-      descricao: line.slice(0, 120),
+      descricao: line.replace(/\s{2,}/g, ' ').trim().slice(0, 120),
     });
   }
 

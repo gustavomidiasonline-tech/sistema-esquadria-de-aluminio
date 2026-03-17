@@ -146,7 +146,21 @@ export function useSubscription() {
     enabled: !!user,
   });
 
-  const currentPlan: PlanType = (subscription as { plan?: PlanType } | null)?.plan || "basico";
+  // Super Admin override: se há um super_admin ativo no sistema local, libera plano avançado
+  const hasSuperAdmin = useMemo(() => {
+    try {
+      const stored = localStorage.getItem('alumy_admins');
+      if (!stored) return false;
+      const admins = JSON.parse(stored) as Array<{ cargo: string; status: string }>;
+      return admins.some((a) => a.cargo === 'super_admin' && a.status === 'ativo');
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const currentPlan: PlanType = hasSuperAdmin
+    ? "avancado"
+    : (subscription as { plan?: PlanType } | null)?.plan || "basico";
 
   const hasFeature = useMemo(() => {
     return (feature: FeatureKey): boolean => {

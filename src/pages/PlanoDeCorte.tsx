@@ -1,15 +1,19 @@
 import { AppLayout } from "@/components/AppLayout";
 import { useState, useMemo } from "react";
-import { Plus, ArrowLeft, Printer, Save, Search, Download } from "lucide-react";
+import { Plus, ArrowLeft, Save, Search, Download } from "lucide-react";
 import { exportListaCortePDF } from "@/lib/pdf-export";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ProfileCuttingTable } from "@/components/plano-de-corte/ProfileCuttingTable";
 import { ProductThumbnail } from "@/components/plano-de-corte/ProductThumbnail";
-import { produtosEsquadria, type PerfilCorte } from "@/data/perfis-aluminio";
+import { produtosEsquadria, perfisAluminio, type PerfilCorte } from "@/data/perfis-aluminio";
+import { calcularVidros, calcularFerragens, calcularMateriaisAuxiliares, type ItemVidro, type ItemFerragem } from "@/lib/calculo-esquadria";
 import { toast } from "sonner";
 
 /** Recalcula as medidas dos perfis proporcionalmente às novas dimensões */
@@ -135,6 +139,17 @@ const PlanoDeCorte = () => {
       ? recalcularPerfis(produto.perfis, produto.largura, produto.altura, newL, newA)
       : [];
 
+    // Motor de engenharia: vidros, ferragens e materiais
+    const vidros: ItemVidro[] = produto
+      ? calcularVidros(produto.tipo, newL, newA, produto.folhas)
+      : [];
+    const ferragens: ItemFerragem[] = produto
+      ? calcularFerragens(produto.tipo, newL, newA, produto.folhas)
+      : [];
+    const materiaisAux: ItemFerragem[] = produto
+      ? calcularMateriaisAuxiliares(produto.tipo, newL, newA)
+      : [];
+
     const handleSalvar = () => {
       setPlanos(prev => prev.map(p =>
         p.id === selectedPlano.id
@@ -147,9 +162,9 @@ const PlanoDeCorte = () => {
 
     return (
       <AppLayout>
-        <div className="max-w-7xl space-y-0">
+        <div className="max-w-7xl space-y-4">
           {/* Top bar */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-2">
             <button onClick={() => setSelectedPlano(null)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-5 w-5" />
             </button>
@@ -157,11 +172,22 @@ const PlanoDeCorte = () => {
               exportListaCortePDF(
                 produto?.nome || "Produto",
                 newL, newA,
-                recalculatedPerfis.map(p => ({
-                  codigo: p.perfilCodigo, posicao: p.posicao,
-                  medida: p.medida, quantidade: p.quantidade,
-                  anguloEsq: p.anguloEsquerdo, anguloDir: p.anguloDireito,
-                }))
+                recalculatedPerfis.map(p => {
+                  const perfilInfo = perfisAluminio.find(pa => pa.codigo === p.perfilCodigo);
+                  return {
+                    codigo: p.perfilCodigo,
+                    descricao: perfilInfo?.descricao || "",
+                    posicao: p.posicao,
+                    medida: p.medida,
+                    quantidade: p.quantidade,
+                    pesoMetro: perfilInfo?.peso || 0,
+                    anguloEsq: p.anguloEsquerdo,
+                    anguloDir: p.anguloDireito,
+                  };
+                }),
+                vidros,
+                ferragens,
+                materiaisAux
               );
               toast.success("PDF gerado!");
             }}>
@@ -170,7 +196,7 @@ const PlanoDeCorte = () => {
           </div>
 
           {/* Product header */}
-          <div className="glass-card-premium p-6 mb-6">
+          <div className="glass-card-premium p-6">
             <div className="flex items-start gap-6">
               {produto && (
                 <ProductThumbnail tipo={produto.tipo} folhas={produto.folhas} className="w-32 h-28" />
@@ -219,8 +245,95 @@ const PlanoDeCorte = () => {
             />
           )}
 
+          {/* Vidros */}
+          {vidros.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Cálculo de Vidros</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead className="text-right">Largura (mm)</TableHead>
+                        <TableHead className="text-right">Altura (mm)</TableHead>
+                        <TableHead className="text-right">Qtd</TableHead>
+                        <TableHead className="text-right">Área (m²)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {vidros.map((v, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{v.descricao}</TableCell>
+                          <TableCell className="text-right font-mono">{v.largura_mm}</TableCell>
+                          <TableCell className="text-right font-mono">{v.altura_mm}</TableCell>
+                          <TableCell className="text-right font-bold">{v.quantidade}</TableCell>
+                          <TableCell className="text-right font-bold text-primary">{v.area_m2} m²</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Ferragens e Materiais */}
+          {(ferragens.length > 0 || materiaisAux.length > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {ferragens.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Lista de Ferragens</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1">
+                      {ferragens.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                          <div>
+                            <span className="text-sm">{f.nome}</span>
+                            {f.observacao && <span className="text-xs text-muted-foreground ml-1">({f.observacao})</span>}
+                          </div>
+                          <div className="flex items-center gap-1 font-bold text-sm">
+                            <span className="text-primary">{f.quantidade}</span>
+                            <span className="text-muted-foreground text-xs">{f.unidade}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {materiaisAux.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Materiais Auxiliares</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1">
+                      {materiaisAux.map((m, i) => (
+                        <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                          <div>
+                            <span className="text-sm">{m.nome}</span>
+                            {m.observacao && <span className="text-xs text-muted-foreground ml-1">({m.observacao})</span>}
+                          </div>
+                          <div className="flex items-center gap-1 font-bold text-sm">
+                            <span className="text-primary">{m.quantidade}</span>
+                            <span className="text-muted-foreground text-xs">{m.unidade}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
           {/* Save button */}
-          <div className="flex justify-end mt-4">
+          <div className="flex justify-end">
             <Button className="gap-2" onClick={handleSalvar}>
               <Save className="h-4 w-4" /> Salvar
             </Button>

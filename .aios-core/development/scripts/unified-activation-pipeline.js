@@ -49,7 +49,7 @@ const { PermissionMode } = require('../../core/permissions');
 const GreetingPreferenceManager = require('./greeting-preference-manager');
 const ContextDetector = require('../../core/session/context-detector');
 const WorkflowNavigator = require('./workflow-navigator');
-const { isProAvailable, loadProModule } = require('../../../bin/utils/pro-detector');
+const { isProAvailable, loadProModule } = require('../../../bin/utils/pro-detector.cjs');
 
 /**
  * ACT-11: Loader importance tiers with per-tier timeout budgets.

@@ -37,6 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("*")
       .eq("user_id", userId)
       .single();
+
+    // Auto-provision: se profile existe mas não tem company_id, criar via RPC (SECURITY DEFINER)
+    if (data && !data.company_id) {
+      const { data: newCompanyId } = await supabase.rpc("auto_provision_company");
+      if (newCompanyId) {
+        data.company_id = newCompanyId;
+      }
+    }
+
     setProfile(data);
   };
 

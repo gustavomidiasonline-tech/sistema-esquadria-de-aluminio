@@ -45,7 +45,44 @@ export class FileUploadService {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        fullText += textContent.items.map((item: { str: string }) => item.str).join(' ') + '\n';
+        // Preservar estrutura tabular: agrupar items por posicao Y (mesma linha)
+        // e separar com tab entre colunas distantes
+        interface TextItem { str: string; transform: number[]; width: number }
+        const items = textContent.items as TextItem[];
+        if (items.length > 0 && items[0].transform) {
+          // Agrupar por linha (posicao Y arredondada)
+          const lines = new Map<number, TextItem[]>();
+          for (const item of items) {
+            if (!item.str.trim()) continue;
+            const y = Math.round(item.transform[5]); // Y position
+            if (!lines.has(y)) lines.set(y, []);
+            lines.get(y)!.push(item);
+          }
+          // Ordenar linhas por Y (de cima pra baixo = Y decrescente)
+          const sortedLines = [...lines.entries()].sort((a, b) => b[0] - a[0]);
+          for (const [, lineItems] of sortedLines) {
+            // Ordenar items dentro da linha por X (esquerda pra direita)
+            lineItems.sort((a, b) => a.transform[4] - b.transform[4]);
+            let lineText = '';
+            let lastX = -1;
+            for (const item of lineItems) {
+              const x = item.transform[4];
+              // Se a distancia entre items e grande, inserir tab (separador de coluna)
+              if (lastX >= 0 && (x - lastX) > 30) {
+                lineText += '\t';
+              } else if (lastX >= 0 && (x - lastX) > 5) {
+                lineText += ' ';
+              }
+              lineText += item.str;
+              lastX = x + (item.width || item.str.length * 5);
+            }
+            fullText += lineText + '\n';
+          }
+        } else {
+          // Fallback simples se nao tem transform
+          fullText += items.map((item: TextItem) => item.str).join(' ') + '\n';
+        }
+        fullText += '\n'; // separador de pagina
       }
 
       return this.extractNumbers(fullText, 'pdf');
