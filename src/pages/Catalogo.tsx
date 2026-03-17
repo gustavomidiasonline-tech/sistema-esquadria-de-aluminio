@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CatalogImportDialog } from '@/components/catalog/CatalogImportDialog';
+import { CleanupCatalogButton } from '@/components/catalog/CleanupCatalogButton';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Package, Layers, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -88,10 +89,13 @@ export default function Catalogo() {
               Perfis e modelos importados de catálogos — usados nos cálculos automaticamente
             </p>
           </div>
-          <Button onClick={() => setDialogOpen(true)} className="gap-2">
-            <Upload className="h-4 w-4" />
-            Importar Catálogo (IA)
-          </Button>
+          <div className="flex gap-2">
+            <CleanupCatalogButton onSuccess={() => queryClient.invalidateQueries({ queryKey: ['perfis_catalogo', 'window_models'] })} />
+            <Button onClick={() => setDialogOpen(true)} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Importar Catálogo (IA)
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
