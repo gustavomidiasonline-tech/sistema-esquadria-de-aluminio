@@ -68,16 +68,17 @@ const ESPESSURA_PATTERNS = [
 ];
 
 // ─── Palavras-chave de tipo ───────────────────────────────────────────────────
+// IMPORTANTE: Tipos DEVEM corresponder à constraint window_models_tipo_check
+// Valores válidos: 'correr', 'basculante', 'maxim-ar', 'fixo', 'pivotante', 'giro', 'balcao', 'camarao'
 const TIPO_KEYWORDS: Record<string, string[]> = {
-  marco: ['marco', 'frame', 'caixilho'],
-  folha: ['folha', 'wing', 'sash', 'batente'],
-  trilho: ['trilho', 'guia', 'track', 'rail', 'calha'],
-  veneziana: ['veneziana', 'persiana', 'shutter', 'louver'],
-  estrutural: ['estrutural', 'reforço', 'structural', 'reinforc'],
-  acabamento: ['arremate', 'acabamento', 'trim', 'cover', 'tampa'],
-  janela: ['janela', 'window', 'janel'],
-  porta: ['porta', 'door'],
-  complemento: ['complemento', 'acessório', 'accesso', 'plug', 'cap'],
+  correr: ['correr', 'sliding', 'deslizante', 'track', 'trilho'],
+  basculante: ['basculante', 'casement', 'batente', 'oscilante'],
+  'maxim-ar': ['maxim-ar', 'maximar', 'máximar', 'awning'],
+  fixo: ['fixo', 'fixed', 'painel', 'janela fixa'],
+  pivotante: ['pivotante', 'pivot', 'eixo central'],
+  giro: ['giro', 'turnable', 'rotação', 'rotating'],
+  balcao: ['balcão', 'balcao', 'bay window', 'sacada'],
+  camarao: ['camarão', 'camarao', 'corner window'],
 };
 
 // ─── Palavras-chave de modelo de janela ──────────────────────────────────────
@@ -97,7 +98,8 @@ function detectTipo(text: string): string {
   for (const [tipo, keywords] of Object.entries(TIPO_KEYWORDS)) {
     if (keywords.some((kw) => lower.includes(kw))) return tipo;
   }
-  return 'perfil';
+  // Fallback para tipo válido conforme constraint
+  return 'fixo';
 }
 
 function extractPeso(text: string): number | null {

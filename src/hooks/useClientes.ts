@@ -1,20 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import type { Tables } from '@/integrations/supabase/types';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 
-export type Cliente = Tables<'clientes'>;
+export interface Cliente {
+  id: string;
+  nome: string;
+  email?: string;
+  telefone?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  cnpj_cpf?: string;
+  created_at: string;
+}
 
 export function useClientes() {
-  return useQuery({
-    queryKey: ['clientes'],
-    queryFn: async (): Promise<Cliente[]> => {
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .order('nome', { ascending: true });
-
-      if (error) throw error;
-      return data ?? [];
-    },
+  return useSupabaseQuery<Cliente[]>('clientes', {
+    orderBy: { column: 'nome', ascending: true },
   });
 }
