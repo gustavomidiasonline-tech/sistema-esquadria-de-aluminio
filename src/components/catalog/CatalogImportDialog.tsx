@@ -1,10 +1,11 @@
 /**
- * CatalogImportDialog — Importação de catálogos de fabricantes via IA
- * Upload de PDF/texto → processamento Claude → review → confirmar importação
+ * CatalogImportDialog — Importação local de catálogos de fabricantes
+ * 100% local: PDF.js extrai texto → regex extrai dados → salva no banco.
+ * Nenhuma API externa necessária.
  */
 
 import { useState, useRef } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Package, Layers } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Package, Layers, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,13 +14,13 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { CatalogImportService, type ImportJob } from '@/services/catalog-import.service';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import { FileUploadService } from '@/services/file-upload.service';
+import { CatalogParserService, type ParsedPerfil, type ParsedModelo } from '@/services/catalog-parser.service';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CatalogImportDialogProps {
   open: boolean;
@@ -27,15 +28,14 @@ interface CatalogImportDialogProps {
   onSuccess?: () => void;
 }
 
-type Step = 'upload' | 'processing' | 'review' | 'done';
+type Step = 'upload' | 'processing' | 'preview' | 'done';
 
-interface ReviewData {
-  jobId: string;
+interface PreviewData {
   fabricante: string;
-  totalPerfis: number;
-  totalModelos: number;
+  perfis: ParsedPerfil[];
+  modelos: ParsedModelo[];
   confianca: number;
-  avisos: string[];
+  linhasIgnoradas: number;
 }
 
 export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogImportDialogProps) {
@@ -45,11 +45,9 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
 
   const [step, setStep] = useState<Step>('upload');
   const [loading, setLoading] = useState(false);
-  const [apiKey, setApiKey] = useState('');
   const [textoManual, setTextoManual] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [reviewData, setReviewData] = useState<ReviewData | null>(null);
-  const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
+  const [preview, setPreview] = useState<PreviewData | null>(null);
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -59,14 +57,13 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
     }
   }
 
-  async function handleIniciarImportacao() {
-    if (!companyId) return;
-    if (!apiKey.trim()) {
-      toast({ title: 'API Key necessária', description: 'Insira sua chave da API Claude', variant: 'destructive' });
-      return;
-    }
+  async function handleProcessar() {
     if (!selectedFile && !textoManual.trim()) {
-      toast({ title: 'Conteúdo necessário', description: 'Selecione um arquivo ou cole o texto do catálogo', variant: 'destructive' });
+      toast({
+        title: 'Conteúdo necessário',
+        description: 'Selecione um arquivo PDF/TXT ou cole o texto do catálogo.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -74,53 +71,42 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
     setStep('processing');
 
     try {
-      let conteudo = textoManual;
-      let nomeArquivo = 'texto-manual.txt';
+      let texto = textoManual;
 
       if (selectedFile) {
-        conteudo = await CatalogImportService.extrairTextoPDF(selectedFile);
-        nomeArquivo = selectedFile.name;
+        const ext = selectedFile.name.split('.').pop()?.toLowerCase();
+        if (ext === 'pdf') {
+          const result = await FileUploadService.processPDF(selectedFile);
+          if (!result.success || !result.rawText) {
+            throw new Error(result.error ?? 'Falha ao extrair texto do PDF');
+          }
+          texto = result.rawText;
+        } else {
+          // TXT/CSV: ler diretamente
+          texto = await selectedFile.text();
+        }
       }
 
-      const job = await CatalogImportService.iniciarImportacao(
-        companyId,
-        nomeArquivo,
-        conteudo,
-        apiKey
-      );
-      setCurrentJob(job);
-
-      // Poll até concluir (máx 60s)
-      const jobConcluido = await pollJobStatus(job.id, companyId);
-      setCurrentJob(jobConcluido);
-
-      // Buscar dados do job para review
-      const { data } = await import('@/integrations/supabase/client').then((m) =>
-        m.supabase
-          .from('ai_import_jobs')
-          .select('dados_para_import, total_perfis, total_modelos')
-          .eq('id', job.id)
-          .single()
-      );
-
-      if (data) {
-        const dadosImport = data.dados_para_import as {
-          fabricante?: string;
-          confianca?: number;
-          avisos?: string[];
-        } | null;
-
-        setReviewData({
-          jobId: job.id,
-          fabricante: dadosImport?.fabricante ?? 'Desconhecido',
-          totalPerfis: (data.total_perfis as number) ?? 0,
-          totalModelos: (data.total_modelos as number) ?? 0,
-          confianca: dadosImport?.confianca ?? 0,
-          avisos: dadosImport?.avisos ?? [],
-        });
+      if (!texto.trim()) {
+        throw new Error('Nenhum texto extraído do arquivo. Tente colar o conteúdo manualmente.');
       }
 
-      setStep('review');
+      const result = CatalogParserService.parse(texto);
+
+      if (result.perfis.length === 0 && result.modelos.length === 0) {
+        throw new Error(
+          'Nenhum perfil ou modelo detectado no texto. Verifique se o catálogo está em formato legível (não é imagem escaneada).',
+        );
+      }
+
+      setPreview({
+        fabricante: result.fabricante,
+        perfis: result.perfis,
+        modelos: result.modelos,
+        confianca: result.confianca,
+        linhasIgnoradas: result.linhasIgnoradas,
+      });
+      setStep('preview');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao processar catálogo';
       toast({ title: 'Erro no processamento', description: message, variant: 'destructive' });
@@ -130,21 +116,64 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
     }
   }
 
-  async function handleConfirmarImportacao() {
-    if (!companyId || !reviewData) return;
+  async function handleConfirmar() {
+    if (!companyId || !preview) return;
     setLoading(true);
 
     try {
-      await CatalogImportService.confirmarImportacao(reviewData.jobId, companyId);
+      let perfisSalvos = 0;
+      let modelosSalvos = 0;
+
+      // Salvar perfis em lotes de 50
+      if (preview.perfis.length > 0) {
+        const perfisBatch = preview.perfis.map((p) => ({
+          company_id: companyId,
+          codigo: p.codigo,
+          nome: p.nome,
+          tipo: p.tipo,
+          peso_kg_m: p.peso_kg_m,
+          espessura_mm: p.espessura_mm,
+        }));
+
+        for (let i = 0; i < perfisBatch.length; i += 50) {
+          const chunk = perfisBatch.slice(i, i + 50);
+          const { error } = await supabase
+            .from('perfis_catalogo')
+            .upsert(chunk, { onConflict: 'company_id,codigo', ignoreDuplicates: false });
+          if (error) throw error;
+          perfisSalvos += chunk.length;
+        }
+      }
+
+      // Salvar modelos
+      if (preview.modelos.length > 0) {
+        const modelosBatch = preview.modelos.map((m) => ({
+          company_id: companyId,
+          codigo: m.codigo,
+          nome: m.nome,
+          tipo: m.tipo,
+          descricao: m.descricao,
+        }));
+
+        for (let i = 0; i < modelosBatch.length; i += 50) {
+          const chunk = modelosBatch.slice(i, i + 50);
+          const { error } = await supabase
+            .from('window_models')
+            .upsert(chunk, { onConflict: 'company_id,codigo', ignoreDuplicates: false });
+          if (error) throw error;
+          modelosSalvos += chunk.length;
+        }
+      }
+
       setStep('done');
       toast({
         title: 'Catálogo importado!',
-        description: `${reviewData.totalPerfis} perfis e ${reviewData.totalModelos} modelos adicionados ao catálogo.`,
+        description: `${perfisSalvos} perfis e ${modelosSalvos} modelos salvos no sistema.`,
       });
       onSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao confirmar importação';
-      toast({ title: 'Erro ao confirmar', description: message, variant: 'destructive' });
+      const message = err instanceof Error ? err.message : 'Erro ao salvar no banco de dados';
+      toast({ title: 'Erro ao salvar', description: message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -154,71 +183,65 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
     setStep('upload');
     setSelectedFile(null);
     setTextoManual('');
-    setReviewData(null);
-    setCurrentJob(null);
+    setPreview(null);
     setLoading(false);
     onOpenChange(false);
   }
 
+  const confiancaVariant =
+    (preview?.confianca ?? 0) >= 0.8
+      ? 'default'
+      : (preview?.confianca ?? 0) >= 0.5
+        ? 'secondary'
+        : 'destructive';
+
   return (
     <Dialog open={open} onOpenChange={handleFechar}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
             Importar Catálogo de Fabricante
           </DialogTitle>
           <DialogDescription>
-            Use IA para extrair perfis e modelos automaticamente de catálogos técnicos.
+            Extração local via fórmulas inteligentes — sem API externa, sem custo adicional.
           </DialogDescription>
         </DialogHeader>
 
+        {/* ── STEP: UPLOAD ── */}
         {step === 'upload' && (
           <div className="space-y-4">
-            {/* API Key */}
-            <div className="space-y-2">
-              <Label htmlFor="apiKey">Chave API Claude (Anthropic)</Label>
-              <Input
-                id="apiKey"
-                type="password"
-                placeholder="sk-ant-..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Necessária para extração por IA. Nunca armazenamos sua chave.
-              </p>
+            {/* Dropzone */}
+            <div
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {selectedFile ? (
+                <div className="flex items-center justify-center gap-2 text-sm">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <span className="font-medium">{selectedFile.name}</span>
+                  <button
+                    className="ml-2 text-muted-foreground hover:text-foreground"
+                    onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm font-medium">Arraste ou clique para selecionar</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDF, TXT ou CSV de catálogo técnico</p>
+                </>
+              )}
             </div>
-
-            {/* Upload arquivo */}
-            <div className="space-y-2">
-              <Label>Arquivo do Catálogo</Label>
-              <div
-                className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {selectedFile ? (
-                  <div className="flex items-center justify-center gap-2 text-sm">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{selectedFile.name}</span>
-                  </div>
-                ) : (
-                  <>
-                    <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Clique para selecionar PDF ou TXT
-                    </p>
-                  </>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.txt,.text"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.txt,.csv,.text"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
 
             {/* Separador */}
             <div className="relative">
@@ -226,129 +249,167 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">ou</span>
+                <span className="bg-background px-2 text-muted-foreground">ou cole o texto</span>
               </div>
             </div>
 
-            {/* Texto manual */}
-            <div className="space-y-2">
-              <Label htmlFor="textoManual">Cole o texto do catálogo</Label>
-              <Textarea
-                id="textoManual"
-                placeholder="Cole aqui o conteúdo do catálogo técnico..."
-                value={textoManual}
-                onChange={(e) => {
-                  setTextoManual(e.target.value);
-                  setSelectedFile(null);
-                }}
-                rows={5}
-                className="resize-none"
-              />
+            <Textarea
+              placeholder="Cole aqui o conteúdo do catálogo técnico (lista de perfis, tabela de códigos, etc.)..."
+              value={textoManual}
+              onChange={(e) => {
+                setTextoManual(e.target.value);
+                setSelectedFile(null);
+              }}
+              rows={6}
+              className="resize-none font-mono text-xs"
+            />
+
+            <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-3 text-xs text-blue-300">
+              <strong>Como funciona:</strong> o sistema usa padrões regex para detectar automaticamente
+              códigos de perfil (ex: A1234, PRF-456), pesos (kg/m), espessuras (mm) e tipos de peça.
+              Funciona melhor com PDFs com texto selecionável.
             </div>
 
             <Button
               className="w-full"
-              onClick={handleIniciarImportacao}
-              disabled={loading || (!selectedFile && !textoManual.trim()) || !apiKey.trim()}
+              onClick={handleProcessar}
+              disabled={loading || (!selectedFile && !textoManual.trim())}
             >
-              Processar com IA
+              Extrair dados do catálogo
             </Button>
           </div>
         )}
 
+        {/* ── STEP: PROCESSING ── */}
         {step === 'processing' && (
-          <div className="flex flex-col items-center gap-4 py-8">
+          <div className="flex flex-col items-center gap-4 py-10">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <div className="text-center">
-              <p className="font-medium">Analisando catálogo...</p>
+              <p className="font-medium">Extraindo dados localmente...</p>
               <p className="text-sm text-muted-foreground mt-1">
-                A IA está extraindo perfis e modelos. Isso pode levar até 30 segundos.
+                Aplicando padrões regex para detectar perfis e modelos.
               </p>
             </div>
           </div>
         )}
 
-        {step === 'review' && reviewData && (
+        {/* ── STEP: PREVIEW ── */}
+        {step === 'preview' && preview && (
           <div className="space-y-4">
+            {/* Resumo */}
             <div className="rounded-lg border p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Fabricante detectado</span>
-                <Badge variant="outline">{reviewData.fabricante}</Badge>
+                <Badge variant="outline">{preview.fabricante}</Badge>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-2xl font-bold">{reviewData.totalPerfis}</p>
-                    <p className="text-xs text-muted-foreground">Perfis extraídos</p>
-                  </div>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-md bg-muted/40 p-3">
+                  <Package className="h-5 w-5 mx-auto mb-1 text-blue-400" />
+                  <p className="text-2xl font-bold">{preview.perfis.length}</p>
+                  <p className="text-xs text-muted-foreground">Perfis</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-2xl font-bold">{reviewData.totalModelos}</p>
-                    <p className="text-xs text-muted-foreground">Modelos extraídos</p>
-                  </div>
+                <div className="rounded-md bg-muted/40 p-3">
+                  <Layers className="h-5 w-5 mx-auto mb-1 text-emerald-400" />
+                  <p className="text-2xl font-bold">{preview.modelos.length}</p>
+                  <p className="text-xs text-muted-foreground">Modelos</p>
+                </div>
+                <div className="rounded-md bg-muted/40 p-3">
+                  <CheckCircle className="h-5 w-5 mx-auto mb-1 text-primary" />
+                  <p className="text-2xl font-bold">{Math.round(preview.confianca * 100)}%</p>
+                  <p className="text-xs text-muted-foreground">Confiança</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Confiança da extração:</span>
-                <Badge
-                  variant={
-                    reviewData.confianca >= 0.8
-                      ? 'default'
-                      : reviewData.confianca >= 0.5
-                      ? 'secondary'
-                      : 'destructive'
-                  }
-                >
-                  {Math.round(reviewData.confianca * 100)}%
-                </Badge>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <AlertCircle className="h-3 w-3" />
+                {preview.linhasIgnoradas} linhas sem dados reconhecíveis ignoradas
               </div>
+
+              {preview.confianca < 0.5 && (
+                <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 p-2 text-xs text-yellow-300">
+                  Confiança baixa. O PDF pode conter imagens escaneadas. Revise os dados antes de confirmar.
+                </div>
+              )}
             </div>
 
-            {reviewData.avisos.length > 0 && (
-              <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/15 p-3 space-y-1">
-                <div className="flex items-center gap-2 text-yellow-800">
-                  <AlertCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Avisos da extração</span>
+            {/* Preview de perfis */}
+            {preview.perfis.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  Prévia dos perfis{' '}
+                  <Badge variant={confiancaVariant} className="ml-1 text-xs">
+                    {preview.perfis.length} detectados
+                  </Badge>
+                </p>
+                <div className="rounded-md border overflow-hidden">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b bg-muted/30">
+                        <th className="text-left p-2 text-muted-foreground">Código</th>
+                        <th className="text-left p-2 text-muted-foreground">Nome</th>
+                        <th className="text-left p-2 text-muted-foreground">Tipo</th>
+                        <th className="text-right p-2 text-muted-foreground">Peso</th>
+                        <th className="text-right p-2 text-muted-foreground">Esp.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.perfis.slice(0, 10).map((p, i) => (
+                        <tr key={i} className="border-b border-white/5">
+                          <td className="p-2 font-mono text-blue-300">{p.codigo}</td>
+                          <td className="p-2 max-w-[180px] truncate">{p.nome}</td>
+                          <td className="p-2">
+                            <Badge variant="secondary" className="text-xs">{p.tipo}</Badge>
+                          </td>
+                          <td className="p-2 text-right text-muted-foreground">
+                            {p.peso_kg_m != null ? `${p.peso_kg_m.toFixed(3)} kg/m` : '—'}
+                          </td>
+                          <td className="p-2 text-right text-muted-foreground">
+                            {p.espessura_mm != null ? `${p.espessura_mm} mm` : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {preview.perfis.length > 10 && (
+                    <p className="text-xs text-muted-foreground text-center py-2 bg-muted/20">
+                      + {preview.perfis.length - 10} perfis adicionais serão importados
+                    </p>
+                  )}
                 </div>
-                {reviewData.avisos.map((aviso, i) => (
-                  <p key={i} className="text-sm text-yellow-400 ml-6">• {aviso}</p>
-                ))}
               </div>
             )}
 
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setStep('upload')}>
-                Cancelar
+            {/* Botões */}
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setStep('upload')} disabled={loading}>
+                Voltar
               </Button>
               <Button
                 className="flex-1"
-                onClick={handleConfirmarImportacao}
-                disabled={loading || (reviewData.totalPerfis === 0 && reviewData.totalModelos === 0)}
+                onClick={handleConfirmar}
+                disabled={loading || (preview.perfis.length === 0 && preview.modelos.length === 0)}
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <CheckCircle className="h-4 w-4 mr-2" />
                 )}
-                Confirmar Importação
+                Confirmar importação
               </Button>
             </div>
           </div>
         )}
 
-        {step === 'done' && reviewData && (
-          <div className="flex flex-col items-center gap-4 py-8 text-center">
-            <CheckCircle className="h-12 w-12 text-green-500" />
+        {/* ── STEP: DONE ── */}
+        {step === 'done' && preview && (
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <CheckCircle className="h-14 w-14 text-green-500" />
             <div>
-              <p className="font-medium text-lg">Catálogo importado com sucesso!</p>
+              <p className="font-semibold text-lg">Catálogo importado com sucesso!</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {reviewData.totalPerfis} perfis e {reviewData.totalModelos} modelos
-                foram adicionados ao catálogo de {reviewData.fabricante}.
+                {preview.perfis.length} perfis e {preview.modelos.length} modelos de{' '}
+                <strong>{preview.fabricante}</strong> foram adicionados ao sistema.
               </p>
             </div>
             <Button onClick={handleFechar}>Fechar</Button>
@@ -357,35 +418,4 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
       </DialogContent>
     </Dialog>
   );
-}
-
-// --- Helper: poll job status ---
-
-async function pollJobStatus(jobId: string, companyId: string): Promise<ImportJob> {
-  const MAX_ATTEMPTS = 30;
-  const INTERVAL_MS = 2000;
-
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
-
-    const { supabase } = await import('@/integrations/supabase/client');
-    const { data } = await supabase
-      .from('ai_import_jobs')
-      .select('*')
-      .eq('id', jobId)
-      .eq('company_id', companyId)
-      .single();
-
-    if (!data) continue;
-
-    const job = data as ImportJob;
-    if (job.status === 'concluido' || job.status === 'erro') {
-      if (job.status === 'erro') {
-        throw new Error(job.erro ?? 'Erro desconhecido no processamento');
-      }
-      return job;
-    }
-  }
-
-  throw new Error('Timeout: processamento demorou mais que o esperado');
 }
