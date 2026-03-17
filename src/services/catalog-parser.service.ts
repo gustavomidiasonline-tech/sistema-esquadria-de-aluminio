@@ -36,18 +36,22 @@ const CODIGO_PATTERNS = [
 
 // ─── Padrões de peso ─────────────────────────────────────────────────────────
 const PESO_PATTERNS = [
-  /(\d+[.,]\d{1,4})\s*kg\/m/gi,
-  /peso[:\s]+(\d+[.,]\d{1,4})/gi,
-  /(\d+[.,]\d{1,4})\s*g\/m/gi,   // gramas por metro → converter
-  /(\d+[.,]\d{1,4})\s*kg/gi,
+  /(\d+[.,]\d{1,4})\s*kg\/m/gi,                  // 0,450 kg/m
+  /peso[:\s]+(\d+[.,]\d{1,4})/gi,                 // peso: 0.450
+  /(\d+[.,]\d{1,4})\s*g\/m/gi,                    // gramas por metro → converter
+  /(\d+[.,]\d{1,4})\s*kg/gi,                      // 0,450 kg
+  /\bw\s*=\s*(\d+[.,]\d{1,4})/gi,                 // W = 0.450 (peso linear)
+  /(?:^|\s)(0[.,]\d{2,4}|\d[.,]\d{3,4})(?=\s|$)/gm, // decimal isolado tipo 0,450 ou 1,237 (coluna de peso)
 ];
 
 // ─── Padrões de espessura ────────────────────────────────────────────────────
 const ESPESSURA_PATTERNS = [
-  /esp(?:essura)?[.:\s]+(\d+[.,]\d*)\s*mm/gi,
-  /(\d+[.,]\d*)\s*mm\s+(?:esp|parede|wall)/gi,
-  /e\s*=\s*(\d+[.,]\d*)/gi,
-  /\b(\d+[.,]\d)\s*mm\b/gi,
+  /esp(?:essura)?[.:\s]+(\d+[.,]\d*)\s*mm/gi,     // espessura: 1,4mm
+  /(\d+[.,]\d*)\s*mm\s+(?:esp|parede|wall)/gi,    // 1,4mm esp
+  /e\s*=\s*(\d+[.,]\d*)/gi,                       // e = 1,4
+  /esp(?:essura)?\s*(?:parede\s*)?[=:]\s*(\d+[.,]\d*)/gi, // esp parede = 1,4
+  /\b(\d[.,]\d{1,2})\s*mm\b/gi,                   // 1,4 mm (número pequeno com mm)
+  /\bt(?:hickness)?\s*=\s*(\d+[.,]\d*)/gi,        // t = 1,4 ou thickness = 1,4
 ];
 
 // ─── Palavras-chave de tipo ───────────────────────────────────────────────────
@@ -83,16 +87,38 @@ function detectTipo(text: string): string {
 }
 
 function extractPeso(text: string): number | null {
-  for (const pattern of PESO_PATTERNS) {
+  // Padrões explícitos primeiro (mais confiáveis)
+  const explicit = PESO_PATTERNS.slice(0, 4);
+  for (const pattern of explicit) {
     pattern.lastIndex = 0;
     const match = pattern.exec(text);
     if (match) {
       let val = normalizeFloat(match[1]);
-      // Se em gramas/metro, converter para kg/m
-      if (/g\/m/i.test(text)) val = val / 1000;
+      if (/g\/m/i.test(match[0])) val = val / 1000;
       if (val > 0 && val < 50) return Math.round(val * 10000) / 10000;
     }
   }
+
+  // Padrão W= para peso linear
+  const wPattern = PESO_PATTERNS[4];
+  wPattern.lastIndex = 0;
+  const wMatch = wPattern.exec(text);
+  if (wMatch) {
+    const val = normalizeFloat(wMatch[1]);
+    if (val > 0 && val < 50) return Math.round(val * 10000) / 10000;
+  }
+
+  // Coluna isolada: decimal tipo 0,450 ou 1,237 — comum em catálogos tabulares
+  // Só usar se a linha contém um código de perfil (não linha de cabeçalho)
+  const colPattern = PESO_PATTERNS[5];
+  colPattern.lastIndex = 0;
+  const colMatch = colPattern.exec(text);
+  if (colMatch) {
+    const val = normalizeFloat(colMatch[1]);
+    // Faixa de peso real de perfil de alumínio: 0,05 a 10 kg/m
+    if (val >= 0.05 && val <= 10) return Math.round(val * 10000) / 10000;
+  }
+
   return null;
 }
 
@@ -142,10 +168,13 @@ function parseLinhaALinha(text: string): ParsedPerfil[] {
     const peso = extractPeso(line);
     const espessura = extractEspessura(line);
 
-    // Nome: tudo que não é o código, números e unidades
+    // Nome: tudo que não é o código, dados técnicos ou unidades
     const nome = line
       .replace(codigo, '')
       .replace(/\d+[.,]\d+\s*(?:kg\/m|g\/m|mm|kg|m)/gi, '')
+      // Remover dados de seção técnica (Jx, Wx, Ix etc. com valores)
+      .replace(/[IJWSA]x?[xt]?\s*=\s*[\d\s]+(?:mm\d*)?/gi, '')
+      .replace(/\b\d[\d\s]{3,}\b/g, '') // números grandes (separador de milhar europeu)
       .replace(/\s{2,}/g, ' ')
       .trim()
       .slice(0, 80);
