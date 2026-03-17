@@ -206,34 +206,34 @@ export function OrcamentoDetail({ orcamento, itens, onDeleteItem, onGerarOP }: O
       </div>
 
       {/* Summary KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-muted/30 border border-border rounded-lg p-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 xs:gap-3">
+        <div className="bg-muted/30 border border-border rounded-lg p-2 xs:p-3">
           <div className="flex items-center gap-2 mb-1">
             <Package className="h-3.5 w-3.5 text-primary" />
-            <span className="text-[10px] font-medium text-muted-foreground">Itens</span>
+            <span className="text-[9px] xs:text-[10px] font-medium text-muted-foreground truncate">Itens</span>
           </div>
-          <p className="text-lg font-bold text-foreground">{itens.length}</p>
+          <p className="text-base xs:text-lg font-bold text-foreground">{itens.length}</p>
         </div>
-        <div className="bg-muted/30 border border-border rounded-lg p-3">
+        <div className="bg-muted/30 border border-border rounded-lg p-2 xs:p-3">
           <div className="flex items-center gap-2 mb-1">
             <Square className="h-3.5 w-3.5 text-blue-500" />
-            <span className="text-[10px] font-medium text-muted-foreground">Vidro total</span>
+            <span className="text-[9px] xs:text-[10px] font-medium text-muted-foreground truncate">Vidro total</span>
           </div>
-          <p className="text-lg font-bold text-foreground">{totalM2.toFixed(2)} m2</p>
+          <p className="text-base xs:text-lg font-bold text-foreground">{totalM2.toFixed(2)} m2</p>
         </div>
-        <div className="bg-muted/30 border border-border rounded-lg p-3">
+        <div className="bg-muted/30 border border-border rounded-lg p-2 xs:p-3">
           <div className="flex items-center gap-2 mb-1">
             <Weight className="h-3.5 w-3.5 text-amber-500" />
-            <span className="text-[10px] font-medium text-muted-foreground">Peso est.</span>
+            <span className="text-[9px] xs:text-[10px] font-medium text-muted-foreground truncate">Peso est.</span>
           </div>
-          <p className="text-lg font-bold text-foreground">{totalWeight.toFixed(1)} kg</p>
+          <p className="text-base xs:text-lg font-bold text-foreground">{totalWeight.toFixed(1)} kg</p>
         </div>
-        <div className="bg-muted/30 border border-border rounded-lg p-3">
+        <div className="bg-muted/30 border border-border rounded-lg p-2 xs:p-3">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="text-[10px] font-medium text-muted-foreground">Valor total</span>
+            <span className="text-[9px] xs:text-[10px] font-medium text-muted-foreground truncate">Valor</span>
           </div>
-          <p className="text-lg font-bold text-primary">{fmt(totals.venda)}</p>
+          <p className="text-base xs:text-lg font-bold text-primary">{fmt(totals.venda)}</p>
         </div>
       </div>
 

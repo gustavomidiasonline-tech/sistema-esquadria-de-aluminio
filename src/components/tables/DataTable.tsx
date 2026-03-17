@@ -127,22 +127,22 @@ export function DataTable<T extends { id: string }>({
         {headerActions && <div className="flex justify-end">{headerActions}</div>}
         <div className="rounded-xl border border-border overflow-hidden">
           <div
-            className="bg-muted/40 px-4 py-3 grid"
+            className="bg-muted/40 px-2 xs:px-3 sm:px-4 py-2 sm:py-3 grid"
             style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}
           >
             {columns.map((col) => (
-              <span key={col.key} className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <span key={col.key} className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">
                 {col.header}
               </span>
             ))}
             {renderActions && <span />}
           </div>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="px-4 py-3 border-t border-border/50 flex gap-4">
+            <div key={i} className="px-2 xs:px-3 sm:px-4 py-2 sm:py-3 border-t border-border/50 flex gap-2 xs:gap-3 sm:gap-4">
               {columns.map((col) => (
                 <Skeleton key={col.key} className="h-4 flex-1" />
               ))}
-              {renderActions && <Skeleton className="h-4 w-20" />}
+              {renderActions && <Skeleton className="h-4 w-16 sm:w-20" />}
             </div>
           ))}
         </div>
@@ -154,8 +154,8 @@ export function DataTable<T extends { id: string }>({
     return (
       <div className="space-y-2">
         {headerActions && <div className="flex justify-end">{headerActions}</div>}
-        <div className="text-center py-12 text-muted-foreground">
-          {emptyIcon && <div className="flex justify-center mb-3">{emptyIcon}</div>}
+        <div className="text-center py-8 xs:py-10 sm:py-12 text-muted-foreground text-xs sm:text-sm">
+          {emptyIcon && <div className="flex justify-center mb-2 xs:mb-3">{emptyIcon}</div>}
           {emptyMessage}
         </div>
       </div>
@@ -167,27 +167,27 @@ export function DataTable<T extends { id: string }>({
       {headerActions && <div className="flex justify-end">{headerActions}</div>}
 
       <div className="rounded-xl border border-border overflow-hidden bg-card">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto -webkit-overflow-scrolling-touch scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+          <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="bg-muted/40 border-b border-border">
                 {columns.map((col) => (
                   <th
                     key={col.key}
                     className={cn(
-                      'px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap',
+                      'px-2 xs:px-3 sm:px-4 py-2 sm:py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap',
                       ALIGN_TH[col.align ?? 'left'],
                       col.sortable && 'cursor-pointer select-none hover:text-foreground transition-colors',
                     )}
                     onClick={col.sortable ? () => toggleSort(col.key) : undefined}
                   >
-                    <span className="inline-flex items-center">
+                    <span className="inline-flex items-center gap-1">
                       {col.header}
                       {col.sortable && <SortIcon colKey={col.key} />}
                     </span>
                   </th>
                 ))}
-                {renderActions && <th className="px-4 py-3 w-24" />}
+                {renderActions && <th className="px-2 xs:px-3 sm:px-4 py-2 sm:py-3 w-20 sm:w-24" />}
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -204,7 +204,7 @@ export function DataTable<T extends { id: string }>({
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className={cn('px-4 py-3 text-foreground', ALIGN_TD[col.align ?? 'left'])}
+                      className={cn('px-2 xs:px-3 sm:px-4 py-2 sm:py-3 text-foreground truncate', ALIGN_TD[col.align ?? 'left'])}
                     >
                       {col.render
                         ? col.render(row)
@@ -212,7 +212,7 @@ export function DataTable<T extends { id: string }>({
                     </td>
                   ))}
                   {renderActions && (
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 xs:px-3 sm:px-4 py-2 sm:py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">{renderActions(row)}</div>
                     </td>
                   )}
@@ -223,7 +223,7 @@ export function DataTable<T extends { id: string }>({
         </div>
 
         {hasFooter && (
-          <div className="border-t border-border bg-muted/30 px-4 py-2.5 flex items-center justify-between gap-4">
+          <div className="border-t border-border bg-muted/30 px-2 xs:px-3 sm:px-4 py-2 sm:py-2.5 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 xs:gap-4">
             <div className="text-xs text-muted-foreground">
               {footerContent ?? (
                 <span>
@@ -236,19 +236,19 @@ export function DataTable<T extends { id: string }>({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-10 w-10 min-touch-target"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={safePage === 1}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-xs text-muted-foreground px-1">
+                <span className="text-xs text-muted-foreground px-2">
                   {safePage} / {totalPages}
                 </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-10 w-10 min-touch-target"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
                 >
