@@ -43,7 +43,13 @@ export default function Catalogo() {
         .from('perfis_catalogo')
         .select('id, codigo, nome, tipo, peso_kg_m, espessura_mm, company_id')
         .order('codigo');
-      if (error) throw error;
+
+      console.log('📊 Query perfis_catalogo:', { data_count: data?.length ?? 0, error });
+
+      if (error) {
+        console.error('❌ Erro na query:', error);
+        throw error;
+      }
       return data ?? [];
     },
   });
@@ -56,7 +62,13 @@ export default function Catalogo() {
         .from('window_models')
         .select('id, codigo, nome, tipo, descricao, num_folhas')
         .order('codigo');
-      if (error) throw error;
+
+      console.log('📊 Query window_models:', { data_count: data?.length ?? 0, error });
+
+      if (error) {
+        console.error('❌ Erro na query:', error);
+        throw error;
+      }
       return data ?? [];
     },
   });
