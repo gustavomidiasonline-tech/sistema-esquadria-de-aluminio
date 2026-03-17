@@ -15,9 +15,15 @@
     "start:orquestrador": "cd squads/squad-aisistema-aliminio && node orquestrador.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.22.1"
   },
-  "keywords": ["erp", "aluminio", "vidracaria", "squads", "microservices"],
+  "keywords": [
+    "erp",
+    "aluminio",
+    "vidracaria",
+    "squads",
+    "microservices"
+  ],
   "author": "AIOX Development Team",
   "license": "MIT"
 }

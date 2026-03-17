@@ -148,6 +148,10 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
 
   async function handleConfirmar() {
     if (!preview) return;
+
+    console.log('👤 Profile:', profile);
+    console.log('🏢 CompanyId:', companyId);
+
     if (!companyId) {
       toast({
         title: 'Sessão expirada',
