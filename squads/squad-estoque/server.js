@@ -199,8 +199,8 @@ app.get('/status-estoque', (req, res) => {
     resumo,
     total_reservas: reservas.length,
     quantidade_total_reservada: totalReservas,
-    total_movimentacoes,
-    total_sincronizacoes,
+    total_movimentacoes: totalMovimentacoes,
+    total_sincronizacoes: totalSincronizacoes,
     ultimas_sincronizacoes: sincronizacoes.slice(-5)
   });
 });
