@@ -200,19 +200,21 @@ export const InventoryService = {
     const { data, error } = await supabase
       .from('inventory_items')
       .select('id, codigo, nome, quantidade_disponivel, quantidade_minima')
-      .eq('company_id', companyId)
-      .filter('quantidade_disponivel', 'lt', 'quantidade_minima');
+      .eq('company_id', companyId);
 
     if (error) throw databaseError(`Erro ao buscar alertas: ${error.message}`, { service: 'inventory', operation: 'getAlertasEstoque' });
 
-    return (data ?? []).map((item) => ({
-      itemId: item.id as string,
-      codigo: item.codigo as string,
-      nome: item.nome as string,
-      disponivel: item.quantidade_disponivel as number,
-      minimo: item.quantidade_minima as number,
-      deficit: (item.quantidade_minima as number) - (item.quantidade_disponivel as number),
-    }));
+    // Filtrar no JavaScript: quantidade_disponivel < quantidade_minima
+    return (data ?? [])
+      .filter(item => (item.quantidade_disponivel as number) < (item.quantidade_minima as number))
+      .map((item) => ({
+        itemId: item.id as string,
+        codigo: item.codigo as string,
+        nome: item.nome as string,
+        disponivel: item.quantidade_disponivel as number,
+        minimo: item.quantidade_minima as number,
+        deficit: (item.quantidade_minima as number) - (item.quantidade_disponivel as number),
+      }));
   },
 
   /**
