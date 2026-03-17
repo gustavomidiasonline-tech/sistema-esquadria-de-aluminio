@@ -1,109 +1,12 @@
 import type { SocialContact } from '@/components/redes-sociais/types';
 
-export const MOCK_CONTACTS: SocialContact[] = [
-  {
-    id: '1',
-    name: 'Maria Silva',
-    channel: 'whatsapp',
-    lastMessage: 'Oi! Você pode me ligar?',
-    lastMessageTime: 'Hoje 6:13 PM',
-    unread: 3,
-    starred: true,
-    online: true,
-    messages: [
-      { id: 'm1', text: 'Olá, tudo bem?', timestamp: 'Hoje 5:55 PM', fromMe: false, read: true },
-      { id: 'm2', text: 'Tudo sim! Como posso ajudar?', timestamp: 'Hoje 6:00 PM', fromMe: true, read: true },
-      { id: 'm3', text: 'Queria saber sobre o orçamento', timestamp: 'Hoje 6:10 PM', fromMe: false, read: true },
-      { id: 'm4', text: 'Oi! Você pode me ligar?', timestamp: 'Hoje 6:13 PM', fromMe: false, read: false },
-    ],
-  },
-  {
-    id: '2',
-    name: 'João Pereira',
-    channel: 'whatsapp',
-    lastMessage: 'Oi, tenho uma pergunta',
-    lastMessageTime: 'Hoje 5:45 PM',
-    unread: 1,
-    starred: true,
-    online: false,
-    messages: [
-      { id: 'm1', text: 'Bom dia!', timestamp: 'Hoje 5:30 PM', fromMe: false, read: true },
-      { id: 'm2', text: 'Bom dia, João! Em que posso ajudar?', timestamp: 'Hoje 5:35 PM', fromMe: true, read: true },
-      { id: 'm3', text: 'Oi, tenho uma pergunta', timestamp: 'Hoje 5:45 PM', fromMe: false, read: false },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Ana Rodrigues',
-    channel: 'instagram',
-    lastMessage: 'Adorei o produto! 😍',
-    lastMessageTime: 'Hoje 12:45 PM',
-    unread: 0,
-    starred: false,
-    online: true,
-    messages: [
-      { id: 'm1', text: 'Vi seu post e fiquei interessada', timestamp: 'Hoje 11:30 AM', fromMe: false, read: true },
-      { id: 'm2', text: 'Que ótimo! Temos várias opções disponíveis', timestamp: 'Hoje 11:45 AM', fromMe: true, read: true },
-      { id: 'm3', text: 'Adorei o produto! 😍', timestamp: 'Hoje 12:45 PM', fromMe: false, read: true },
-    ],
-  },
-  {
-    id: '4',
-    name: 'Carlos Ferreira',
-    channel: 'instagram',
-    lastMessage: 'Mal posso esperar!!',
-    lastMessageTime: 'Hoje 11:56 AM',
-    unread: 2,
-    starred: false,
-    online: false,
-    messages: [
-      { id: 'm1', text: 'Oi! Vi o anúncio no Instagram', timestamp: 'Hoje 10:00 AM', fromMe: false, read: true },
-      { id: 'm2', text: 'Olá! Bem vindo. Como posso ajudar?', timestamp: 'Hoje 10:15 AM', fromMe: true, read: true },
-      { id: 'm3', text: 'Quero fazer um pedido', timestamp: 'Hoje 11:00 AM', fromMe: false, read: true },
-      { id: 'm4', text: 'Claro! Já estou preparando', timestamp: 'Hoje 11:30 AM', fromMe: true, read: true },
-      { id: 'm5', text: 'Mal posso esperar!!', timestamp: 'Hoje 11:56 AM', fromMe: false, read: false },
-    ],
-  },
-  {
-    id: '5',
-    name: 'Beatriz Costa',
-    channel: 'facebook',
-    lastMessage: 'Vi vocês no Facebook e amei!',
-    lastMessageTime: 'Hoje 11:45 AM',
-    unread: 1,
-    starred: false,
-    online: true,
-    messages: [
-      { id: 'm1', text: 'Vi vocês no Facebook e amei!', timestamp: 'Hoje 11:45 AM', fromMe: false, read: false },
-    ],
-  },
-  {
-    id: '6',
-    name: 'Roberto Alves',
-    channel: 'facebook',
-    lastMessage: 'Quando fica pronto meu pedido?',
-    lastMessageTime: 'Ontem 4:20 PM',
-    unread: 0,
-    starred: false,
-    online: false,
-    messages: [
-      { id: 'm1', text: 'Quando fica pronto meu pedido?', timestamp: 'Ontem 4:20 PM', fromMe: false, read: true },
-      { id: 'm2', text: 'Seu pedido está em produção, previsão 3 dias!', timestamp: 'Ontem 4:30 PM', fromMe: true, read: true },
-    ],
-  },
-  {
-    id: '7',
-    name: 'Luisa Mendes',
-    channel: 'whatsapp',
-    lastMessage: 'Obrigada pelo atendimento!',
-    lastMessageTime: 'Ontem 3:00 PM',
-    unread: 0,
-    starred: false,
-    online: false,
-    messages: [
-      { id: 'm1', text: 'Recebi o produto, ficou perfeito!', timestamp: 'Ontem 2:50 PM', fromMe: false, read: true },
-      { id: 'm2', text: 'Fico feliz que gostou! 😊', timestamp: 'Ontem 2:55 PM', fromMe: true, read: true },
-      { id: 'm3', text: 'Obrigada pelo atendimento!', timestamp: 'Ontem 3:00 PM', fromMe: false, read: true },
-    ],
-  },
-];
+/**
+ * MOCK_CONTACTS — Estrutura pronta para receber APIs reais
+ *
+ * Removidas falsas mensagens. Sistema aguarda integração com:
+ * - Meta API (WhatsApp, Instagram, Facebook)
+ * - Webhook real para sincronizar conversas
+ *
+ * TODO: Integrar com social-media.service.ts para carregar dados reais
+ */
+export const MOCK_CONTACTS: SocialContact[] = [];

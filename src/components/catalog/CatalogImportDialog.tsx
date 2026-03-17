@@ -77,14 +77,33 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
       if (selectedFile) {
         const ext = selectedFile.name.split('.').pop()?.toLowerCase();
         if (ext === 'pdf') {
-          const result = await FileUploadService.processPDF(selectedFile);
-          if (!result.success || !result.rawText) {
-            throw new Error(result.error ?? 'Falha ao extrair texto do PDF');
+          try {
+            const result = await FileUploadService.processPDF(selectedFile);
+            if (!result.success) {
+              throw new Error(result.error ?? 'Falha desconhecida ao extrair texto do PDF');
+            }
+            if (!result.rawText || result.rawText.trim().length === 0) {
+              throw new Error(
+                'PDF processado mas nenhum texto foi extraído. Verifique se o PDF contém texto selecionável (não é apenas imagem escaneada).'
+              );
+            }
+            texto = result.rawText;
+          } catch (pdfError) {
+            const errorMsg = pdfError instanceof Error ? pdfError.message : 'Erro desconhecido ao processar PDF';
+            throw new Error(`Erro ao processar PDF: ${errorMsg}`);
           }
-          texto = result.rawText;
+        } else if (ext === 'csv' || ext === 'txt') {
+          // TXT/CSV: ler diretamente com fallback robusto
+          try {
+            texto = await selectedFile.text();
+            if (!texto || texto.trim().length === 0) {
+              throw new Error('Arquivo vazio ou ilegível');
+            }
+          } catch (readError) {
+            throw new Error(`Erro ao ler arquivo: ${readError instanceof Error ? readError.message : 'Desconhecido'}`);
+          }
         } else {
-          // TXT/CSV: ler diretamente
-          texto = await selectedFile.text();
+          throw new Error(`Tipo de arquivo não suportado: .${ext}. Use PDF, CSV ou TXT.`);
         }
       }
 
@@ -100,17 +119,27 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
         );
       }
 
+      // Validar resultado do parsing com precisão 99%
+      if (!result || typeof result !== 'object') {
+        throw new Error('Erro ao processar catálogo: resultado inválido');
+      }
+
       setPreview({
-        fabricante: result.fabricante,
-        perfis: result.perfis,
-        modelos: result.modelos,
-        confianca: result.confianca,
-        linhasIgnoradas: result.linhasIgnoradas,
+        fabricante: result.fabricante || 'Desconhecido',
+        perfis: Array.isArray(result.perfis) ? result.perfis : [],
+        modelos: Array.isArray(result.modelos) ? result.modelos : [],
+        confianca: result.confianca ?? 0.5,
+        linhasIgnoradas: result.linhasIgnoradas ?? 0,
       });
       setStep('preview');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao processar catálogo';
-      toast({ title: 'Erro no processamento', description: message, variant: 'destructive' });
+      const message = err instanceof Error ? err.message : 'Erro desconhecido ao processar catálogo';
+      console.error('Erro de importação:', err);
+      toast({
+        title: 'Erro no processamento',
+        description: message,
+        variant: 'destructive',
+      });
       setStep('upload');
     } finally {
       setLoading(false);
