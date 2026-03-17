@@ -1,0 +1,13 @@
+{
+  "name": "squad-financeiro",
+  "version": "1.0.0",
+  "description": "Squad Financeiro - Financial Control & NF-e",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "license": "MIT"
+}

@@ -3,11 +3,25 @@
  * ORQUESTRADOR CENTRAL - Brain do Sistema ERP
  * Coordena todos os 7 squads
  * Porta: 4000
+ *
+ * Autenticação: JWT Bearer token (OAuth2 Resource Server pattern)
+ * Endpoints públicos: GET /health, POST /auth/*
+ * Endpoints protegidos: POST /processar-pedido, GET /status-squads, GET /status/:id
  */
 
 const express = require('express');
 const app = express();
 app.use(express.json());
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+const { requireAuth, requireRole, logAuthAccess } = require('./auth-middleware');
+const authRouter = require('./auth-router');
+
+// Montar endpoints de autenticação (públicos)
+app.use('/auth', authRouter);
+
+// Log de acessos autenticados (opcional, não bloqueia)
+app.use(logAuthAccess);
 
 // Configuração de squads (usando localhost para ambiente local)
 const SQUADS = {
@@ -173,8 +187,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Processar Pedido Completo
-app.post('/processar-pedido', async (req, res) => {
+// Processar Pedido Completo  [PROTEGIDO — requer Bearer token]
+app.post('/processar-pedido', requireAuth, async (req, res) => {
   try {
     const resultado = await orquestrador.procesarPedido(req.body);
     res.json(resultado);
@@ -188,8 +202,8 @@ app.post('/processar-pedido', async (req, res) => {
   }
 });
 
-// Status do Processo
-app.get('/status/:processId', (req, res) => {
+// Status do Processo  [PROTEGIDO — requer Bearer token]
+app.get('/status/:processId', requireAuth, (req, res) => {
   const proc = processosEmExecutacao.get(req.params.processId);
 
   if (!proc) {
@@ -199,8 +213,8 @@ app.get('/status/:processId', (req, res) => {
   res.json(proc);
 });
 
-// Health de todos os squads
-app.get('/status-squads', async (req, res) => {
+// Health de todos os squads  [PROTEGIDO — requer Bearer token, role operator+]
+app.get('/status-squads', requireAuth, async (req, res) => {
   const status = {};
 
   for (const [name, url] of Object.entries(SQUADS)) {
@@ -232,10 +246,17 @@ require('http').createServer(app).listen(PORT, () => {
   Object.entries(SQUADS).forEach(([name, url]) => {
     console.log(`  ✓ ${name.padEnd(15)} -> ${url}`);
   });
-  console.log(`\nEndpoints:`);
+  console.log(`\nEndpoints (publicos):`);
+  console.log(`  GET  /health`);
+  console.log(`  POST /auth/register`);
+  console.log(`  POST /auth/login`);
+  console.log(`  POST /auth/refresh`);
+  console.log(`  POST /auth/logout       (requer Bearer token)`);
+  console.log(`  GET  /auth/me           (requer Bearer token)`);
+  console.log(`\nEndpoints (protegidos - requer Bearer token):`);
   console.log(`  POST /processar-pedido`);
-  console.log(`  GET /status-squads`);
-  console.log(`  GET /health\n`);
+  console.log(`  GET  /status-squads`);
+  console.log(`  GET  /status/:processId\n`);
 });
 
 module.exports = app;

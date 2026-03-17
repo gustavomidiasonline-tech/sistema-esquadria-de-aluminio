@@ -1,0 +1,13 @@
+{
+  "name": "squad-dashboard",
+  "version": "1.0.0",
+  "description": "Squad Dashboard - Real-time Analytics",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "license": "MIT"
+}

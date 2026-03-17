@@ -1,0 +1,13 @@
+{
+  "name": "squad-crm",
+  "version": "1.0.0",
+  "description": "Squad CRM - Client Management & Quotes",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "license": "MIT"
+}

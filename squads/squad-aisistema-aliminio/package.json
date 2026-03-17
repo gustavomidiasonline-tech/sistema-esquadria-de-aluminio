@@ -1,0 +1,13 @@
+{
+  "name": "squad-aisistema-aliminio",
+  "version": "1.0.0",
+  "description": "Orquestrador Central - Brain do Sistema ERP",
+  "main": "orquestrador.js",
+  "scripts": {
+    "start": "node orquestrador.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "license": "MIT"
+}

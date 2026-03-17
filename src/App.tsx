@@ -42,6 +42,7 @@ import BOM from "./pages/BOM";
 import ImportarDados from "./pages/ImportarDados";
 import Catalogo from "./pages/Catalogo";
 import RedesSociais from "./pages/RedesSociais";
+import Debug from "./pages/Debug";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/importar-dados" element={<ProtectedRoute><ImportarDados /></ProtectedRoute>} />
             <Route path="/catalogo" element={<ProtectedRoute><Catalogo /></ProtectedRoute>} />
             <Route path="/redes-sociais" element={<ProtectedRoute><RedesSociais /></ProtectedRoute>} />
+            <Route path="/debug" element={<ProtectedRoute><Debug /></ProtectedRoute>} />
             {/* Financeiro */}
             <Route path="/financeiro" element={<ProtectedRoute><FeatureGate feature="financeiro"><FinanceiroVisaoGeral /></FeatureGate></ProtectedRoute>} />
             <Route path="/financeiro/contas-receber" element={<ProtectedRoute><FeatureGate feature="financeiro"><ContasReceber /></FeatureGate></ProtectedRoute>} />

@@ -1,0 +1,13 @@
+{
+  "name": "squad-integradores",
+  "version": "1.0.0",
+  "description": "Squad Integradores - External APIs & Webhooks",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "license": "MIT"
+}

@@ -15,6 +15,7 @@
     "start:orquestrador": "cd squads/squad-aisistema-aliminio && node orquestrador.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
     "bcryptjs": "^3.0.3",
     "express": "^4.22.1",
     "jsonwebtoken": "^9.0.3"

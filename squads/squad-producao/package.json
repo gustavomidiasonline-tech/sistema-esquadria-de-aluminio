@@ -1,0 +1,13 @@
+{
+  "name": "squad-producao",
+  "version": "1.0.0",
+  "description": "Squad Producao - Production Cutting & Typology Management",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "license": "MIT"
+}

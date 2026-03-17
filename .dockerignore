@@ -1,0 +1,87 @@
+# Node.js
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+bun.lock
+bun.lockb
+package-lock.json
+
+# Build artifacts
+dist
+build
+.next
+.nuxt
+.output
+
+# Source TypeScript / frontend (not needed in backend containers)
+src
+public
+index.html
+tsconfig*.json
+vite.config.*
+postcss.config.js
+tailwind.config.*
+eslint.config.js
+vitest.config.ts
+components.json
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Environment files (never bake secrets into images)
+.env
+.env.*
+*.env
+
+# Logs
+*.log
+logs
+squads.log
+
+# Test/QA
+coverage
+test-*.sh
+*.test.js
+*.spec.js
+**/__tests__
+**/__mocks__
+
+# Documentation (reduces image size)
+*.md
+docs
+AGENTS.md
+GETTING-STARTED.md
+SQUADS-README.md
+EXECUTION-REPORT.md
+IMPLEMENTATION_COMPLETE.md
+IMPLEMENTATION-SUMMARY.txt
+INTEGRATION_GUIDE.md
+QA-VALIDATION-RESULTS.md
+GLASS_*
+PHASE4-DOCKER.md
+
+# Docker files themselves (not needed inside containers)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# IDE / OS artifacts
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Supabase local (use volume mount instead)
+supabase/.branches
+supabase/.temp
+
+# AIOS/AIOX framework meta files (not needed at runtime)
+squads/pixel-perfect-squad
+.aios
+.aiox
+.claude

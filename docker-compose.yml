@@ -1,0 +1,285 @@
+version: "3.9"
+
+# =============================================================================
+# ERP Sistema Aluminio & Vidracarias — Docker Compose (Development)
+# 8 Squads especializados + 1 Orquestrador Central + PostgreSQL (Supabase local)
+# =============================================================================
+
+networks:
+  erp-network:
+    driver: bridge
+    name: erp-network
+
+volumes:
+  postgres-data:
+    name: erp-postgres-data
+  postgres-config:
+    name: erp-postgres-config
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — Supabase local development database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: supabase/postgres:15.8.1.060
+    container_name: erp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-erp_aluminio}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - postgres-config:/etc/postgresql
+      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-erp_aluminio}"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Squad Producao — Production Cutting & Typology Management (port 3002)
+  # ---------------------------------------------------------------------------
+  squad-producao:
+    build:
+      context: ./squads/squad-producao
+      dockerfile: Dockerfile
+    container_name: erp-squad-producao
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3002
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_aluminio}
+    ports:
+      - "${PORT_PRODUCAO:-3002}:3002"
+    networks:
+      - erp-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # Squad Estoque — Inventory Management & Catalogs (port 3003)
+  # ---------------------------------------------------------------------------
+  squad-estoque:
+    build:
+      context: ./squads/squad-estoque
+      dockerfile: Dockerfile
+    container_name: erp-squad-estoque
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3003
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_aluminio}
+    ports:
+      - "${PORT_ESTOQUE:-3003}:3003"
+    networks:
+      - erp-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # Squad CRM — Client Management & Quotes (port 3004)
+  # ---------------------------------------------------------------------------
+  squad-crm:
+    build:
+      context: ./squads/squad-crm
+      dockerfile: Dockerfile
+    container_name: erp-squad-crm
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3004
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_aluminio}
+    ports:
+      - "${PORT_CRM:-3004}:3004"
+    networks:
+      - erp-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3004/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # Squad Financeiro — Financial Control & NF-e (port 3005)
+  # ---------------------------------------------------------------------------
+  squad-financeiro:
+    build:
+      context: ./squads/squad-financeiro
+      dockerfile: Dockerfile
+    container_name: erp-squad-financeiro
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3005
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_aluminio}
+    ports:
+      - "${PORT_FINANCEIRO:-3005}:3005"
+    networks:
+      - erp-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3005/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # Squad Dashboard — Real-time Analytics (port 3006)
+  # ---------------------------------------------------------------------------
+  squad-dashboard:
+    build:
+      context: ./squads/squad-dashboard
+      dockerfile: Dockerfile
+    container_name: erp-squad-dashboard
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3006
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_aluminio}
+    ports:
+      - "${PORT_DASHBOARD:-3006}:3006"
+    networks:
+      - erp-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3006/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # Squad Qualidade — QA & Validation (port 3007)
+  # ---------------------------------------------------------------------------
+  squad-qualidade:
+    build:
+      context: ./squads/squad-qualidade
+      dockerfile: Dockerfile
+    container_name: erp-squad-qualidade
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3007
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_aluminio}
+    ports:
+      - "${PORT_QUALIDADE:-3007}:3007"
+    networks:
+      - erp-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3007/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # Squad Integradores — External APIs & Webhooks (port 3008)
+  # ---------------------------------------------------------------------------
+  squad-integradores:
+    build:
+      context: ./squads/squad-integradores
+      dockerfile: Dockerfile
+    container_name: erp-squad-integradores
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3008
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_aluminio}
+    ports:
+      - "${PORT_INTEGRADORES:-3008}:3008"
+    networks:
+      - erp-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3008/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # Orquestrador Central — Brain do ERP (port 4000)
+  # Depends on ALL squads being healthy before starting
+  # ---------------------------------------------------------------------------
+  orquestrador:
+    build:
+      context: ./squads/squad-aisistema-aliminio
+      dockerfile: Dockerfile
+    container_name: erp-orquestrador
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_aluminio}
+      # Docker service name URL overrides (used by docker-entrypoint.js)
+      SQUAD_PRODUCAO_URL: http://squad-producao:3002
+      SQUAD_ESTOQUE_URL: http://squad-estoque:3003
+      SQUAD_CRM_URL: http://squad-crm:3004
+      SQUAD_FINANCEIRO_URL: http://squad-financeiro:3005
+      SQUAD_DASHBOARD_URL: http://squad-dashboard:3006
+      SQUAD_QUALIDADE_URL: http://squad-qualidade:3007
+      SQUAD_INTEGRADORES_URL: http://squad-integradores:3008
+    ports:
+      - "${PORT_ORQUESTRADOR:-4000}:4000"
+    networks:
+      - erp-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      squad-producao:
+        condition: service_healthy
+      squad-estoque:
+        condition: service_healthy
+      squad-crm:
+        condition: service_healthy
+      squad-financeiro:
+        condition: service_healthy
+      squad-dashboard:
+        condition: service_healthy
+      squad-qualidade:
+        condition: service_healthy
+      squad-integradores:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 25s

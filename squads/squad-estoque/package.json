@@ -1,0 +1,13 @@
+{
+  "name": "squad-estoque",
+  "version": "1.0.0",
+  "description": "Squad Estoque - Inventory Management & Catalogs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "license": "MIT"
+}
