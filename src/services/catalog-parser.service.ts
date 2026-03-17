@@ -87,38 +87,16 @@ function detectTipo(text: string): string {
 }
 
 function extractPeso(text: string): number | null {
-  // Padrões explícitos primeiro (mais confiáveis)
-  const explicit = PESO_PATTERNS.slice(0, 4);
-  for (const pattern of explicit) {
+  // Padrões explícitos com unidade (mais confiáveis)
+  for (const pattern of PESO_PATTERNS.slice(0, 5)) {
     pattern.lastIndex = 0;
     const match = pattern.exec(text);
     if (match) {
       let val = normalizeFloat(match[1]);
       if (/g\/m/i.test(match[0])) val = val / 1000;
-      if (val > 0 && val < 50) return Math.round(val * 10000) / 10000;
+      if (val >= 0.05 && val < 50) return Math.round(val * 10000) / 10000;
     }
   }
-
-  // Padrão W= para peso linear
-  const wPattern = PESO_PATTERNS[4];
-  wPattern.lastIndex = 0;
-  const wMatch = wPattern.exec(text);
-  if (wMatch) {
-    const val = normalizeFloat(wMatch[1]);
-    if (val > 0 && val < 50) return Math.round(val * 10000) / 10000;
-  }
-
-  // Coluna isolada: decimal tipo 0,450 ou 1,237 — comum em catálogos tabulares
-  // Só usar se a linha contém um código de perfil (não linha de cabeçalho)
-  const colPattern = PESO_PATTERNS[5];
-  colPattern.lastIndex = 0;
-  const colMatch = colPattern.exec(text);
-  if (colMatch) {
-    const val = normalizeFloat(colMatch[1]);
-    // Faixa de peso real de perfil de alumínio: 0,05 a 10 kg/m
-    if (val >= 0.05 && val <= 10) return Math.round(val * 10000) / 10000;
-  }
-
   return null;
 }
 
@@ -132,6 +110,62 @@ function extractEspessura(text: string): number | null {
     }
   }
   return null;
+}
+
+/**
+ * Extração colunar inteligente — para catálogos tabulares sem unidades explícitas.
+ *
+ * Heurística baseada em física dos perfis de alumínio:
+ *   - Espessura de parede: 0,5 mm a 10 mm, tipicamente 1-2 casas decimais (1,4 / 2,0)
+ *   - Peso linear:  0,05 kg/m a 10 kg/m, tipicamente 3 casas decimais (0,542 / 1,237)
+ *
+ * Diferenciador principal: número de casas decimais.
+ * 3+ casas → peso | 1-2 casas no range 0,5-10 → espessura
+ */
+function extractDadosColunares(
+  line: string,
+  codigo: string,
+): { peso: number | null; espessura: number | null } {
+  // Limpar código, letras e dados técnicos de seção (Jx, Wx, Ix...)
+  const limpo = line
+    .replace(new RegExp(codigo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), ' ')
+    .replace(/[IJWSA]x?[xt]?\s*=\s*[\d\s]+(?:mm\d*)?/gi, ' ')
+    .replace(/\b\d[\d ]{4,}\b/g, ' ') // números grandes com separador europeu
+    .replace(/[a-zA-ZÀ-ÿ/=]+/g, ' ');
+
+  // Coletar todos os decimais remanescentes
+  const matches = [...limpo.matchAll(/(\d+[.,]\d+)/g)];
+  const numeros = matches
+    .map((m) => ({ raw: m[1], val: normalizeFloat(m[1]) }))
+    .filter((n) => n.val > 0 && n.val < 200);
+
+  let peso: number | null = null;
+  let espessura: number | null = null;
+
+  for (const { raw, val } of numeros) {
+    const decimais = (raw.split(/[.,]/)[1] ?? '').length;
+
+    if (decimais >= 3 && val >= 0.05 && val <= 10 && peso === null) {
+      // 3+ casas decimais → peso linear (ex: 0,542 ou 1,237 kg/m)
+      peso = Math.round(val * 10000) / 10000;
+    } else if (decimais <= 2 && val >= 0.5 && val <= 10 && espessura === null) {
+      // 1-2 casas decimais no range físico → espessura de parede (ex: 1,4 ou 2,0 mm)
+      espessura = val;
+    }
+  }
+
+  // Fallback: se ainda não separou, tentar por faixa (menos preciso)
+  if (peso === null && espessura === null) {
+    for (const { val } of numeros) {
+      if (val >= 0.05 && val < 1.5 && peso === null) {
+        peso = Math.round(val * 10000) / 10000;
+      } else if (val >= 0.8 && val <= 15 && espessura === null) {
+        espessura = val;
+      }
+    }
+  }
+
+  return { peso, espessura };
 }
 
 function extractCodigo(text: string): string | null {
@@ -165,8 +199,15 @@ function parseLinhaALinha(text: string): ParsedPerfil[] {
     const codigo = extractCodigo(line);
     if (!codigo || seenCodigos.has(codigo)) continue;
 
-    const peso = extractPeso(line);
-    const espessura = extractEspessura(line);
+    let peso = extractPeso(line);
+    let espessura = extractEspessura(line);
+
+    // Fallback colunar: detecta por casas decimais quando não há unidade explícita
+    if (peso === null || espessura === null) {
+      const colunar = extractDadosColunares(line, codigo);
+      if (peso === null) peso = colunar.peso;
+      if (espessura === null) espessura = colunar.espessura;
+    }
 
     // Nome: tudo que não é o código, dados técnicos ou unidades
     const nome = line
@@ -219,11 +260,17 @@ function parsePorBlocos(text: string): ParsedPerfil[] {
     const end = positions[i + 1]?.index ?? Math.min(index + 300, text.length);
     const bloco = text.slice(index, end);
 
-    const peso = extractPeso(bloco);
-    const espessura = extractEspessura(bloco);
+    let peso = extractPeso(bloco);
+    let espessura = extractEspessura(bloco);
+    if (peso === null || espessura === null) {
+      const colunar = extractDadosColunares(bloco, code);
+      if (peso === null) peso = colunar.peso;
+      if (espessura === null) espessura = colunar.espessura;
+    }
     const nome = bloco
       .replace(code, '')
       .replace(/\d+[.,]\d+\s*(?:kg\/m|g\/m|mm|kg|m)/gi, '')
+      .replace(/[IJWSA]x?[xt]?\s*=\s*[\d\s]+(?:mm\d*)?/gi, '')
       .replace(/\s{2,}/g, ' ')
       .trim()
       .slice(0, 80);
@@ -293,11 +340,22 @@ export const CatalogParserService = {
     const modelos = parseModelos(text);
     const fabricante = detectFabricante(text);
 
-    // Calcular confiança baseada na qualidade dos dados
+    // Calcular confiança multi-dimensional:
+    //   30% → base por ter perfis detectados
+    //   10% → volume adequado (>= 5 perfis)
+    //   35% → cobertura de peso (principal indicador de qualidade)
+    //   25% → cobertura de espessura
     const comPeso = perfis.filter((p) => p.peso_kg_m !== null).length;
+    const comEsp  = perfis.filter((p) => p.espessura_mm !== null).length;
     const confianca = perfis.length === 0
       ? 0
-      : Math.min(0.5 + (comPeso / perfis.length) * 0.5, 1);
+      : Math.min(
+          0.30 +
+          (perfis.length >= 5 ? 0.10 : perfis.length * 0.02) +
+          (comPeso / perfis.length) * 0.35 +
+          (comEsp  / perfis.length) * 0.25,
+          1,
+        );
 
     return {
       perfis: perfis.slice(0, 500), // limite de segurança
