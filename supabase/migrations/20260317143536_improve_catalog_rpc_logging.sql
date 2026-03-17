@@ -1,7 +1,4 @@
--- supabase-no-transaction
--- Função atômica para importação de catálogo
--- Executa DELETE + INSERT dentro de uma única transação SQL.
--- Elimina a janela de inconsistência do padrão delete+insert do cliente.
+-- Melhorar logging da função import_catalog_atomic para debugar
 
 CREATE OR REPLACE FUNCTION import_catalog_atomic(
   p_company_id  uuid,
@@ -37,6 +34,8 @@ BEGIN
       INTO v_codigos_perfis
       FROM jsonb_array_elements(p_perfis) AS elem;
 
+    RAISE NOTICE '[IMPORT_CATALOG] Deletando perfis antigos: %', v_codigos_perfis;
+
     -- Deletar apenas os códigos que serão re-importados
     DELETE FROM perfis_catalogo
       WHERE company_id = p_company_id
@@ -56,6 +55,7 @@ BEGIN
     FROM jsonb_array_elements(p_perfis) AS elem;
 
     GET DIAGNOSTICS v_perfis_count = ROW_COUNT;
+    RAISE NOTICE '[IMPORT_CATALOG] Salvos % perfis', v_perfis_count;
   END IF;
 
   -- ── Modelos ─────────────────────────────────────────────────────────────
@@ -63,6 +63,8 @@ BEGIN
     SELECT array_agg(elem->>'codigo')
       INTO v_codigos_modelos
       FROM jsonb_array_elements(p_modelos) AS elem;
+
+    RAISE NOTICE '[IMPORT_CATALOG] Deletando modelos antigos: %', v_codigos_modelos;
 
     DELETE FROM window_models
       WHERE company_id = p_company_id
@@ -79,9 +81,12 @@ BEGIN
     FROM jsonb_array_elements(p_modelos) AS elem;
 
     GET DIAGNOSTICS v_modelos_count = ROW_COUNT;
+    RAISE NOTICE '[IMPORT_CATALOG] Salvos % modelos', v_modelos_count;
   END IF;
 
   -- ── Retorno ─────────────────────────────────────────────────────────────
+  RAISE NOTICE '[IMPORT_CATALOG] Finalizando: perfis_salvos=%, modelos_salvos=%', v_perfis_count, v_modelos_count;
+
   RETURN jsonb_build_object(
     'perfis_salvos',  v_perfis_count,
     'modelos_salvos', v_modelos_count,
@@ -91,6 +96,6 @@ BEGIN
 
 EXCEPTION WHEN OTHERS THEN
   -- Qualquer erro faz rollback automático da transação inteira
-  RAISE EXCEPTION 'Falha na importação atômica: %', SQLERRM;
+  RAISE EXCEPTION '[IMPORT_CATALOG] Falha: %', SQLERRM;
 END;
 $$;

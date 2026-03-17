@@ -75,8 +75,6 @@
   }
 
   html {
-    /* Scroll behavior with reduced-motion fallback */
-    scroll-behavior: smooth;
     /* Font smoothing */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -177,6 +175,80 @@
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.10);
   }
+}
+
+/* === RESPONSIVE SCROLL BEHAVIOR === */
+/* Smooth scroll only on desktop — avoids janky behavior on touch devices */
+@media (min-width: 1024px) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (max-width: 1023px) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* === HOVER STATE MANAGEMENT === */
+/* Mobile: no hover effects (tap instead) */
+@media (hover: none) {
+  button:hover,
+  a:hover {
+    opacity: inherit;
+  }
+}
+
+/* Desktop: enhanced hover effects */
+@media (hover: hover) {
+  .interactive-hover:hover {
+    transform: scale(1.02);
+    transition: transform 150ms ease;
+  }
+}
+
+/* === BACKDROP FILTER MOBILE OPTIMIZATION === */
+/* Reduce blur intensity on mobile for better performance */
+@media (max-width: 768px) {
+  .glass-sidebar {
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  }
+
+  .glass-header {
+    backdrop-filter: blur(12px) saturate(1.1);
+    -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  }
+
+  .glass-card {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .glass-surface {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+}
+
+/* === FOCUS INDICATORS (Accessibility) === */
+/* Enhanced focus ring for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Remove focus outline for mouse/touch users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* === HARDWARE ACCELERATION === */
+/* GPU acceleration for animated elements */
+.min-touch-target {
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 /* === PRINT STYLES === */

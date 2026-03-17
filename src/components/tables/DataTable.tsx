@@ -180,6 +180,7 @@ export function DataTable<T extends { id: string }>({
                       col.sortable && 'cursor-pointer select-none hover:text-foreground transition-colors',
                     )}
                     onClick={col.sortable ? () => toggleSort(col.key) : undefined}
+                    aria-sort={sort?.key === col.key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : undefined}
                   >
                     <span className="inline-flex items-center gap-1">
                       {col.header}
@@ -239,10 +240,11 @@ export function DataTable<T extends { id: string }>({
                   className="h-10 w-10 min-touch-target"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={safePage === 1}
+                  aria-label="Página anterior"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-xs text-muted-foreground px-2">
+                <span className="text-xs text-muted-foreground px-2" aria-live="polite">
                   {safePage} / {totalPages}
                 </span>
                 <Button
@@ -251,6 +253,7 @@ export function DataTable<T extends { id: string }>({
                   className="h-10 w-10 min-touch-target"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
+                  aria-label="Próxima página"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>

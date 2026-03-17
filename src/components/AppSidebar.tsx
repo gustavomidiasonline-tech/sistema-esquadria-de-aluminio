@@ -204,7 +204,7 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
     : `${isSidebarCollapsed ? "w-16" : "w-60"} glass-sidebar flex flex-col h-screen sticky top-0 transition-all duration-300 shrink-0`;
 
   return (
-    <aside className={sidebarClassName}>
+    <aside className={sidebarClassName} role="navigation" aria-label="Menu principal">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-xs font-bold text-white">
@@ -259,6 +259,8 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
                 if (isLocked("/pedidos")) { handleNavigateTo("/planos"); return; }
                 setPedidosOpen(!pedidosOpen);
               }}
+              aria-expanded={pedidosOpen}
+              aria-label="Pedidos"
               className={cn(
                 "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isLocked("/pedidos")
@@ -297,6 +299,8 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
               onClick={() => {
                 setMateriaisOpen(!materiaisOpen);
               }}
+              aria-expanded={materiaisOpen}
+              aria-label="Materiais"
               className={cn(
                 "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 "text-white/60 hover:bg-white/8 hover:text-white/90"
@@ -347,6 +351,8 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
                 if (isLocked("/financeiro")) { handleNavigateTo("/planos"); return; }
                 setFinanceiroOpen(!financeiroOpen);
               }}
+              aria-expanded={financeiroOpen}
+              aria-label="Financeiro"
               className={cn(
                 "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isLocked("/financeiro")
@@ -414,6 +420,7 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="flex items-center justify-center py-4 border-t border-sidebar-border text-sidebar-muted hover:text-sidebar-foreground transition-colors"
+          aria-label={collapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
         >
           {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </button>

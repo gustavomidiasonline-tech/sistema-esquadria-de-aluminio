@@ -174,21 +174,32 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
       };
 
       // Tentar importação atômica via RPC (requer migration 20260316020000)
+      const perfisBatch = preview.perfis.map((p) => ({
+        codigo: p.codigo,
+        nome: p.nome,
+        tipo: p.tipo || 'perfil',
+        peso_kg_m: p.peso_kg_m,
+        espessura_mm: p.espessura_mm,
+      }));
+      const modelosBatch = preview.modelos.map((m) => ({
+        codigo: m.codigo,
+        nome: m.nome,
+        tipo: validarTipo(m.tipo),
+        descricao: m.descricao,
+      }));
+
+      console.log('📤 Enviando para RPC:', {
+        company_id: companyId,
+        perfis_count: perfisBatch.length,
+        modelos_count: modelosBatch.length,
+        perfis: perfisBatch.slice(0, 2),
+        modelos: modelosBatch.slice(0, 2),
+      });
+
       const { data: rpcData, error: rpcError } = await supabase.rpc('import_catalog_atomic', {
         p_company_id: companyId,
-        p_perfis: preview.perfis.map((p) => ({
-          codigo: p.codigo,
-          nome: p.nome,
-          tipo: p.tipo || 'perfil',
-          peso_kg_m: p.peso_kg_m,
-          espessura_mm: p.espessura_mm,
-        })),
-        p_modelos: preview.modelos.map((m) => ({
-          codigo: m.codigo,
-          nome: m.nome,
-          tipo: validarTipo(m.tipo),
-          descricao: m.descricao,
-        })),
+        p_perfis: perfisBatch,
+        p_modelos: modelosBatch,
       });
 
       const rpcAvailable = !rpcError || !rpcError.message.includes('function') && !rpcError.message.includes('does not exist') && !rpcError.message.includes('42883');
@@ -199,7 +210,12 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
         console.log('✅ RPC Success:', result);
         perfisSalvos = result.perfis_salvos;
         modelosSalvos = result.modelos_salvos;
+        if (perfisSalvos === 0 && modelosSalvos === 0) {
+          console.warn('⚠️ RPC retornou 0 itens salvos - verificar dados enviados');
+        }
       } else if (!rpcAvailable) {
+        console.log('⚠️ RPC não disponível, usando fallback delete+insert');
+
         // RPC não existe ainda — fallback delete+insert
         if (preview.perfis.length > 0) {
           const perfisBatch = preview.perfis.map((p) => ({
