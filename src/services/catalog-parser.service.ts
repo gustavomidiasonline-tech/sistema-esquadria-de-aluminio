@@ -50,21 +50,24 @@ const CODIGO_PATTERNS = [
 // ─── Padrões de peso ─────────────────────────────────────────────────────────
 const PESO_PATTERNS = [
   /(\d+[.,]\d{1,4})\s*kg\/m/gi,                  // 0,450 kg/m
+  /(\d+[.,]\d{1,4})\s*kg\/metro/gi,              // 0,450 kg/metro
   /peso[:\s]+(\d+[.,]\d{1,4})/gi,                 // peso: 0.450
   /(\d+[.,]\d{1,4})\s*g\/m/gi,                    // gramas por metro → converter
   /\bw\s*=\s*(\d+[.,]\d{1,4})/gi,                 // W = 0.450 (peso linear)
-  /(\d+[.,]\d{1,4})\s*kg(?!\/)/gi,                // 0,450 kg (mas nao kg/m, ja coberto)
+  /(\d+[.,]\d{1,4})\s*kg\b(?!\/)/gi,              // 0,450 kg (mas nao kg/m)
   // Nota: extração de decimal colunar isolado é feita por extractDadosColunares()
 ];
 
 // ─── Padrões de espessura ────────────────────────────────────────────────────
 const ESPESSURA_PATTERNS = [
   /esp(?:essura)?[.:\s]+(\d+[.,]\d*)\s*mm/gi,     // espessura: 1,4mm
-  /(\d+[.,]\d*)\s*mm\s+(?:esp|parede|wall)/gi,    // 1,4mm esp
+  /(\d+[.,]\d*)\s*mm\s+(?:esp|parede|wall|thickness)/gi,    // 1,4mm esp
   /e\s*=\s*(\d+[.,]\d*)/gi,                       // e = 1,4
   /esp(?:essura)?\s*(?:parede\s*)?[=:]\s*(\d+[.,]\d*)/gi, // esp parede = 1,4
   /\b(\d[.,]\d{1,2})\s*mm\b/gi,                   // 1,4 mm (número pequeno com mm)
   /\bt(?:hickness)?\s*=\s*(\d+[.,]\d*)/gi,        // t = 1,4 ou thickness = 1,4
+  /parede[:\s]+(\d+[.,]\d*)/gi,                   // parede: 1,4
+  /thickness[:\s]+(\d+[.,]\d*)/gi,                // thickness: 1,4
 ];
 
 // ─── Palavras-chave de tipo ───────────────────────────────────────────────────
@@ -288,34 +291,41 @@ function parseTabular(line: string, codigo: string): { nome: string; peso: numbe
 }
 
 /**
- * Limpa o nome extraido removendo lixo numerico e tecnico
+ * Limpa o nome extraido removendo APENAS lixo claro (sem destruir dados reais)
+ * 99% precision: conservador, mantém nomes com números que fazem sentido
  */
 function cleanNome(raw: string, codigo: string): string {
-  const cleaned = raw
-    // Remover o codigo do perfil
-    .replace(new RegExp(codigo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '')
-    // Remover dados com unidades
-    .replace(/\d+[.,]\d+\s*(?:kg\/m|g\/m|mm|kg|m)\b/gi, '')
-    // Remover dados de secao tecnica (Jx, Wx, Ix etc. com valores)
-    .replace(/[IJWSA]x?[xt]?\s*=\s*[\d\s]+(?:mm\d*)?/gi, '')
-    // Remover sequencias de numeros pequenos separados por espaco (dados de diagrama: "4 3 4 3 4 3")
-    .replace(/(?:\b\d{1,2}\b[\s,]+){3,}/g, '')
-    // Remover numeros isolados grandes
-    .replace(/\b\d[\d\s]{3,}\b/g, '')
-    // Remover numeros decimais soltos
-    .replace(/\b\d+[.,]\d+\b/g, '')
-    // Remover numeros inteiros soltos (exceto se parte de palavra)
-    .replace(/(?<![A-Za-z])\b\d{1,5}\b(?![A-Za-z])/g, '')
-    // Remover pontuacao solta
-    .replace(/[()[\]{}<>|\\]/g, '')
-    // Normalizar espacos
+  let cleaned = raw;
+
+  // 1. Remover o codigo do perfil (exato, case-insensitive)
+  cleaned = cleaned.replace(new RegExp(`\\b${codigo}\\b`, 'gi'), ' ');
+
+  // 2. Remover APENAS unidades explícitas seguindo números (kg/m, mm, etc)
+  // Mas NÃO remover os números (weight/espessura extraem depois)
+  cleaned = cleaned.replace(/\s+(?:kg\/m|g\/m|kg|mm|m)\b/gi, '');
+
+  // 3. Remover dados de seção técnica ÓBVIA (W=xxx, I=xxx com valores numéricos grandes)
+  cleaned = cleaned.replace(/[IJWSA]x?\s*=\s*[\d.,]+\s*(?:cm\d+|mm\d+)?/gi, '');
+
+  // 4. Remover sequências REPETIDAS de números pequenos (diagrama: "3 3 4 3 4")
+  cleaned = cleaned.replace(/(?:\s\d{1,2}){4,}\b/g, '');
+
+  // 5. Remover página/referência: "pag 45", "fig. 3.1", "ref 234"
+  cleaned = cleaned.replace(/\b(?:pag|fig|ref|page|item|fig\.)\s+\d+\b/gi, '');
+
+  // 6. Remover posição de diagrama técnico: "A3", "B4", "C5" (letras isoladas + número pequeno)
+  cleaned = cleaned.replace(/\b[A-Z]\d{1,2}\b/g, ' ');
+
+  // 7. Normalizar espaços e pontuação
+  cleaned = cleaned
     .replace(/\s{2,}/g, ' ')
     .replace(/^[\s.,;:-]+|[\s.,;:-]+$/g, '')
     .trim()
     .slice(0, 80);
 
-  // Se o nome resultante e muito curto ou so tem numeros, usar codigo
-  if (cleaned.length < 2 || /^\d+$/.test(cleaned)) return codigo;
+  // Fallback: se ficou muito vazio, usar código
+  if (cleaned.length < 2) return codigo;
+
   return cleaned;
 }
 

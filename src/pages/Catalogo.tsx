@@ -5,9 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CatalogImportDialog } from '@/components/catalog/CatalogImportDialog';
-import { CatalogDebug } from '@/components/debug/CatalogDebug';
-import { GetUserCompanyIdDebug } from '@/components/debug/GetUserCompanyIdDebug';
-import { ProfileDebug } from '@/components/debug/ProfileDebug';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Package, Layers, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -45,13 +42,7 @@ export default function Catalogo() {
         .from('perfis_catalogo')
         .select('id, codigo, nome, tipo, peso_kg_m, espessura_mm, company_id')
         .order('codigo');
-
-      console.log('📊 Query perfis_catalogo:', { data_count: data?.length ?? 0, error });
-
-      if (error) {
-        console.error('❌ Erro na query:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data ?? [];
     },
   });
@@ -64,13 +55,7 @@ export default function Catalogo() {
         .from('window_models')
         .select('id, codigo, nome, tipo, descricao, num_folhas')
         .order('codigo');
-
-      console.log('📊 Query window_models:', { data_count: data?.length ?? 0, error });
-
-      if (error) {
-        console.error('❌ Erro na query:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data ?? [];
     },
   });
@@ -95,11 +80,6 @@ export default function Catalogo() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        {/* Debug */}
-        <ProfileDebug />
-        <GetUserCompanyIdDebug />
-        <CatalogDebug />
-
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
