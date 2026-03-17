@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/AppLayout';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,39 +29,35 @@ interface WindowModel {
 }
 
 export default function Catalogo() {
-  const { profile } = useAuth();
-  const companyId = profile?.company_id;
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchPerfis, setSearchPerfis] = useState('');
   const [searchModelos, setSearchModelos] = useState('');
 
   const { data: perfis = [], isLoading: loadingPerfis } = useQuery<PerfilCatalogo[]>({
-    queryKey: ['perfis_catalogo', companyId],
+    queryKey: ['perfis_catalogo'],
     queryFn: async () => {
+      // RLS já filtra por empresa, não precisa de .eq()
       const { data, error } = await supabase
         .from('perfis_catalogo')
         .select('id, codigo, nome, tipo, peso_kg_m, espessura_mm, company_id')
-        .eq('company_id', companyId)
         .order('codigo');
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!companyId, // Só executa se company_id existe
   });
 
   const { data: modelos = [], isLoading: loadingModelos } = useQuery<WindowModel[]>({
-    queryKey: ['window_models', companyId],
+    queryKey: ['window_models'],
     queryFn: async () => {
+      // RLS já filtra por empresa, não precisa de .eq()
       const { data, error } = await supabase
         .from('window_models')
         .select('id, codigo, nome, tipo, descricao, num_folhas')
-        .eq('company_id', companyId)
         .order('codigo');
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!companyId, // Só executa se company_id existe
   });
 
   const perfisFiltered = perfis.filter(

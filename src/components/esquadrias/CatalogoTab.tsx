@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -55,21 +54,17 @@ export function CatalogoTab() {
 }
 
 function PerfisTable({ search }: { search: string }) {
-  const { profile } = useAuth();
-  const companyId = profile?.company_id;
-
   const { data: perfis, isLoading } = useQuery({
-    queryKey: ["perfis_catalogo", companyId],
+    queryKey: ["perfis_catalogo"],
     queryFn: async () => {
+      // RLS já filtra por empresa, não precisa de .eq()
       const { data, error } = await supabase
         .from("perfis_catalogo")
         .select("*, linhas(nome)")
-        .eq("company_id", companyId)
         .order("codigo");
       if (error) throw error;
       return data as unknown as PerfilWithJoins[];
     },
-    enabled: !!companyId,
   });
 
   const filtered = (perfis || []).filter(
