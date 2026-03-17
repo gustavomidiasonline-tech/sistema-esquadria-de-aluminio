@@ -195,7 +195,8 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
 
       if (!rpcError) {
         // RPC funcionou — usar contagens retornadas
-        const result = rpcData as { perfis_salvos: number; modelos_salvos: number };
+        const result = rpcData as { perfis_salvos: number; modelos_salvos: number; company_id_usado: string; success: boolean };
+        console.log('✅ RPC Success:', result);
         perfisSalvos = result.perfis_salvos;
         modelosSalvos = result.modelos_salvos;
       } else if (!rpcAvailable) {

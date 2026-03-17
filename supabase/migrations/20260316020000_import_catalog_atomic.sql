@@ -78,7 +78,9 @@ BEGIN
   -- ── Retorno ─────────────────────────────────────────────────────────────
   RETURN jsonb_build_object(
     'perfis_salvos',  v_perfis_count,
-    'modelos_salvos', v_modelos_count
+    'modelos_salvos', v_modelos_count,
+    'company_id_usado', p_company_id,
+    'success', true
   );
 
 EXCEPTION WHEN OTHERS THEN
