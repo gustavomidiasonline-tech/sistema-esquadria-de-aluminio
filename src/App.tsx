@@ -40,6 +40,7 @@ import Workflow from "./pages/Workflow";
 import ConfiguracaoModelos from "./pages/ConfiguracaoModelos";
 import BOM from "./pages/BOM";
 import ImportarDados from "./pages/ImportarDados";
+import Catalogo from "./pages/Catalogo";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
             <Route path="/bom" element={<ProtectedRoute><BOM /></ProtectedRoute>} />
             <Route path="/importar-dados" element={<ProtectedRoute><ImportarDados /></ProtectedRoute>} />
+            <Route path="/catalogo" element={<ProtectedRoute><Catalogo /></ProtectedRoute>} />
             {/* Financeiro */}
             <Route path="/financeiro" element={<ProtectedRoute><FeatureGate feature="financeiro"><FinanceiroVisaoGeral /></FeatureGate></ProtectedRoute>} />
             <Route path="/financeiro/contas-receber" element={<ProtectedRoute><FeatureGate feature="financeiro"><ContasReceber /></FeatureGate></ProtectedRoute>} />

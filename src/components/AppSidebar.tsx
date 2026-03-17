@@ -55,6 +55,7 @@ const pedidosItems = [
 
 const materiaisItems = [
   { title: "Lista de Materiais", url: "/bom", icon: ClipboardList },
+  { title: "Catálogo", url: "/catalogo", icon: Package },
   { title: "Importar Dados", url: "/importar-dados", icon: Upload },
 ];
 
