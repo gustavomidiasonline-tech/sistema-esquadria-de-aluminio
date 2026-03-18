@@ -1,6 +1,7 @@
 ﻿import Papa from 'papaparse';
 import type { InventoryItemTipo } from '@/services/inventory.service';
 import type * as PDFJSType from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 export interface InventoryImportItem {
   codigo: string;
@@ -42,9 +43,6 @@ const COLUMN_ALIASES: Record<string, string> = {
 
 // Lazy load PDF.js only when needed
 let PDFJS: typeof PDFJSType | null = null;
-
-// Import worker inline to avoid path resolution issues in Vite
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 const getPDFJS = async () => {
   if (!PDFJS) {
