@@ -43,13 +43,14 @@ const COLUMN_ALIASES: Record<string, string> = {
 // Lazy load PDF.js only when needed
 let PDFJS: typeof PDFJSType | null = null;
 
+// Import worker inline to avoid path resolution issues in Vite
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
 const getPDFJS = async () => {
   if (!PDFJS) {
     PDFJS = await import('pdfjs-dist');
-    PDFJS.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.mjs',
-      import.meta.url,
-    ).href;
+    // Use the imported worker URL directly - Vite handles the path resolution
+    PDFJS.GlobalWorkerOptions.workerSrc = pdfWorker;
   }
   return PDFJS;
 };
