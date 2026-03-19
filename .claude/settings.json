@@ -1,8 +1,10 @@
 {
-  "language": "english",
   "permissions": {
     "allow": [
-      "Bash(npm run)"
+      "Bash(npm run)",
+      "Bash(npm run test:run)",
+      "Bash(npm run test:run -- src/services/inventory.service.test.ts)"
     ]
-  }
+  },
+  "language": "english"
 }
