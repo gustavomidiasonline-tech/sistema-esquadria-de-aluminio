@@ -1,8 +1,8 @@
 import { AppLayout } from "@/components/AppLayout";
-import { UserCog, Plus, Search, Mail, Phone, Briefcase, UserCheck, UserX, Pencil, Trash2 } from "lucide-react";
+import { UserCog, Plus, Search, Mail, Phone, Briefcase, UserCheck, UserX, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,13 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface Funcionario {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   telefone: string;
-  funcao: "instalador" | "cortador" | "montador" | "medidor" | "motorista" | "auxiliar";
+  funcao: string;
   status: "ativo" | "ferias" | "afastado" | "desligado";
   dataAdmissao: string;
   salario: number;
@@ -38,6 +41,7 @@ const funcaoLabels: Record<string, string> = {
   medidor: "Medidor",
   motorista: "Motorista",
   auxiliar: "Auxiliar",
+  outro: "Outro",
 };
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
@@ -47,50 +51,68 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
   desligado: { label: "Desligado", variant: "destructive" },
 };
 
-const mockFuncionarios: Funcionario[] = [
-  { id: 1, nome: "João Pedro Almeida", email: "joao@alumy.com", telefone: "(11) 99111-2233", funcao: "instalador", status: "ativo", dataAdmissao: "2023-02-10", salario: 3200 },
-  { id: 2, nome: "Lucas Martins", email: "lucas@alumy.com", telefone: "(11) 98222-3344", funcao: "cortador", status: "ativo", dataAdmissao: "2023-05-15", salario: 2800 },
-  { id: 3, nome: "Rafael Souza", email: "rafael@alumy.com", telefone: "(21) 97333-4455", funcao: "montador", status: "ferias", dataAdmissao: "2022-11-01", salario: 3000 },
-  { id: 4, nome: "Pedro Henrique Lima", email: "pedro@alumy.com", telefone: "(11) 96444-5566", funcao: "medidor", status: "ativo", dataAdmissao: "2024-01-20", salario: 2500 },
-  { id: 5, nome: "Marcos Vinícius", email: "marcos@alumy.com", telefone: "(11) 95555-6677", funcao: "motorista", status: "ativo", dataAdmissao: "2023-08-12", salario: 2600 },
-  { id: 6, nome: "Thiago Oliveira", email: "thiago@alumy.com", telefone: "(21) 94666-7788", funcao: "auxiliar", status: "afastado", dataAdmissao: "2024-04-05", salario: 1800 },
-  { id: 7, nome: "André Costa", email: "andre@alumy.com", telefone: "(11) 93777-8899", funcao: "instalador", status: "desligado", dataAdmissao: "2022-06-10", salario: 0 },
-];
-
 type FormState = { nome: string; email: string; telefone: string; funcao: string; status: string; salario: string };
 
 const emptyForm: FormState = { nome: "", email: "", telefone: "", funcao: "instalador", status: "ativo", salario: "" };
 
-function usePersistedFuncionarios() {
-  const key = 'alumy_funcionarios';
-  const [funcionarios, setFuncionariosState] = useState<Funcionario[]>(() => {
-    try {
-      const stored = localStorage.getItem(key);
-      return stored ? (JSON.parse(stored) as Funcionario[]) : mockFuncionarios;
-    } catch {
-      return mockFuncionarios;
-    }
-  });
-
-  function setFuncionarios(next: Funcionario[]) {
-    setFuncionariosState(next);
-    localStorage.setItem(key, JSON.stringify(next));
-  }
-
-  return [funcionarios, setFuncionarios] as const;
-}
+const STORAGE_KEY = "alumy_funcionarios_v2";
 
 const Funcionarios = () => {
-  const [funcionarios, setFuncionarios] = usePersistedFuncionarios();
+  const { profile } = useAuth();
+  const companyId = profile?.company_id;
+
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<Funcionario | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [confirmDelete, setConfirmDelete] = useState<Funcionario | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Limpar dados falsos do localStorage antigo quando monta
+  useEffect(() => {
+    localStorage.removeItem("alumy_funcionarios");
+  }, []);
+
+  const loadFromStorage = (): Funcionario[] => {
+    if (!companyId) return [];
+    try {
+      const stored = localStorage.getItem(`${STORAGE_KEY}_${companyId}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveToStorage = (data: Funcionario[]) => {
+    if (!companyId) return;
+    localStorage.setItem(`${STORAGE_KEY}_${companyId}`, JSON.stringify(data));
+  };
+
+  const fetchFuncionarios = async () => {
+    if (!companyId) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      // Funcionários são armazenados localmente por empresa (tabela dedicada não existe no schema atual)
+      const local = loadFromStorage();
+      setFuncionarios(local);
+    } catch (err) {
+      console.error("Erro ao carregar funcionários:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFuncionarios();
+  }, [companyId]);
 
   const filtrados = funcionarios.filter((f) => {
-    const matchBusca = f.nome.toLowerCase().includes(busca.toLowerCase()) || f.email.toLowerCase().includes(busca.toLowerCase());
+    const matchBusca =
+      f.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      f.email.toLowerCase().includes(busca.toLowerCase());
     const matchStatus = filtroStatus === "todos" || f.status === filtroStatus;
     return matchBusca && matchStatus;
   });
@@ -121,34 +143,46 @@ const Funcionarios = () => {
   }
 
   function handleSalvar() {
+    setSaving(true);
     const salarioNum = parseFloat(form.salario) || 0;
+    let updated: Funcionario[];
+
     if (editando) {
-      setFuncionarios(funcionarios.map((f) =>
+      updated = funcionarios.map((f) =>
         f.id === editando.id
-          ? { ...f, nome: form.nome, email: form.email, telefone: form.telefone, funcao: form.funcao as Funcionario["funcao"], status: form.status as Funcionario["status"], salario: salarioNum }
+          ? { ...f, nome: form.nome, email: form.email, telefone: form.telefone, funcao: form.funcao, status: form.status as Funcionario["status"], salario: salarioNum }
           : f
-      ));
+      );
+      toast.success("Funcionário atualizado!");
     } else {
       const novoFunc: Funcionario = {
-        id: Date.now(),
+        id: crypto.randomUUID(),
         nome: form.nome,
         email: form.email,
         telefone: form.telefone,
-        funcao: form.funcao as Funcionario["funcao"],
+        funcao: form.funcao,
         status: form.status as Funcionario["status"],
         dataAdmissao: new Date().toISOString().split("T")[0],
         salario: salarioNum,
       };
-      setFuncionarios([novoFunc, ...funcionarios]);
+      updated = [novoFunc, ...funcionarios];
+      toast.success("Funcionário cadastrado!");
     }
+
+    setFuncionarios(updated);
+    saveToStorage(updated);
     setDialogOpen(false);
     setEditando(null);
     setForm(emptyForm);
+    setSaving(false);
   }
 
   function handleExcluir() {
     if (confirmDelete) {
-      setFuncionarios(funcionarios.filter((f) => f.id !== confirmDelete.id));
+      const updated = funcionarios.filter((f) => f.id !== confirmDelete.id);
+      setFuncionarios(updated);
+      saveToStorage(updated);
+      toast.success("Funcionário removido.");
       setConfirmDelete(null);
     }
   }
@@ -222,11 +256,19 @@ const Funcionarios = () => {
         </div>
 
         <div className="glass-card-premium divide-y divide-border">
-          {filtrados.length === 0 ? (
-            <div className="px-5 py-12 text-center text-muted-foreground text-sm">Nenhum funcionário encontrado.</div>
+          {loading ? (
+            <div className="px-5 py-12 flex items-center justify-center gap-2 text-muted-foreground text-sm">
+              <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
+            </div>
+          ) : filtrados.length === 0 ? (
+            <div className="px-5 py-12 text-center text-muted-foreground text-sm">
+              {funcionarios.length === 0
+                ? "Nenhum funcionário cadastrado. Clique em \"Novo funcionário\" para começar."
+                : "Nenhum funcionário encontrado."}
+            </div>
           ) : (
             filtrados.map((func) => {
-              const sc = statusConfig[func.status];
+              const sc = statusConfig[func.status] ?? { label: func.status, variant: "outline" as const };
               return (
                 <div key={func.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-4">
@@ -237,12 +279,12 @@ const Funcionarios = () => {
                       <p className="text-sm font-semibold text-foreground">{func.nome}</p>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{func.email}</span>
-                        <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{func.telefone}</span>
+                        {func.telefone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{func.telefone}</span>}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline">{funcaoLabels[func.funcao]}</Badge>
+                    <Badge variant="outline">{funcaoLabels[func.funcao] ?? func.funcao}</Badge>
                     <Badge variant={sc.variant}>{sc.label}</Badge>
                     {func.salario > 0 && (
                       <span className="text-sm font-medium text-foreground">
@@ -294,6 +336,7 @@ const Funcionarios = () => {
                     <SelectItem value="medidor">Medidor</SelectItem>
                     <SelectItem value="motorista">Motorista</SelectItem>
                     <SelectItem value="auxiliar">Auxiliar</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -324,7 +367,8 @@ const Funcionarios = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSalvar} disabled={!form.nome || !form.email}>
+            <Button onClick={handleSalvar} disabled={saving || !form.nome || !form.email}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {editando ? "Salvar alterações" : "Criar funcionário"}
             </Button>
           </DialogFooter>

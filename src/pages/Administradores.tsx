@@ -1,8 +1,8 @@
 import { AppLayout } from "@/components/AppLayout";
-import { ShieldCheck, Plus, Search, Mail, Phone, Pencil, Trash2, Shield, UserCheck } from "lucide-react";
+import { ShieldCheck, Plus, Search, Mail, Phone, Pencil, Trash2, Shield, UserCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,13 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface Administrador {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   telefone: string;
-  cargo: "super_admin" | "admin" | "gerente";
+  cargo: string;
   status: "ativo" | "inativo";
   dataCadastro: string;
 }
@@ -34,54 +37,77 @@ const cargoLabels: Record<string, string> = {
   super_admin: "Super Admin",
   admin: "Administrador",
   gerente: "Gerente",
+  funcionario: "Funcionário",
 };
 
 const cargoVariant: Record<string, "default" | "secondary" | "outline"> = {
   super_admin: "default",
   admin: "secondary",
   gerente: "outline",
+  funcionario: "outline",
 };
 
-const mockAdmins: Administrador[] = [
-  { id: 1, nome: "Carlos Alberto Silva", email: "carlos@alumy.com", telefone: "(11) 99999-1234", cargo: "super_admin", status: "ativo", dataCadastro: "2024-01-10" },
-  { id: 2, nome: "Ana Paula Ferreira", email: "ana@alumy.com", telefone: "(11) 98888-5678", cargo: "admin", status: "ativo", dataCadastro: "2024-03-15" },
-  { id: 3, nome: "Roberto Santos", email: "roberto@alumy.com", telefone: "(21) 97777-9012", cargo: "gerente", status: "ativo", dataCadastro: "2024-06-20" },
-  { id: 4, nome: "Mariana Costa", email: "mariana@alumy.com", telefone: "(11) 96666-3456", cargo: "admin", status: "inativo", dataCadastro: "2024-02-05" },
-];
+type FormState = { nome: string; email: string; telefone: string; cargo: string };
 
-type FormState = { nome: string; email: string; telefone: string; cargo: string; status: string };
-
-const emptyForm: FormState = { nome: "", email: "", telefone: "", cargo: "admin", status: "ativo" };
-
-function usePersistedAdmins() {
-  const key = 'alumy_admins';
-  const [admins, setAdminsState] = useState<Administrador[]>(() => {
-    try {
-      const stored = localStorage.getItem(key);
-      return stored ? (JSON.parse(stored) as Administrador[]) : mockAdmins;
-    } catch {
-      return mockAdmins;
-    }
-  });
-
-  function setAdmins(next: Administrador[]) {
-    setAdminsState(next);
-    localStorage.setItem(key, JSON.stringify(next));
-  }
-
-  return [admins, setAdmins] as const;
-}
+const emptyForm: FormState = { nome: "", email: "", telefone: "", cargo: "admin" };
 
 const Administradores = () => {
-  const [admins, setAdmins] = usePersistedAdmins();
+  const { profile } = useAuth();
+  const companyId = profile?.company_id;
+
+  const [admins, setAdmins] = useState<Administrador[]>([]);
+  const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<Administrador | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [confirmDelete, setConfirmDelete] = useState<Administrador | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Limpar dados falsos do localStorage quando o componente monta
+  useEffect(() => {
+    localStorage.removeItem('alumy_admins');
+  }, []);
+
+  const fetchAdmins = async () => {
+    if (!companyId) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, user_id, nome, full_name, email, telefone, cargo, created_at, company_id")
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const mapped: Administrador[] = (data ?? []).map((p: any) => ({
+        id: p.id,
+        nome: p.nome || p.full_name || p.email?.split("@")[0] || "Sem nome",
+        email: p.email || "",
+        telefone: p.telefone || "",
+        cargo: p.cargo || "admin",
+        status: "ativo" as const,
+        dataCadastro: p.created_at?.split("T")[0] ?? new Date().toISOString().split("T")[0],
+      }));
+
+      setAdmins(mapped);
+    } catch (err) {
+      console.error("Erro ao buscar administradores:", err);
+      toast.error("Erro ao carregar administradores");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAdmins();
+  }, [companyId]);
 
   const filtrados = admins.filter(
-    (a) => a.nome.toLowerCase().includes(busca.toLowerCase()) || a.email.toLowerCase().includes(busca.toLowerCase())
+    (a) =>
+      a.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      a.email.toLowerCase().includes(busca.toLowerCase())
   );
 
   const totais = {
@@ -97,38 +123,54 @@ const Administradores = () => {
 
   function abrirEditar(admin: Administrador) {
     setEditando(admin);
-    setForm({ nome: admin.nome, email: admin.email, telefone: admin.telefone, cargo: admin.cargo, status: admin.status });
+    setForm({ nome: admin.nome, email: admin.email, telefone: admin.telefone, cargo: admin.cargo });
     setDialogOpen(true);
   }
 
-  function handleSalvar() {
-    if (editando) {
-      setAdmins(admins.map((a) =>
-        a.id === editando.id
-          ? { ...a, nome: form.nome, email: form.email, telefone: form.telefone, cargo: form.cargo as Administrador["cargo"], status: form.status as Administrador["status"] }
-          : a
-      ));
-    } else {
-      const novoAdmin: Administrador = {
-        id: Date.now(),
-        nome: form.nome,
-        email: form.email,
-        telefone: form.telefone,
-        cargo: form.cargo as Administrador["cargo"],
-        status: form.status as Administrador["status"],
-        dataCadastro: new Date().toISOString().split("T")[0],
-      };
-      setAdmins([novoAdmin, ...admins]);
+  async function handleSalvar() {
+    if (!companyId) return;
+    setSaving(true);
+    try {
+      if (editando) {
+        // Atualizar perfil existente
+        const { error } = await supabase
+          .from("profiles")
+          .update({ nome: form.nome, telefone: form.telefone, cargo: form.cargo })
+          .eq("id", editando.id);
+
+        if (error) throw error;
+        toast.success("Administrador atualizado!");
+      } else {
+        toast.info("Para adicionar um novo administrador, peça que ele crie uma conta no sistema. O perfil dele aparecerá automaticamente aqui.");
+        setDialogOpen(false);
+        return;
+      }
+      await fetchAdmins();
+      setDialogOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
+      setSaving(false);
     }
-    setDialogOpen(false);
-    setEditando(null);
-    setForm(emptyForm);
   }
 
-  function handleExcluir() {
-    if (confirmDelete) {
-      setAdmins(admins.filter((a) => a.id !== confirmDelete.id));
+  async function handleExcluir() {
+    if (!confirmDelete) return;
+    setSaving(true);
+    try {
+      // Apenas atualiza o cargo para "removido" (não deleta o auth user)
+      const { error } = await supabase
+        .from("profiles")
+        .update({ cargo: "removido" })
+        .eq("id", confirmDelete.id);
+      if (error) throw error;
+      toast.success("Administrador removido da lista.");
+      await fetchAdmins();
       setConfirmDelete(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao remover");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -138,10 +180,10 @@ const Administradores = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Administradores</h1>
-            <p className="text-sm text-muted-foreground">Gerencie os administradores do sistema e suas permissões</p>
+            <p className="text-sm text-muted-foreground">Usuários cadastrados no sistema com acesso à sua empresa</p>
           </div>
           <Button className="gap-2" onClick={abrirNovo}>
-            <Plus className="h-4 w-4" /> Novo administrador
+            <Plus className="h-4 w-4" /> Adicionar
           </Button>
         </div>
 
@@ -187,8 +229,16 @@ const Administradores = () => {
         </div>
 
         <div className="glass-card-premium divide-y divide-border">
-          {filtrados.length === 0 ? (
-            <div className="px-5 py-12 text-center text-muted-foreground text-sm">Nenhum administrador encontrado.</div>
+          {loading ? (
+            <div className="px-5 py-12 flex items-center justify-center gap-2 text-muted-foreground text-sm">
+              <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
+            </div>
+          ) : filtrados.length === 0 ? (
+            <div className="px-5 py-12 text-center text-muted-foreground text-sm">
+              {admins.length === 0
+                ? "Nenhum usuário cadastrado ainda. Crie uma conta para aparecer aqui."
+                : "Nenhum administrador encontrado."}
+            </div>
           ) : (
             filtrados.map((admin) => (
               <div key={admin.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors">
@@ -200,15 +250,15 @@ const Administradores = () => {
                     <p className="text-sm font-semibold text-foreground">{admin.nome}</p>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{admin.email}</span>
-                      <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{admin.telefone}</span>
+                      {admin.telefone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{admin.telefone}</span>}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant={cargoVariant[admin.cargo]}>{cargoLabels[admin.cargo]}</Badge>
-                  <Badge variant={admin.status === "ativo" ? "default" : "outline"}>
-                    {admin.status === "ativo" ? "Ativo" : "Inativo"}
+                  <Badge variant={cargoVariant[admin.cargo] ?? "outline"}>
+                    {cargoLabels[admin.cargo] ?? admin.cargo}
                   </Badge>
+                  <Badge variant="default">Ativo</Badge>
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEditar(admin)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -222,26 +272,28 @@ const Administradores = () => {
         </div>
       </div>
 
-      {/* Dialog Criar / Editar */}
+      {/* Dialog Editar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editando ? "Editar Administrador" : "Novo Administrador"}</DialogTitle>
+            <DialogTitle>{editando ? "Editar Administrador" : "Adicionar Administrador"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Nome completo</Label>
-              <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Nome do administrador" />
+          {!editando ? (
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-muted-foreground">
+                Para adicionar um novo administrador, basta pedir que o usuário <strong>crie uma conta no sistema</strong> usando o email da empresa. Ele aparecerá automaticamente nesta lista.
+              </p>
             </div>
-            <div>
-              <Label>E-mail</Label>
-              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@empresa.com" />
-            </div>
-            <div>
-              <Label>Telefone</Label>
-              <Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label>Nome completo</Label>
+                <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Nome" />
+              </div>
+              <div>
+                <Label>Telefone</Label>
+                <Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" />
+              </div>
               <div>
                 <Label>Cargo / Função</Label>
                 <Select value={form.cargo} onValueChange={(v) => setForm({ ...form, cargo: v })}>
@@ -250,42 +302,39 @@ const Administradores = () => {
                     <SelectItem value="super_admin">Super Admin</SelectItem>
                     <SelectItem value="admin">Administrador</SelectItem>
                     <SelectItem value="gerente">Gerente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="inativo">Inativo</SelectItem>
+                    <SelectItem value="funcionario">Funcionário</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-          </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSalvar} disabled={!form.nome || !form.email}>
-              {editando ? "Salvar alterações" : "Criar administrador"}
-            </Button>
+            {editando && (
+              <Button onClick={handleSalvar} disabled={saving || !form.nome}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Salvar alterações
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Confirmar Exclusão */}
+      {/* Dialog Confirmar Remoção */}
       <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Excluir administrador</DialogTitle>
+            <DialogTitle>Remover administrador</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Tem certeza que deseja excluir <strong>{confirmDelete?.nome}</strong>? Esta ação não pode ser desfeita.
+            Tem certeza que deseja remover <strong>{confirmDelete?.nome}</strong> da lista de administradores?
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleExcluir}>Excluir</Button>
+            <Button variant="destructive" onClick={handleExcluir} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Remover
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
