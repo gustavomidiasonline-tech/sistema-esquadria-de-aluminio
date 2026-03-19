@@ -32,21 +32,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    try {
+      // Tentar buscar por user_id primeiro, depois por id (schema legado usa id = auth.uid)
+      let { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
 
-    // Auto-provision: se profile existe mas não tem company_id, criar via RPC (SECURITY DEFINER)
-    if (data && !data.company_id) {
-      const { data: newCompanyId } = await supabase.rpc("auto_provision_company");
-      if (newCompanyId) {
-        data.company_id = newCompanyId;
+      if (error || !data) {
+        const fallback = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .single();
+        data = fallback.data;
+        error = fallback.error;
       }
-    }
 
-    setProfile(data);
+      if (error || !data) {
+        console.warn("[Auth] Profile não encontrado para user:", userId);
+        setProfile(null);
+        return;
+      }
+
+      // Normalizar campos (schema legado usa full_name em vez de nome)
+      if (!data.nome && data.full_name) {
+        data.nome = data.full_name;
+      }
+      if (!data.user_id) {
+        data.user_id = userId;
+      }
+
+      // Auto-provision: se profile existe mas não tem company_id, tentar criar via RPC
+      if (!data.company_id) {
+        try {
+          const { data: newCompanyId } = await supabase.rpc("auto_provision_company");
+          if (newCompanyId) {
+            data.company_id = newCompanyId;
+          }
+        } catch (rpcError) {
+          console.warn("[Auth] auto_provision_company RPC indisponível:", rpcError);
+        }
+      }
+
+      setProfile(data);
+    } catch (err) {
+      console.error("[Auth] Erro ao buscar profile:", err);
+      setProfile(null);
+    }
   };
 
   useEffect(() => {

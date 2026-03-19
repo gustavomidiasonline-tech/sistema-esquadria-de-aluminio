@@ -11,39 +11,16 @@ const getPDFJS = async () => {
     try {
       PDFJS = await import('pdfjs-dist');
 
-      // Determinar caminho correto do worker dependendo do ambiente
-      let workerPath: string;
-
-      if (typeof window !== 'undefined' && import.meta.url) {
-        // Ambiente ESM (Vite)
-        try {
-          // Tentar carregar worker.mjs primeiro (mais recente)
-          workerPath = new URL(
-            'pdfjs-dist/build/pdf.worker.mjs',
-            import.meta.url,
-          ).href;
-
-          // Fallback para .min.mjs se não existir
-          const response = await fetch(workerPath, { method: 'HEAD' });
-          if (!response.ok) {
-            workerPath = new URL(
-              'pdfjs-dist/build/pdf.worker.min.mjs',
-              import.meta.url,
-            ).href;
-          }
-        } catch {
-          // Se houver erro, usar fallback direto
-          workerPath = new URL(
-            'pdfjs-dist/build/pdf.worker.js',
-            import.meta.url,
-          ).href;
-        }
-      } else {
-        // Fallback para Node.js ou ambientes não-browser
-        workerPath = 'pdfjs-dist/build/pdf.worker.js';
+      try {
+        // Try to load worker from node_modules (works in dev with Vite)
+        const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs');
+        const blob = new Blob([workerModule.default || ''], { type: 'application/javascript' });
+        PDFJS.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+      } catch {
+        // Fallback: use CDN worker
+        PDFJS.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       }
-
-      PDFJS.GlobalWorkerOptions.workerSrc = workerPath;
     } catch (error) {
       console.error('Falha ao carregar PDF.js:', error);
       throw new Error(`Não foi possível carregar PDF.js: ${error instanceof Error ? error.message : 'Desconhecido'}`);

@@ -1,5 +1,7 @@
-﻿import Papa from 'papaparse';
+import Papa from 'papaparse';
 import type { InventoryItemTipo } from '@/services/inventory.service';
+import { CatalogParserService } from '@/services/catalog-parser.service';
+import { FileUploadService } from '@/services/file-upload.service';
 import type * as PDFJSType from 'pdfjs-dist';
 
 export interface InventoryImportItem {
@@ -141,6 +143,70 @@ export async function parseInventoryImportFile(file: File): Promise<InventoryImp
 }
 
 async function parseInventoryPDF(file: File): Promise<InventoryImportResult> {
+  try {
+    // Step 1: Extract raw text from PDF using FileUploadService
+    const uploadResult = await FileUploadService.processPDF(file);
+    if (!uploadResult.success || !uploadResult.rawText?.trim()) {
+      return {
+        success: false,
+        items: [],
+        errors: ['Erro ao extrair texto do PDF. Verifique se o PDF contém texto selecionável (não é apenas imagem escaneada).'],
+      };
+    }
+
+    const rawText = uploadResult.rawText;
+
+    // Step 2: Use CatalogParserService (intelligent regex-based extraction)
+    const catalogResult = CatalogParserService.parse(rawText);
+
+    if (catalogResult.perfis.length > 0 || catalogResult.modelos.length > 0) {
+      // Convert catalog profiles to inventory items
+      const items: InventoryImportItem[] = [];
+
+      for (const perfil of catalogResult.perfis) {
+        items.push({
+          codigo: perfil.codigo,
+          nome: perfil.nome,
+          tipo: 'perfil',
+          quantidade: 0,
+          unidade: 'barra',
+        });
+      }
+
+      // Also convert window models (as 'outro' type)
+      for (const modelo of catalogResult.modelos) {
+        items.push({
+          codigo: modelo.codigo,
+          nome: modelo.nome,
+          tipo: 'outro',
+          quantidade: 0,
+          unidade: 'un',
+        });
+      }
+
+      return {
+        success: true,
+        items,
+        errors: [],
+      };
+    }
+
+    // Step 3: Fallback to legacy tabular parsing (for structured PDFs with explicit columns)
+    return parseInventoryPDFLegacy(file);
+  } catch (error) {
+    return {
+      success: false,
+      items: [],
+      errors: [`Erro ao processar PDF: ${error instanceof Error ? error.message : 'Desconhecido'}`],
+    };
+  }
+}
+
+/**
+ * Legacy PDF parser — expects tabular columns (codigo, nome, tipo, quantidade, unidade).
+ * Used as fallback when CatalogParserService finds nothing.
+ */
+async function parseInventoryPDFLegacy(file: File): Promise<InventoryImportResult> {
   try {
     const pdfjs = await getPDFJS();
     const arrayBuffer = await file.arrayBuffer();

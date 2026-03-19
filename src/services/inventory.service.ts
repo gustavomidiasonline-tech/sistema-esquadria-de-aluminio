@@ -317,6 +317,117 @@ export const InventoryService = {
 
     return baseSummary;
   },
+  /**
+   * Sincroniza perfis do catálogo de fabricantes (perfis_catalogo) com o estoque.
+   * Para cada perfil no catálogo que não existe no estoque, cria um item com quantidade 0.
+   */
+  async sincronizarDeCatalogo(companyId: string): Promise<InventorySyncResult> {
+    try {
+      console.log(`📦 Iniciando sincronização de catálogo para company_id: ${companyId}`);
+
+      // 1. Buscar todos os perfis do catálogo
+      console.log('📋 Buscando perfis do catálogo...');
+      const { data: catalogPerfis, error: catalogError } = await supabase
+        .from('perfis_catalogo')
+        .select('codigo, nome, tipo')
+        .eq('company_id', companyId);
+
+      if (catalogError) {
+        throw databaseError(`Erro ao buscar catálogo: ${catalogError.message}`, { service: 'inventory', operation: 'sincronizarDeCatalogo' });
+      }
+
+      console.log(`✅ Encontrados ${catalogPerfis?.length ?? 0} perfis no catálogo`);
+
+      if (!catalogPerfis?.length) {
+        console.log('⚠️ Nenhum perfil encontrado no catálogo');
+        return { inserted: 0, updated: 0, skipped: 0 };
+      }
+
+      // 2. Buscar itens de estoque existentes
+      console.log('🔍 Buscando itens de estoque existentes...');
+      const { data: existingItems, error: existingError } = await supabase
+        .from('inventory_items')
+        .select('codigo, nome')
+        .eq('company_id', companyId)
+        .eq('tipo', 'perfil');
+
+      if (existingError) {
+        throw databaseError(`Erro ao buscar estoque: ${existingError.message}`, { service: 'inventory', operation: 'sincronizarDeCatalogo' });
+      }
+
+      console.log(`✅ Encontrados ${existingItems?.length ?? 0} itens de estoque existentes`);
+
+      const existingCodigos = new Set(
+        (existingItems ?? []).map((item: { codigo?: string }) => String(item.codigo ?? '').toUpperCase())
+      );
+
+      // 3. Inserir/atualizar em batch para melhor performance
+      console.log('📝 Preparando inserções...');
+      let inserted = 0;
+      let skipped = 0;
+      const itemsToInsert = [];
+
+      for (const perfil of catalogPerfis) {
+        const codigo = String(perfil.codigo ?? '').trim();
+        const nome = String(perfil.nome ?? '').trim();
+
+        if (!codigo || !nome) {
+          console.warn(`⚠️ Perfil inválido ignorado: codigo="${codigo}", nome="${nome}"`);
+          skipped++;
+          continue;
+        }
+
+        if (existingCodigos.has(codigo.toUpperCase())) {
+          console.log(`⏭️ Perfil já existe no estoque: ${codigo}`);
+          skipped++;
+          continue;
+        }
+
+        itemsToInsert.push({
+          company_id: companyId,
+          codigo,
+          nome,
+          tipo: 'perfil' as const,
+          quantidade_disponivel: 0,
+          quantidade_reservada: 0,
+          quantidade_minima: 0,
+          unidade: 'barra',
+        });
+      }
+
+      // Inserir em batches de 50
+      if (itemsToInsert.length > 0) {
+        console.log(`🚀 Inserindo ${itemsToInsert.length} novos itens em batches...`);
+        for (let i = 0; i < itemsToInsert.length; i += 50) {
+          const batch = itemsToInsert.slice(i, i + 50);
+          const batchNum = Math.floor(i / 50) + 1;
+
+          try {
+            console.log(`  📦 Batch ${batchNum}: inserindo ${batch.length} itens...`);
+            const { error: insertError } = await supabase
+              .from('inventory_items')
+              .insert(batch);
+
+            if (insertError) {
+              throw new Error(`Batch ${batchNum}: ${insertError.message}`);
+            }
+
+            inserted += batch.length;
+            console.log(`  ✅ Batch ${batchNum} inserido com sucesso`);
+          } catch (batchErr) {
+            const errMsg = batchErr instanceof Error ? batchErr.message : 'Desconhecido';
+            throw databaseError(`Erro ao inserir batch ${batchNum}: ${errMsg}`, { service: 'inventory', operation: 'sincronizarDeCatalogo' });
+          }
+        }
+      }
+
+      console.log(`\n✅ Sincronização completa: ${inserted} inserido(s), ${skipped} ignorado(s)`);
+      return { inserted, updated: 0, skipped };
+    } catch (err) {
+      console.error('❌ Erro na sincronização:', err);
+      throw err;
+    }
+  },
 };
 
 type SyncSourceConfig = {

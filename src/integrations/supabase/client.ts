@@ -1,20 +1,45 @@
+import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Enhanced Mock Supabase client with full data support
+// Read Supabase credentials from Vite env vars
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
+
+const hasRealSupabase = !!(
+  SUPABASE_URL &&
+  SUPABASE_ANON_KEY &&
+  SUPABASE_URL !== 'http://localhost:54321' &&
+  !SUPABASE_ANON_KEY.startsWith('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1v')
+);
+
+// ─── Real Supabase Client ────────────────────────────────────────────
+const createRealClient = () => {
+  return createClient<Database>(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+    auth: {
+      storage: localStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    },
+  });
+};
+
+// ─── Mock Supabase Client (fallback para desenvolvimento sem Supabase) ─
 const createMockClient = () => {
-  // State listeners for auth changes
   let authListeners: Array<(event: string, session: any) => void> = [];
 
-  // Storage keys
-  const USERS_STORAGE_KEY = 'mock-registered-users';
-  const CATALOGS_STORAGE_KEY = 'mock-catalogs';
-  const CLIENTES_STORAGE_KEY = 'mock-clientes';
-  const ORCAMENTOS_STORAGE_KEY = 'mock-orcamentos';
-  const PEDIDOS_STORAGE_KEY = 'mock-pedidos';
-  const CONTAS_RECEBER_STORAGE_KEY = 'mock-contas-receber';
-  const CONTAS_PAGAR_STORAGE_KEY = 'mock-contas-pagar';
+  const USERS_KEY = 'mock-registered-users';
+  const STORAGE_KEYS: Record<string, string> = {
+    perfis_catalogo: 'mock-catalogs',
+    window_models: 'mock-catalogs',
+    inventory_items: 'mock-inventory-items',
+    orcamentos: 'mock-orcamentos',
+    pedidos: 'mock-pedidos',
+    clientes: 'mock-clientes',
+    contas_receber: 'mock-contas-receber',
+    contas_pagar: 'mock-contas-pagar',
+  };
 
-  // Initialize data stores
   const getStore = (key: string) => {
     const stored = localStorage.getItem(key);
     return stored ? JSON.parse(stored) : {};
@@ -24,7 +49,6 @@ const createMockClient = () => {
     localStorage.setItem(key, JSON.stringify(data));
   };
 
-  // Hash password
   const hashPassword = (password: string): string => {
     let hash = 0;
     for (let i = 0; i < password.length; i++) {
@@ -35,16 +59,114 @@ const createMockClient = () => {
     return 'hash_' + Math.abs(hash).toString(36);
   };
 
+  const getCurrentContext = () => {
+    const stored = localStorage.getItem('sb-localhost-auth-token');
+    if (!stored) return null;
+    const session = JSON.parse(stored);
+    return {
+      userId: session.user.id,
+      email: session.user.email,
+      companyId: 'mock-company-default',
+    };
+  };
+
+  const getMockProfile = (userId: string, email: string) => ({
+    id: userId,
+    user_id: userId,
+    company_id: 'mock-company-default',
+    nome: email.split('@')[0],
+    email,
+    telefone: '11999999999',
+    cargo: 'Usuário',
+    avatar_url: null,
+  });
+
+  // Thenable query builder — matches real Supabase behavior
+  const createQueryBuilder = (table: string, data: any[] = [], isSingle = false) => {
+    let filteredData = [...data];
+
+    const builder: any = {
+      select: () => createQueryBuilder(table, filteredData),
+      eq: (field: string, value: any) => {
+        filteredData = filteredData.filter(item => item[field] === value);
+        return createQueryBuilder(table, filteredData, isSingle);
+      },
+      neq: (field: string, value: any) => {
+        filteredData = filteredData.filter(item => item[field] !== value);
+        return createQueryBuilder(table, filteredData, isSingle);
+      },
+      in: (field: string, values: any[]) => {
+        filteredData = filteredData.filter(item => values.includes(item[field]));
+        return createQueryBuilder(table, filteredData, isSingle);
+      },
+      filter: (field: string, op: string, value: any) => {
+        if (op === 'eq') filteredData = filteredData.filter(item => item[field] === value);
+        else if (op === 'lt') filteredData = filteredData.filter(item => item[field] < value);
+        else if (op === 'gt') filteredData = filteredData.filter(item => item[field] > value);
+        else if (op === 'lte') filteredData = filteredData.filter(item => item[field] <= value);
+        else if (op === 'gte') filteredData = filteredData.filter(item => item[field] >= value);
+        return createQueryBuilder(table, filteredData, isSingle);
+      },
+      single: () => createQueryBuilder(table, filteredData, true),
+      order: (column: string, options?: { ascending: boolean }) => {
+        filteredData.sort((a, b) => {
+          if (a[column] < b[column]) return options?.ascending ? -1 : 1;
+          if (a[column] > b[column]) return options?.ascending ? 1 : -1;
+          return 0;
+        });
+        return createQueryBuilder(table, filteredData, isSingle);
+      },
+      limit: (count: number) => {
+        filteredData = filteredData.slice(0, count);
+        return createQueryBuilder(table, filteredData, isSingle);
+      },
+      // Thenable — allows `await supabase.from(...).select(...)` to resolve
+      then: (resolve: (value: any) => void, reject?: (reason: any) => void) => {
+        try {
+          resolve(isSingle
+            ? { data: filteredData[0] || null, error: null }
+            : { data: filteredData, error: null });
+        } catch (err) {
+          if (reject) reject(err);
+        }
+      },
+      delete: () => {
+        const del: any = {
+          eq: () => del,
+          then: (resolve: (v: any) => void) => resolve({ data: null, error: null }),
+        };
+        return del;
+      },
+      update: () => {
+        const upd: any = {
+          eq: () => upd,
+          then: (resolve: (v: any) => void) => resolve({ data: null, error: null }),
+        };
+        return upd;
+      },
+      upsert: (records: any) => {
+        const items = Array.isArray(records) ? records : [records];
+        return createQueryBuilder(table, items);
+      },
+      insert: (records: any) => {
+        const items = Array.isArray(records) ? records : [records];
+        return createQueryBuilder(table, items);
+      },
+    };
+
+    return builder;
+  };
+
   // Mock Auth
   const mockAuth = {
     signInWithPassword: async (credentials: { email: string; password: string }) => {
-      const users = getStore(USERS_STORAGE_KEY);
+      const users = getStore(USERS_KEY);
       const registeredUser = users[credentials.email.toLowerCase()];
 
       if (!registeredUser || registeredUser.passwordHash !== hashPassword(credentials.password)) {
         return {
           data: { user: null, session: null },
-          error: { message: 'Invalid email or password' } as any
+          error: { message: 'Email ou senha inválidos' } as any,
         };
       }
 
@@ -70,43 +192,31 @@ const createMockClient = () => {
       };
 
       localStorage.setItem('sb-localhost-auth-token', JSON.stringify(session));
-      setTimeout(() => {
-        authListeners.forEach(listener => listener('SIGNED_IN', session));
-      }, 0);
-
+      setTimeout(() => authListeners.forEach(l => l('SIGNED_IN', session)), 0);
       return { data: { user: mockUser, session }, error: null };
     },
 
     signUp: async (creds: any) => {
       const email = creds.email.toLowerCase();
-      const users = getStore(USERS_STORAGE_KEY);
-
+      const users = getStore(USERS_KEY);
       if (users[email]) {
-        return {
-          data: { user: null, session: null },
-          error: { message: 'User already exists' } as any
-        };
+        return { data: { user: null, session: null }, error: { message: 'Usuário já existe' } as any };
       }
-
       const userId = 'mock-user-' + Math.random().toString(36).substr(2, 9);
-      const companyId = 'mock-company-' + Math.random().toString(36).substr(2, 9);
-
       users[email] = {
         userId,
         email: creds.email,
         passwordHash: hashPassword(creds.password),
-        companyId,
+        companyId: 'mock-company-default',
         created_at: new Date().toISOString(),
       };
-      saveStore(USERS_STORAGE_KEY, users);
-
-      const user = { id: userId, email: creds.email } as any;
-      return { data: { user, session: null }, error: null };
+      saveStore(USERS_KEY, users);
+      return { data: { user: { id: userId, email: creds.email } as any, session: null }, error: null };
     },
 
     signOut: async () => {
       localStorage.removeItem('sb-localhost-auth-token');
-      authListeners.forEach(listener => listener('SIGNED_OUT', null));
+      authListeners.forEach(l => l('SIGNED_OUT', null));
       return { error: null };
     },
 
@@ -125,124 +235,11 @@ const createMockClient = () => {
           subscription: {
             unsubscribe: () => {
               authListeners = authListeners.filter(l => l !== callback);
-            }
-          }
-        }
+            },
+          },
+        },
       };
     },
-  };
-
-  // Get current user context
-  const getCurrentContext = () => {
-    const stored = localStorage.getItem('sb-localhost-auth-token');
-    if (!stored) return null;
-    const session = JSON.parse(stored);
-    return {
-      userId: session.user.id,
-      email: session.user.email,
-      companyId: 'mock-company-default'
-    };
-  };
-
-  // Get mock profile
-  const getMockProfile = (userId: string, email: string) => ({
-    id: userId,
-    user_id: userId,
-    company_id: 'mock-company-default',
-    nome: email.split('@')[0],
-    email: email,
-    telefone: '11999999999',
-    cargo: 'Usuário',
-    avatar_url: null,
-  });
-
-  // Advanced Query Builder
-  const createQueryBuilder = (table: string, data: any[] = []) => {
-    let filteredData = [...data];
-    let filters: Array<{ field: string; op: string; value: any }> = [];
-
-    return {
-      select: (columns?: string) => {
-        return createQueryBuilder(table, filteredData);
-      },
-      eq: (field: string, value: any) => {
-        filters.push({ field, op: 'eq', value });
-        filteredData = filteredData.filter(item => item[field] === value);
-        return createQueryBuilder(table, filteredData);
-      },
-      in: (field: string, values: any[]) => {
-        filters.push({ field, op: 'in', value: values });
-        filteredData = filteredData.filter(item => values.includes(item[field]));
-        return createQueryBuilder(table, filteredData);
-      },
-      filter: (field: string, op: string, value: any) => {
-        filters.push({ field, op, value });
-        if (op === 'lt') {
-          filteredData = filteredData.filter(item => item[field] < value);
-        } else if (op === 'gt') {
-          filteredData = filteredData.filter(item => item[field] > value);
-        } else if (op === 'lte') {
-          filteredData = filteredData.filter(item => item[field] <= value);
-        } else if (op === 'gte') {
-          filteredData = filteredData.filter(item => item[field] >= value);
-        }
-        return createQueryBuilder(table, filteredData);
-      },
-      single: async () => {
-        return { data: filteredData[0] || null, error: null };
-      },
-      data: async () => {
-        return { data: filteredData, error: null };
-      },
-      delete: async () => {
-        // Delete from store
-        let store = getStore(CATALOGS_STORAGE_KEY);
-        if (table === 'perfis_catalogo') {
-          const keysToDelete = filteredData.map(item => `${item.company_id}:${item.codigo}`);
-          const updated = Object.fromEntries(
-            Object.entries(store).filter(([k]) => !keysToDelete.includes(k))
-          );
-          saveStore(CATALOGS_STORAGE_KEY, updated);
-          return { data: null, error: null };
-        }
-        if (table === 'window_models') {
-          const keysToDelete = filteredData.map(item => `${item.company_id}:${item.codigo}`);
-          const updated = Object.fromEntries(
-            Object.entries(store).filter(([k]) => !keysToDelete.includes(k))
-          );
-          saveStore(CATALOGS_STORAGE_KEY, updated);
-          return { data: null, error: null };
-        }
-        return { data: null, error: null };
-      },
-      update: async (updates: any) => {
-        return { data: filteredData, error: null };
-      },
-      insert: async (records: any | any[]) => {
-        const items = Array.isArray(records) ? records : [records];
-        const store = getStore(CATALOGS_STORAGE_KEY);
-
-        items.forEach(item => {
-          const key = `${table}:${item.company_id}:${item.codigo}`;
-          store[key] = item;
-        });
-
-        saveStore(CATALOGS_STORAGE_KEY, store);
-        return { data: items, error: null };
-      },
-      order: (column: string, options?: { ascending: boolean }) => {
-        filteredData.sort((a, b) => {
-          if (a[column] < b[column]) return options?.ascending ? -1 : 1;
-          if (a[column] > b[column]) return options?.ascending ? 1 : -1;
-          return 0;
-        });
-        return createQueryBuilder(table, filteredData);
-      },
-      limit: (count: number) => {
-        filteredData = filteredData.slice(0, count);
-        return createQueryBuilder(table, filteredData);
-      },
-    };
   };
 
   return {
@@ -253,233 +250,99 @@ const createMockClient = () => {
       const companyId = context?.companyId || 'mock-company-default';
       const userId = context?.userId || 'mock-user-default';
 
-      // Profile queries
-      if (table === 'profiles') {
-        const profile = getMockProfile(userId, context?.email || 'test@example.com');
-        return {
-          select: () => createQueryBuilder(table, [profile]),
-          insert: async (data: any) => {
-            return { data: profile, error: null };
-          },
-          update: async (data: any) => {
-            return { data: profile, error: null };
-          },
-        };
-      }
+      const loadTableData = (): any[] => {
+        if (table === 'profiles') {
+          return [getMockProfile(userId, context?.email || 'test@example.com')];
+        }
+        const storageKey = STORAGE_KEYS[table];
+        if (!storageKey) return [];
+        const store = getStore(storageKey);
+        let items = Object.values(store).filter((item: any) => item.company_id === companyId);
+        if (table === 'perfis_catalogo') items = items.filter((item: any) => item.tipo !== 'window_model');
+        if (table === 'window_models') items = items.filter((item: any) => item.tipo === 'window_model' || item.ativo !== false);
+        return items;
+      };
 
-      // Catalog queries (perfis_catalogo, window_models)
-      if (table === 'perfis_catalogo' || table === 'window_models') {
-        // Get stored data
-        const store = getStore(CATALOGS_STORAGE_KEY);
-        const tableData = Object.values(store)
-          .filter((item: any) => item.company_id === companyId)
-          .filter((item: any) => {
-            if (table === 'perfis_catalogo') return item.tipo !== 'window_model';
-            if (table === 'window_models') return item.tipo === 'window_model' || (item.ativo !== false);
-            return true;
-          });
+      const saveRecords = (records: any[]) => {
+        const storageKey = STORAGE_KEYS[table];
+        if (!storageKey) return;
+        const store = getStore(storageKey);
+        records.forEach((item: any) => {
+          const code = item.codigo || item.id || Math.random().toString(36).substr(2, 9);
+          const key = (table === 'perfis_catalogo' || table === 'window_models')
+            ? `${table}:${companyId}:${code}`
+            : `${companyId}:${code}`;
+          store[key] = { ...item, company_id: item.company_id || companyId };
+        });
+        saveStore(storageKey, store);
+      };
 
-        return {
-          select: () => createQueryBuilder(table, tableData),
-          insert: async (records: any) => {
-            const items = Array.isArray(records) ? records : [records];
-            const updated = { ...store };
-            items.forEach((item: any) => {
-              const key = `${table}:${companyId}:${item.codigo}`;
-              updated[key] = { ...item, company_id: companyId };
-            });
-            saveStore(CATALOGS_STORAGE_KEY, updated);
-            return { data: items, error: null };
-          },
-          delete: () => createQueryBuilder(table, tableData),
-          update: async (data: any) => {
-            return { data: tableData, error: null };
-          },
-          filter: () => createQueryBuilder(table, tableData),
-        };
-      }
-
-      // Business tables (orcamentos, pedidos, clientes, contas_receber, contas_pagar)
-      if (table === 'orcamentos') {
-        const store = getStore(ORCAMENTOS_STORAGE_KEY);
-        const tableData = Object.values(store)
-          .filter((item: any) => item.company_id === companyId);
-        return {
-          select: () => createQueryBuilder(table, tableData),
-          insert: async (records: any) => {
-            const items = Array.isArray(records) ? records : [records];
-            const updated = { ...store };
-            items.forEach((item: any) => {
-              const key = `${companyId}:${item.id || Math.random().toString(36).substr(2, 9)}`;
-              updated[key] = { ...item, company_id: companyId };
-            });
-            saveStore(ORCAMENTOS_STORAGE_KEY, updated);
-            return { data: items, error: null };
-          },
-          delete: () => createQueryBuilder(table, tableData),
-          update: async (data: any) => {
-            return { data: tableData, error: null };
-          },
-          filter: () => createQueryBuilder(table, tableData),
-        };
-      }
-
-      if (table === 'pedidos') {
-        const store = getStore(PEDIDOS_STORAGE_KEY);
-        const tableData = Object.values(store)
-          .filter((item: any) => item.company_id === companyId);
-        return {
-          select: () => createQueryBuilder(table, tableData),
-          insert: async (records: any) => {
-            const items = Array.isArray(records) ? records : [records];
-            const updated = { ...store };
-            items.forEach((item: any) => {
-              const key = `${companyId}:${item.id || Math.random().toString(36).substr(2, 9)}`;
-              updated[key] = { ...item, company_id: companyId };
-            });
-            saveStore(PEDIDOS_STORAGE_KEY, updated);
-            return { data: items, error: null };
-          },
-          delete: () => createQueryBuilder(table, tableData),
-          update: async (data: any) => {
-            return { data: tableData, error: null };
-          },
-          filter: () => createQueryBuilder(table, tableData),
-        };
-      }
-
-      if (table === 'clientes') {
-        const store = getStore(CLIENTES_STORAGE_KEY);
-        const tableData = Object.values(store)
-          .filter((item: any) => item.company_id === companyId);
-        return {
-          select: () => createQueryBuilder(table, tableData),
-          insert: async (records: any) => {
-            const items = Array.isArray(records) ? records : [records];
-            const updated = { ...store };
-            items.forEach((item: any) => {
-              const key = `${companyId}:${item.id || Math.random().toString(36).substr(2, 9)}`;
-              updated[key] = { ...item, company_id: companyId };
-            });
-            saveStore(CLIENTES_STORAGE_KEY, updated);
-            return { data: items, error: null };
-          },
-          delete: () => createQueryBuilder(table, tableData),
-          update: async (data: any) => {
-            return { data: tableData, error: null };
-          },
-          filter: () => createQueryBuilder(table, tableData),
-        };
-      }
-
-      if (table === 'contas_receber') {
-        const store = getStore(CONTAS_RECEBER_STORAGE_KEY);
-        const tableData = Object.values(store)
-          .filter((item: any) => item.company_id === companyId);
-        return {
-          select: () => createQueryBuilder(table, tableData),
-          insert: async (records: any) => {
-            const items = Array.isArray(records) ? records : [records];
-            const updated = { ...store };
-            items.forEach((item: any) => {
-              const key = `${companyId}:${item.id || Math.random().toString(36).substr(2, 9)}`;
-              updated[key] = { ...item, company_id: companyId };
-            });
-            saveStore(CONTAS_RECEBER_STORAGE_KEY, updated);
-            return { data: items, error: null };
-          },
-          delete: () => createQueryBuilder(table, tableData),
-          update: async (data: any) => {
-            return { data: tableData, error: null };
-          },
-          filter: () => createQueryBuilder(table, tableData),
-        };
-      }
-
-      if (table === 'contas_pagar') {
-        const store = getStore(CONTAS_PAGAR_STORAGE_KEY);
-        const tableData = Object.values(store)
-          .filter((item: any) => item.company_id === companyId);
-        return {
-          select: () => createQueryBuilder(table, tableData),
-          insert: async (records: any) => {
-            const items = Array.isArray(records) ? records : [records];
-            const updated = { ...store };
-            items.forEach((item: any) => {
-              const key = `${companyId}:${item.id || Math.random().toString(36).substr(2, 9)}`;
-              updated[key] = { ...item, company_id: companyId };
-            });
-            saveStore(CONTAS_PAGAR_STORAGE_KEY, updated);
-            return { data: items, error: null };
-          },
-          delete: () => createQueryBuilder(table, tableData),
-          update: async (data: any) => {
-            return { data: tableData, error: null };
-          },
-          filter: () => createQueryBuilder(table, tableData),
-        };
-      }
-
-      // Default empty response for other tables
       return {
-        select: () => createQueryBuilder(table, []),
-        insert: async (data: any) => ({ data: data || null, error: null }),
-        delete: () => createQueryBuilder(table, []),
-        update: async (data: any) => ({ data: null, error: null }),
-        filter: () => createQueryBuilder(table, []),
+        select: () => createQueryBuilder(table, loadTableData()),
+        insert: (records: any) => {
+          const items = Array.isArray(records) ? records : [records];
+          saveRecords(items);
+          return createQueryBuilder(table, items);
+        },
+        upsert: (records: any) => {
+          const items = Array.isArray(records) ? records : [records];
+          saveRecords(items);
+          return createQueryBuilder(table, items);
+        },
+        delete: () => createQueryBuilder(table, loadTableData()),
+        update: (updates: any) => {
+          const upd: any = {
+            eq: () => upd,
+            then: (resolve: (v: any) => void) => resolve({ data: null, error: null }),
+          };
+          return upd;
+        },
+        filter: () => createQueryBuilder(table, loadTableData()),
       };
     },
 
     rpc: async (name: string, params?: any) => {
       if (name === 'auto_provision_company') {
-        return { data: 'mock-company-' + Math.random().toString(36).substr(2, 9), error: null };
+        return { data: 'mock-company-default', error: null };
       }
-
       if (name === 'import_catalog_atomic') {
-        // Handle atomic catalog import
         const { p_company_id, p_perfis, p_modelos } = params || {};
-
         try {
-          const store = getStore(CATALOGS_STORAGE_KEY);
-
-          // Save perfis
+          const store = getStore('mock-catalogs');
           if (Array.isArray(p_perfis)) {
             p_perfis.forEach((item: any) => {
-              const key = `perfis_catalogo:${p_company_id}:${item.codigo}`;
-              store[key] = { ...item, company_id: p_company_id };
+              store[`perfis_catalogo:${p_company_id}:${item.codigo}`] = { ...item, company_id: p_company_id };
             });
           }
-
-          // Save modelos
           if (Array.isArray(p_modelos)) {
             p_modelos.forEach((item: any) => {
-              const key = `window_models:${p_company_id}:${item.codigo}`;
-              store[key] = { ...item, company_id: p_company_id, tipo: 'window_model', ativo: true };
+              store[`window_models:${p_company_id}:${item.codigo}`] = { ...item, company_id: p_company_id, tipo: 'window_model', ativo: true };
             });
           }
-
-          saveStore(CATALOGS_STORAGE_KEY, store);
-
+          saveStore('mock-catalogs', store);
           return {
-            data: {
-              success: true,
-              perfis_salvos: p_perfis?.length || 0,
-              modelos_salvos: p_modelos?.length || 0,
-              company_id_usado: p_company_id
-            },
-            error: null
+            data: { success: true, perfis_salvos: p_perfis?.length || 0, modelos_salvos: p_modelos?.length || 0 },
+            error: null,
           };
         } catch (err) {
-          return {
-            data: null,
-            error: { message: String(err) } as any
-          };
+          return { data: null, error: { message: String(err) } as any };
         }
       }
-
       return { data: null, error: null };
     },
   };
 };
 
-export const supabase = createMockClient() as any;
+// ─── Export ──────────────────────────────────────────────────────────
+export const supabase = hasRealSupabase
+  ? createRealClient()
+  : createMockClient() as any;
+
+// Log which mode is active (dev only)
+if (import.meta.env.DEV) {
+  console.log(
+    hasRealSupabase
+      ? `[Supabase] Conectado ao Supabase real: ${SUPABASE_URL}`
+      : '[Supabase] Modo mock (localStorage). Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env.local para usar Supabase real.'
+  );
+}

@@ -41,9 +41,16 @@ const Login = () => {
     try {
       if (isSignUp) {
         await signUp(email, password, nome);
-        toast.success("Conta criada! Fazendo login...");
-        await signIn(email, password);
-        navigate("/");
+        // Tentar login imediato (funciona se confirmação de email está desabilitada)
+        try {
+          await signIn(email, password);
+          toast.success("Conta criada com sucesso!");
+          navigate("/");
+        } catch {
+          // Se falhar (email não confirmado), mostrar mensagem amigável
+          toast.success("Conta criada! Verifique seu email para confirmar o cadastro.");
+          setIsSignUp(false);
+        }
       } else {
         await signIn(email, password);
         toast.success("Login realizado com sucesso!");
@@ -56,6 +63,8 @@ const Login = () => {
         setIsSignUp(false);
       } else if (msg.includes("Invalid login")) {
         toast.error("Email ou senha incorretos.");
+      } else if (msg.includes("Email not confirmed")) {
+        toast.error("Email não confirmado. Verifique sua caixa de entrada.");
       } else {
         toast.error(msg || "Erro ao autenticar");
       }

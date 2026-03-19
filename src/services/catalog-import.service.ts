@@ -9,6 +9,25 @@
 import { supabase } from '@/integrations/supabase/client';
 import { eventBus } from '@/services/eventBus';
 import { importError, databaseError, apiError } from '@/lib/error-handler';
+import type * as PDFJSType from 'pdfjs-dist';
+
+// Lazy load PDF.js for catalog imports
+let PDFJS: typeof PDFJSType | null = null;
+
+const getPDFJS = async () => {
+  if (!PDFJS) {
+    PDFJS = await import('pdfjs-dist');
+    try {
+      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs');
+      const blob = new Blob([workerModule.default || ''], { type: 'application/javascript' });
+      PDFJS.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+    } catch {
+      PDFJS.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  }
+  return PDFJS;
+};
 
 export interface PerfilExtraido {
   codigo: string;
@@ -279,24 +298,45 @@ export const CatalogImportService = {
   },
 
   /**
-   * Extrai texto de um arquivo PDF usando FileReader (browser-only)
-   * Para PDF real, recomenda-se usar pdf.js ou enviar para Edge Function
+   * Extrai texto de um arquivo PDF usando pdfjs-dist
    */
   async extrairTextoPDF(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result;
-        if (typeof text === 'string') {
-          resolve(text);
-        } else {
-          // Para PDF binário, retorna mensagem orientativa
-          resolve(`[Arquivo PDF: ${file.name}]\nPara extrair texto de PDF, use a integração com Supabase Edge Function ou envie o arquivo como texto.`);
+    try {
+      const pdfjs = await getPDFJS();
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjs.getDocument(arrayBuffer).promise;
+
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const items = textContent.items as Array<{ str: string; transform: number[] }>;
+
+        // Group items by Y position (same line) for tabular data
+        const lines = new Map<number, Array<{ str: string; x: number }>>();
+        for (const item of items) {
+          if (!item.str.trim()) continue;
+          const y = Math.round(item.transform[5]);
+          if (!lines.has(y)) lines.set(y, []);
+          lines.get(y)!.push({ str: item.str, x: item.transform[4] });
         }
-      };
-      reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-      reader.readAsText(file);
-    });
+
+        // Sort lines top-to-bottom (Y descending)
+        const sortedLines = [...lines.entries()].sort((a, b) => b[0] - a[0]);
+        for (const [, lineItems] of sortedLines) {
+          lineItems.sort((a, b) => a.x - b.x);
+          fullText += lineItems.map(item => item.str).join(' ') + '\n';
+        }
+        fullText += '\n';
+      }
+
+      return fullText;
+    } catch (error) {
+      throw importError(
+        `Erro ao extrair texto do PDF: ${error instanceof Error ? error.message : 'Desconhecido'}`,
+        { service: 'catalog-import', operation: 'extrairTextoPDF' }
+      );
+    }
   },
 };
 

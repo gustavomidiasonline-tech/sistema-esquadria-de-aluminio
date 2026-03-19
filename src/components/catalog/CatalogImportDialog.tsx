@@ -21,6 +21,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FileUploadService } from '@/services/file-upload.service';
 import { CatalogParserService, type ParsedPerfil, type ParsedModelo } from '@/services/catalog-parser.service';
 import { supabase } from '@/integrations/supabase/client';
+import { InventoryService } from '@/services/inventory.service';
+import { CatalogAuditService } from '@/services/catalog-audit.service';
 
 interface CatalogImportDialogProps {
   open: boolean;
@@ -160,7 +162,9 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
       });
       return;
     }
+
     setLoading(true);
+    const startTime = Date.now();
 
     try {
       let perfisSalvos = preview.perfis.length;
@@ -200,13 +204,32 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
         modelos: modelosBatch.slice(0, 2),
       });
 
-      const { data: rpcData, error: rpcError } = await supabase.rpc('import_catalog_atomic', {
+      // RPC com timeout de 5 minutos
+      const rpcPromise = supabase.rpc('import_catalog_atomic', {
         p_company_id: companyId,
         p_perfis: perfisBatch,
         p_modelos: modelosBatch,
       });
 
-      const rpcAvailable = !rpcError || !rpcError.message.includes('function') && !rpcError.message.includes('does not exist') && !rpcError.message.includes('42883');
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('RPC timeout: operação não completou em 5 minutos')), 5 * 60 * 1000)
+      );
+
+      const { data: rpcData, error: rpcError } = await Promise.race([
+        rpcPromise as Promise<{ data: any; error: null }>,
+        timeoutPromise as Promise<any>,
+      ]).catch((err) => {
+        if (err instanceof Error && err.message.includes('timeout')) {
+          return { data: null, error: { message: err.message } };
+        }
+        throw err;
+      });
+
+      // Verificar se RPC não existe (função não está disponível)
+      const isRpcNotFound = rpcError &&
+        (rpcError.message?.includes('function') ||
+         rpcError.message?.includes('does not exist') ||
+         rpcError.code === '42883');
 
       if (!rpcError) {
         // RPC funcionou — usar contagens retornadas
@@ -217,54 +240,139 @@ export function CatalogImportDialog({ open, onOpenChange, onSuccess }: CatalogIm
         if (perfisSalvos === 0 && modelosSalvos === 0) {
           console.warn('⚠️ RPC retornou 0 itens salvos - verificar dados enviados');
         }
-      } else if (!rpcAvailable) {
+      } else if (isRpcNotFound) {
         console.log('⚠️ RPC não disponível, usando fallback delete+insert');
 
-        // RPC não existe ainda — fallback delete+insert
-        if (preview.perfis.length > 0) {
-          const perfisBatch = preview.perfis.map((p) => ({
-            company_id: companyId,
-            codigo: p.codigo,
-            nome: p.nome,
-            tipo: p.tipo,
-            peso_kg_m: p.peso_kg_m,
-            espessura_mm: p.espessura_mm,
-          }));
-          const codigos = preview.perfis.map((p) => p.codigo);
-          await supabase.from('perfis_catalogo').delete().eq('company_id', companyId).in('codigo', codigos);
-          for (let i = 0; i < perfisBatch.length; i += 50) {
-            const { error } = await supabase.from('perfis_catalogo').insert(perfisBatch.slice(i, i + 50));
-            if (error) throw new Error(`Erro ao salvar perfis: ${error.message}`);
+        // RPC não existe — fallback delete+insert
+        try {
+          if (preview.perfis.length > 0) {
+            const perfisBatch = preview.perfis.map((p) => ({
+              company_id: companyId,
+              codigo: p.codigo,
+              nome: p.nome,
+              tipo: p.tipo,
+              peso_kg_m: p.peso_kg_m,
+              espessura_mm: p.espessura_mm,
+            }));
+            const codigos = preview.perfis.map((p) => p.codigo);
+
+            // Deletar perfis existentes
+            const deleteResult = await supabase
+              .from('perfis_catalogo')
+              .delete()
+              .eq('company_id', companyId)
+              .in('codigo', codigos);
+
+            if (deleteResult.error) {
+              console.warn('⚠️ Erro ao deletar perfis existentes:', deleteResult.error.message);
+            }
+
+            // Inserir em batches de 50
+            for (let i = 0; i < perfisBatch.length; i += 50) {
+              const batch = perfisBatch.slice(i, i + 50);
+              const { error } = await supabase.from('perfis_catalogo').insert(batch);
+              if (error) {
+                throw new Error(`Erro ao salvar perfis (batch ${Math.ceil(i / 50 + 1)}): ${error.message}`);
+              }
+            }
+            perfisSalvos = preview.perfis.length;
           }
-        }
-        if (preview.modelos.length > 0) {
-          const modelosBatch = preview.modelos.map((m) => ({
-            company_id: companyId,
-            codigo: m.codigo,
-            nome: m.nome,
-            tipo: m.tipo,
-            descricao: m.descricao,
-            ativo: true,
-          }));
-          const codigos = preview.modelos.map((m) => m.codigo);
-          await supabase.from('window_models').delete().eq('company_id', companyId).in('codigo', codigos);
-          for (let i = 0; i < modelosBatch.length; i += 50) {
-            const { error } = await supabase.from('window_models').insert(modelosBatch.slice(i, i + 50));
-            if (error) throw new Error(`Erro ao salvar modelos: ${error.message}`);
+
+          if (preview.modelos.length > 0) {
+            const modelosBatch = preview.modelos.map((m) => ({
+              company_id: companyId,
+              codigo: m.codigo,
+              nome: m.nome,
+              tipo: m.tipo,
+              descricao: m.descricao,
+              ativo: true,
+            }));
+            const codigos = preview.modelos.map((m) => m.codigo);
+
+            // Deletar modelos existentes
+            const deleteResult = await supabase
+              .from('window_models')
+              .delete()
+              .eq('company_id', companyId)
+              .in('codigo', codigos);
+
+            if (deleteResult.error) {
+              console.warn('⚠️ Erro ao deletar modelos existentes:', deleteResult.error.message);
+            }
+
+            // Inserir em batches de 50
+            for (let i = 0; i < modelosBatch.length; i += 50) {
+              const batch = modelosBatch.slice(i, i + 50);
+              const { error } = await supabase.from('window_models').insert(batch);
+              if (error) {
+                throw new Error(`Erro ao salvar modelos (batch ${Math.ceil(i / 50 + 1)}): ${error.message}`);
+              }
+            }
+            modelosSalvos = preview.modelos.length;
           }
+        } catch (fallbackErr) {
+          throw new Error(`Falha no fallback delete+insert: ${fallbackErr instanceof Error ? fallbackErr.message : 'Desconhecido'}`);
         }
       } else {
-        throw new Error(rpcError.message);
+        throw new Error(`Erro ao importar catálogo: ${rpcError.message || 'Desconhecido'}`);
+      }
+
+      // Auto-sync catalog profiles → inventory items
+      let syncMsg = '';
+      if (companyId && perfisSalvos > 0) {
+        try {
+          console.log('🔄 Sincronizando perfis do catálogo com estoque...');
+          const syncResult = await InventoryService.sincronizarDeCatalogo(companyId);
+          console.log('✅ Sincronização completa:', syncResult);
+          if (syncResult.inserted > 0) {
+            syncMsg = ` | ${syncResult.inserted} perfil(is) adicionado(s) ao estoque.`;
+          }
+        } catch (syncErr) {
+          const syncErrorMsg = syncErr instanceof Error ? syncErr.message : 'Desconhecido';
+          console.error('❌ Auto-sync catálogo → estoque falhou:', syncErr);
+          throw new Error(`Importação OK, mas sincronização com estoque falhou: ${syncErrorMsg}`);
+        }
       }
 
       setStep('done');
+
+      // Registrar import na auditoria
+      const duration = Date.now() - startTime;
+      await CatalogAuditService.logImport(companyId, profile?.id, {
+        company_id: companyId,
+        file_name: selectedFile?.name || 'manual-input',
+        fabricante: preview.fabricante,
+        perfis_importados: perfisSalvos,
+        modelos_importados: modelosSalvos,
+        perfis_sincronizados: syncMsg.includes('perfil') ? perfisSalvos : 0,
+        status: 'sucesso',
+        duration_ms: duration,
+      });
+
       toast({
         title: 'Catálogo importado!',
-        description: `${perfisSalvos} perfis e ${modelosSalvos} modelos salvos no sistema.`,
+        description: `${perfisSalvos} perfis e ${modelosSalvos} modelos salvos no sistema.${syncMsg}`,
       });
       onSuccess?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao salvar no banco de dados';
+      const duration = Date.now() - startTime;
+
+      // Registrar erro na auditoria
+      if (companyId && profile?.id) {
+        await CatalogAuditService.logImport(companyId, profile.id, {
+          company_id: companyId,
+          file_name: selectedFile?.name || 'manual-input',
+          fabricante: preview?.fabricante || 'Desconhecido',
+          perfis_importados: 0,
+          modelos_importados: 0,
+          perfis_sincronizados: 0,
+          status: 'falha',
+          error_message: message,
+          duration_ms: duration,
+        });
+      }
+
       toast({ title: 'Erro ao salvar', description: message, variant: 'destructive' });
     } finally {
       setLoading(false);

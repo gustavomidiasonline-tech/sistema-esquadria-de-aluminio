@@ -18,11 +18,12 @@ CREATE TABLE IF NOT EXISTS public.cutting_plans (
     CHECK (algoritmo IN ('FFD', 'BFD')),
   comprimento_barra_mm NUMERIC NOT NULL DEFAULT 6000,
   total_barras INTEGER DEFAULT 0,
-  total_cortes INTEGER DEFAULT 0,
+  total_pecas INTEGER DEFAULT 0,
   sobra_total_mm NUMERIC DEFAULT 0,
   aproveitamento_medio NUMERIC DEFAULT 0,
+  barras_json JSONB,
   status TEXT NOT NULL DEFAULT 'pendente'
-    CHECK (status IN ('pendente', 'calculando', 'pronto', 'executado')),
+    CHECK (status IN ('pendente', 'calculando', 'gerado', 'pronto', 'executado')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -194,6 +195,7 @@ CREATE TABLE IF NOT EXISTS public.purchase_order_items (
   inventory_item_id UUID REFERENCES public.inventory_items(id),
   descricao TEXT NOT NULL,
   codigo TEXT,
+  codigo_material TEXT,
   quantidade NUMERIC NOT NULL,
   unidade TEXT NOT NULL DEFAULT 'un',
   preco_unitario NUMERIC NOT NULL DEFAULT 0,

@@ -1,3 +1,8 @@
 {
-  "language": "english"
+  "language": "english",
+  "permissions": {
+    "allow": [
+      "Bash(npm run)"
+    ]
+  }
 }
