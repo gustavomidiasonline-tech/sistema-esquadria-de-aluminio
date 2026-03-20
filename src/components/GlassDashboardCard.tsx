@@ -54,13 +54,13 @@ export const GlassDashboardCard: React.FC<GlassDashboardCardProps> = ({
         {/* Header */}
         <div className='flex items-start justify-between'>
           <div className='flex-1'>
-            <h3 className='text-sm font-medium text-white/40'>{title}</h3>
+            <h3 className='text-sm font-medium text-muted-foreground'>{title}</h3>
             {subtitle && (
-              <p className='text-xs text-white/50 mt-1'>{subtitle}</p>
+              <p className='text-xs text-muted-foreground/80 mt-1'>{subtitle}</p>
             )}
           </div>
           {icon && (
-            <div className='text-white/50'>
+            <div className='text-muted-foreground/80'>
               {icon}
             </div>
           )}
@@ -68,7 +68,7 @@ export const GlassDashboardCard: React.FC<GlassDashboardCardProps> = ({
 
         {/* Value */}
         <div className='flex items-baseline gap-2'>
-          <span className='text-3xl font-bold text-white'>
+          <span className='text-3xl font-bold text-foreground'>
             {value}
           </span>
           {trend && (
@@ -99,10 +99,10 @@ export const GlassDashboardCard: React.FC<GlassDashboardCardProps> = ({
         {progress && (
           <div className='space-y-2'>
             <div className='flex justify-between'>
-              <span className='text-xs text-white/40'>
+              <span className='text-xs text-muted-foreground'>
                 {progress.label || 'Progress'}
               </span>
-              <span className='text-xs text-white/50'>
+              <span className='text-xs text-muted-foreground/80'>
                 {progress.value}%
               </span>
             </div>
@@ -115,8 +115,8 @@ export const GlassDashboardCard: React.FC<GlassDashboardCardProps> = ({
 
         {/* Footer */}
         {footer && (
-          <div className='border-t border-white/10 pt-3 flex items-center justify-between'>
-            <p className='text-xs text-white/40'>{footer.text}</p>
+          <div className='border-t border-border pt-3 flex items-center justify-between'>
+            <p className='text-xs text-muted-foreground'>{footer.text}</p>
             {footer.action && (
               <GlassButton
                 variant='secondary'

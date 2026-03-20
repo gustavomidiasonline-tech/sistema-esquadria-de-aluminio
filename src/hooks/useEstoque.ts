@@ -38,7 +38,6 @@ export function useEstoque(companyId: string) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [form, setForm] = useState<ItemFormValues>(DEFAULT_FORM);
-  const [autoSynced, setAutoSynced] = useState(false);
 
   const { data: itens = [], isLoading, refetch } = useQuery({
     queryKey: ['inventory_items', companyId, tipoFiltro],
@@ -85,13 +84,6 @@ export function useEstoque(companyId: string) {
     },
     onError: (err: unknown) => toast.error((err instanceof Error ? err.message : 'Erro ao sincronizar')),
   });
-
-  useEffect(() => {
-    if (!companyId || autoSynced || isLoading) return;
-    syncMutation.mutate(undefined, {
-      onSettled: () => setAutoSynced(true),
-    });
-  }, [companyId, autoSynced, isLoading, syncMutation]);
 
   const itensFiltrados = itens.filter(i => i.nome.toLowerCase().includes(search.toLowerCase()) || i.codigo.toLowerCase().includes(search.toLowerCase()));
 

@@ -1,4 +1,4 @@
-﻿import {
+import {
   Home,
   Users,
   FileText,
@@ -118,15 +118,15 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
   const linkClass = (path: string) =>
     `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
       isActive(path)
-        ? "bg-white/10 text-[#00ff88] font-semibold border-l-2 border-[#00ff88] pl-[10px]"
-        : "text-white/60 hover:bg-white/8 hover:text-white/90"
+        ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary pl-[10px]"
+        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
     }`;
 
   const subLinkClass = (path: string) =>
     `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
       isActive(path)
-        ? "bg-white/10 text-[#00ff88] font-semibold border-l-2 border-[#00ff88] pl-[10px]"
-        : "text-white/50 hover:bg-white/8 hover:text-white/85"
+        ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary pl-[10px]"
+        : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
     }`;
 
   const isLocked = (url: string): boolean => {
@@ -265,7 +265,7 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
                 "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isLocked("/pedidos")
                   ? "opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30"
-                  : "text-white/60 hover:bg-white/8 hover:text-white/90"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >
               <div className="flex items-center gap-3">
@@ -303,7 +303,7 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
               aria-label="Materiais"
               className={cn(
                 "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                "text-white/60 hover:bg-white/8 hover:text-white/90"
+                "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >
               <div className="flex items-center gap-3">
@@ -357,7 +357,7 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
                 "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isLocked("/financeiro")
                   ? "opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30"
-                  : "text-white/60 hover:bg-white/8 hover:text-white/90"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >
               <div className="flex items-center gap-3">

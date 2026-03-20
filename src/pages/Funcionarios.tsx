@@ -95,7 +95,13 @@ const Funcionarios = () => {
     if (!companyId) { setLoading(false); return; }
     setLoading(true);
     try {
-      // Funcionários são armazenados localmente por empresa (tabela dedicada não existe no schema atual)
+      // Forcefully clear fictitious data if it was set before this fix
+      const clearFlag = localStorage.getItem(`alumy_funcionarios_cleared_mock_${companyId}`);
+      if (!clearFlag) {
+        localStorage.removeItem(`${STORAGE_KEY}_${companyId}`);
+        localStorage.setItem(`alumy_funcionarios_cleared_mock_${companyId}`, "true");
+      }
+      
       const local = loadFromStorage();
       setFuncionarios(local);
     } catch (err) {

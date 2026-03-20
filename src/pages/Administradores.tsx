@@ -77,6 +77,7 @@ const Administradores = () => {
         .from("profiles")
         .select("id, user_id, nome, full_name, email, telefone, cargo, created_at, company_id")
         .eq("company_id", companyId)
+        .neq("cargo", "removido")
         .order("created_at", { ascending: false });
 
       if (error) throw error;

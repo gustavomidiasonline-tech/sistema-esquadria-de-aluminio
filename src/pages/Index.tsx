@@ -151,8 +151,7 @@ const Index = () => {
 
         {/* KPI Cards — Glass Morphism */}
         <div
-          className="relative rounded-2xl overflow-hidden p-4 sm:p-6"
-          style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #2d1b69 70%, #3d0f4a 100%)' }}
+          className="relative rounded-2xl overflow-hidden p-4 sm:p-6 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20"
         >
           {/* animated blobs */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">

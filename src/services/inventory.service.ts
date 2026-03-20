@@ -492,7 +492,7 @@ async function syncSourceToInventory(config: SyncSourceConfig): Promise<Inventor
   });
 
   const inserts: Array<Record<string, unknown>> = [];
-  const updates: Array<{ id: string; nome: string; source_id: string }> = [];
+  const updates: Array<{ id: string; source_id: string }> = [];
   let skipped = 0;
 
   for (const src of source) {
@@ -509,18 +509,17 @@ async function syncSourceToInventory(config: SyncSourceConfig): Promise<Inventor
 
     const existingBySource = existentesPorSource.get(sourceId);
     if (existingBySource) {
-      if (existingBySource.nome !== nome) {
-        updates.push({ id: existingBySource.id, nome, source_id: sourceId });
-      } else {
-        skipped += 1;
-      }
+      // O item já está vinculado. Não atualizamos o nome para não sobrescrever
+      // edições manuais que o usuário possa ter feito no Estoque.
+      skipped += 1;
       continue;
     }
 
     const existingByCodigo = existentesPorCodigo.get(codigo.toUpperCase());
     if (existingByCodigo) {
-      if (!existingByCodigo.source_id || existingByCodigo.nome !== nome) {
-        updates.push({ id: existingByCodigo.id, nome, source_id: sourceId });
+      if (!existingByCodigo.source_id) {
+        // Encontrou por código mas não tem vínculo. Apenas vinculamos.
+        updates.push({ id: existingByCodigo.id, source_id: sourceId });
       } else {
         skipped += 1;
       }
@@ -550,7 +549,7 @@ async function syncSourceToInventory(config: SyncSourceConfig): Promise<Inventor
   for (const update of updates) {
     const { error: updateError } = await supabase
       .from('inventory_items')
-      .update({ nome: update.nome, [sourceIdField]: update.source_id })
+      .update({ [sourceIdField]: update.source_id })
       .eq('id', update.id)
       .eq('company_id', companyId);
 

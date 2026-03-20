@@ -134,6 +134,11 @@ const Login = () => {
             {isSignUp ? "Criar conta" : "Entrar no sistema"}
           </h2>
 
+          <div className="mb-6 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-600 dark:text-amber-400">
+            <p className="font-semibold mb-1">Aviso de Teste / Desenvolvimento:</p>
+            <p>Se o Supabase (Authentication &gt; Providers &gt; Email) tiver a opção <strong>"Confirm email"</strong> ativada, você precisará usar um e-mail real e confirmá-lo. Para usar dados fictícios e entrar direto, desabilite esta configuração no seu painel do Supabase.</p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <div>
