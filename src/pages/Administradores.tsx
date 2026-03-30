@@ -75,7 +75,7 @@ const Administradores = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, user_id, nome, full_name, email, telefone, cargo, created_at, company_id")
+        .select("id, user_id, nome, email, telefone, cargo, created_at, company_id")
         .eq("company_id", companyId)
         .neq("cargo", "removido")
         .order("created_at", { ascending: false });
@@ -84,7 +84,7 @@ const Administradores = () => {
 
       const mapped: Administrador[] = (data ?? []).map((p: any) => ({
         id: p.id,
-        nome: p.nome || p.full_name || p.email?.split("@")[0] || "Sem nome",
+        nome: p.nome || p.email?.split("@")[0] || "Sem nome",
         email: p.email || "",
         telefone: p.telefone || "",
         cargo: p.cargo || "admin",

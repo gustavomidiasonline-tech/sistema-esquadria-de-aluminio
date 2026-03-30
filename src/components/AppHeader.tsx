@@ -70,8 +70,13 @@ export function AppHeader({ onToggleSidebar, isMobile }: AppHeaderProps) {
   const { notifications, criticalCount, totalCount } = useNotifications();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
+    try {
+      await signOut();
+      navigate("/login");
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      navigate("/login");
+    }
   };
 
   const badgeCount = totalCount > 99 ? "99+" : totalCount;

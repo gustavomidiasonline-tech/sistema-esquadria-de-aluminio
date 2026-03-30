@@ -3,6 +3,8 @@
  * Lógica de negócio pura: sem dependências de React ou UI
  */
 
+import { getFolgaConfig } from '@/lib/formula-engine';
+
 export interface EsquadriaConfig {
   modelo: string;
   largura: number;  // mm
@@ -114,17 +116,17 @@ export const EsquadriaService = {
 // --- Calculadores internos por tipo ---
 
 function calcularCorrer2Folhas(largura: number, altura: number): Peca[] {
-  const folga = 10;
+  const cfg = getFolgaConfig('correr_2f');
   return [
     // Marco externo
     { posicao: 'marco_horizontal_superior', comprimento: largura, quantidade: 1 },
     { posicao: 'marco_horizontal_inferior', comprimento: largura, quantidade: 1 },
-    { posicao: 'marco_vertical_esquerdo', comprimento: altura - 2 * folga, quantidade: 1 },
-    { posicao: 'marco_vertical_direito', comprimento: altura - 2 * folga, quantidade: 1 },
+    { posicao: 'marco_vertical_esquerdo', comprimento: altura - 2 * cfg.folga_marco, quantidade: 1 },
+    { posicao: 'marco_vertical_direito', comprimento: altura - 2 * cfg.folga_marco, quantidade: 1 },
     // Folhas (2 folhas)
-    { posicao: 'folha_horizontal_superior', comprimento: largura / 2 + 30, quantidade: 2 },
-    { posicao: 'folha_horizontal_inferior', comprimento: largura / 2 + 30, quantidade: 2 },
-    { posicao: 'folha_vertical', comprimento: altura - 80, quantidade: 4 },
+    { posicao: 'folha_horizontal_superior', comprimento: largura / 2 + cfg.folga_sobreposicao, quantidade: 2 },
+    { posicao: 'folha_horizontal_inferior', comprimento: largura / 2 + cfg.folga_sobreposicao, quantidade: 2 },
+    { posicao: 'folha_vertical', comprimento: altura - cfg.folga_vidro_altura + 10, quantidade: 4 },
     // Trilhos
     { posicao: 'trilho_superior', comprimento: largura, quantidade: 1 },
     { posicao: 'trilho_inferior', comprimento: largura, quantidade: 1 },
@@ -132,16 +134,16 @@ function calcularCorrer2Folhas(largura: number, altura: number): Peca[] {
 }
 
 function calcularCorrer4Folhas(largura: number, altura: number): Peca[] {
-  const folga = 10;
+  const cfg = getFolgaConfig('correr_4f');
   return [
     { posicao: 'marco_horizontal_superior', comprimento: largura, quantidade: 1 },
     { posicao: 'marco_horizontal_inferior', comprimento: largura, quantidade: 1 },
-    { posicao: 'marco_vertical_esquerdo', comprimento: altura - 2 * folga, quantidade: 1 },
-    { posicao: 'marco_vertical_direito', comprimento: altura - 2 * folga, quantidade: 1 },
+    { posicao: 'marco_vertical_esquerdo', comprimento: altura - 2 * cfg.folga_marco, quantidade: 1 },
+    { posicao: 'marco_vertical_direito', comprimento: altura - 2 * cfg.folga_marco, quantidade: 1 },
     // 4 folhas
-    { posicao: 'folha_horizontal_superior', comprimento: largura / 4 + 20, quantidade: 4 },
-    { posicao: 'folha_horizontal_inferior', comprimento: largura / 4 + 20, quantidade: 4 },
-    { posicao: 'folha_vertical', comprimento: altura - 80, quantidade: 8 },
+    { posicao: 'folha_horizontal_superior', comprimento: largura / 4 + cfg.folga_sobreposicao, quantidade: 4 },
+    { posicao: 'folha_horizontal_inferior', comprimento: largura / 4 + cfg.folga_sobreposicao, quantidade: 4 },
+    { posicao: 'folha_vertical', comprimento: altura - cfg.folga_vidro_altura + 10, quantidade: 8 },
     { posicao: 'trilho_superior', comprimento: largura, quantidade: 1 },
     { posicao: 'trilho_inferior', comprimento: largura, quantidade: 1 },
   ];
@@ -157,34 +159,37 @@ function calcularFixo(largura: number, altura: number): Peca[] {
 }
 
 function calcularMaximAr(largura: number, altura: number): Peca[] {
-  const numFolhas = Math.floor(altura / 300);
-  const alturaFolha = (altura - 40) / numFolhas;
+  const cfg = getFolgaConfig('maximar');
+  const numFolhas = Math.max(1, Math.floor(altura / 300));
+  const alturaFolha = (altura - cfg.folga_vidro_altura) / numFolhas;
   return [
     { posicao: 'marco_horizontal_superior', comprimento: largura, quantidade: 1 },
     { posicao: 'marco_horizontal_inferior', comprimento: largura, quantidade: 1 },
     { posicao: 'marco_vertical', comprimento: altura, quantidade: 2 },
-    { posicao: 'folha_horizontal', comprimento: largura - 10, quantidade: numFolhas * 2 },
+    { posicao: 'folha_horizontal', comprimento: largura - cfg.folga_marco, quantidade: numFolhas * 2 },
     { posicao: 'folha_vertical', comprimento: alturaFolha, quantidade: numFolhas * 2 },
     { posicao: 'travessa_intermediaria', comprimento: largura, quantidade: numFolhas - 1 },
   ];
 }
 
 function calcularBasculante(largura: number, altura: number): Peca[] {
+  const cfg = getFolgaConfig('basculante');
   return [
     { posicao: 'marco_horizontal_superior', comprimento: largura, quantidade: 1 },
     { posicao: 'marco_horizontal_inferior', comprimento: largura, quantidade: 1 },
     { posicao: 'marco_vertical', comprimento: altura, quantidade: 2 },
-    { posicao: 'folha_horizontal', comprimento: largura - 20, quantidade: 2 },
-    { posicao: 'folha_vertical', comprimento: altura - 20, quantidade: 2 },
+    { posicao: 'folha_horizontal', comprimento: largura - cfg.folga_vidro_largura / 2, quantidade: 2 },
+    { posicao: 'folha_vertical', comprimento: altura - cfg.folga_vidro_largura / 2, quantidade: 2 },
   ];
 }
 
 function calcularGenerico(largura: number, altura: number, numFolhas: number): Peca[] {
+  const cfg = getFolgaConfig('generico');
   const larguraFolha = largura / numFolhas;
   return [
     { posicao: 'marco_horizontal', comprimento: largura, quantidade: 2 },
     { posicao: 'marco_vertical', comprimento: altura, quantidade: 2 },
-    { posicao: 'folha_horizontal', comprimento: larguraFolha - 10, quantidade: numFolhas * 2 },
-    { posicao: 'folha_vertical', comprimento: altura - 40, quantidade: numFolhas * 2 },
+    { posicao: 'folha_horizontal', comprimento: larguraFolha - cfg.folga_marco, quantidade: numFolhas * 2 },
+    { posicao: 'folha_vertical', comprimento: altura - cfg.folga_vidro_altura / 2, quantidade: numFolhas * 2 },
   ];
 }

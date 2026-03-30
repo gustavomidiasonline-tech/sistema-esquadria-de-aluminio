@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { avaliarFormulaUnificada } from '@/lib/formula-engine';
 
 export interface Product {
   id: string;
@@ -172,14 +173,8 @@ export function useConfiguracaoModelos() {
   };
 
   const evalFormula = (formula: string, L: number, H: number): string => {
-    try {
-      const expr = formula.replace(/L/g, String(L)).replace(/H/g, String(H));
-      if (!/^[\d\s+\-*/().]+$/.test(expr)) return '—';
-      const result: unknown = Function(`"use strict"; return (${expr})`)();
-      return `${Math.round(Number(result))} mm`;
-    } catch {
-      return 'Erro';
-    }
+    const result = avaliarFormulaUnificada(formula, { largura: L, altura: H, folhas: 2 });
+    return result === 0 && !/^[\d\s+\-*/().]+$/.test(formula) ? '—' : `${result} mm`;
   };
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));

@@ -3,6 +3,8 @@
  * Avalia fórmulas de componentes e gera lista de corte com otimização de barras
  */
 
+import { getFolgaConfig, getKerf, type FolgaConfig } from '@/lib/formula-engine';
+
 export interface ComponenteCalculo {
   perfil_id: string | null;
   perfil_codigo: string;
@@ -41,26 +43,115 @@ export interface ResultadoOtimizacao {
 /** Avalia uma fórmula simples de cálculo de perfil */
 export function avaliarFormula(formula: string, largura: number, altura: number, folhas: number): number {
   try {
-    // Replace variables
+    const nf = folhas || 2;
+    // Replace variables — longest names first to avoid partial matches
     const expr = formula
       .replace(/largura_total/g, String(largura))
       .replace(/altura_total/g, String(altura))
+      .replace(/num_folhas/g, String(nf))
       .replace(/largura/g, String(largura))
       .replace(/altura/g, String(altura))
-      .replace(/folhas/g, String(folhas || 2));
+      .replace(/folhas/g, String(nf))
+      .replace(/\bL\b/g, String(largura))
+      .replace(/\bH\b/g, String(altura));
 
-    // Safe eval: only allow numbers, operators, parentheses, spaces
+    // Safe eval: only allow numbers, operators, parentheses, spaces, decimals
     if (!/^[\d\s+\-*/().]+$/.test(expr)) {
       console.warn('Formula inválida:', formula, '->', expr);
       return 0;
     }
 
-    const result = Function(`"use strict"; return (${expr})`)();
-    return Math.round(Number(result));
+    // Use safe math evaluator instead of Function() to bypass CSP restrictions
+    const result = evaluarExpressaoSegura(expr);
+    const value = Number(result);
+    if (!isFinite(value)) return 0;
+    return Math.round(value);
   } catch (e) {
     console.warn('Erro ao avaliar fórmula:', formula, e);
     return 0;
   }
+}
+
+/** Avaliador seguro de expressões matemáticas (CSP-safe) */
+function evaluarExpressaoSegura(expr: string): number {
+  // Implementação simples de parser de expressões matemáticas
+  // Suporta: números, +, -, *, /, parênteses
+  const tokens = tokenizar(expr);
+  const [resultado] = analisarExpressao(tokens, 0);
+  return resultado;
+}
+
+function tokenizar(expr: string): (string | number)[] {
+  const tokens: (string | number)[] = [];
+  let current = '';
+
+  for (let i = 0; i < expr.length; i++) {
+    const char = expr[i];
+
+    if (/\d|\./.test(char)) {
+      current += char;
+    } else if (/[\+\-\*/()]/.test(char)) {
+      if (current) {
+        tokens.push(Number(current));
+        current = '';
+      }
+      tokens.push(char);
+    } else if (/\s/.test(char)) {
+      if (current) {
+        tokens.push(Number(current));
+        current = '';
+      }
+    }
+  }
+
+  if (current) tokens.push(Number(current));
+  return tokens;
+}
+
+function analisarExpressao(tokens: (string | number)[], index: number): [number, number] {
+  let [left, i] = analisarTermo(tokens, index);
+
+  while (i < tokens.length && (tokens[i] === '+' || tokens[i] === '-')) {
+    const op = tokens[i] as string;
+    const [right, nextI] = analisarTermo(tokens, i + 1);
+    left = op === '+' ? left + right : left - right;
+    i = nextI;
+  }
+
+  return [left, i];
+}
+
+function analisarTermo(tokens: (string | number)[], index: number): [number, number] {
+  let [left, i] = analisarFator(tokens, index);
+
+  while (i < tokens.length && (tokens[i] === '*' || tokens[i] === '/')) {
+    const op = tokens[i] as string;
+    const [right, nextI] = analisarFator(tokens, i + 1);
+    left = op === '*' ? left * right : right !== 0 ? left / right : 0;
+    i = nextI;
+  }
+
+  return [left, i];
+}
+
+function analisarFator(tokens: (string | number)[], index: number): [number, number] {
+  if (index >= tokens.length) return [0, index];
+
+  const token = tokens[index];
+
+  // Número
+  if (typeof token === 'number') {
+    return [token, index + 1];
+  }
+
+  // Parêntese
+  if (token === '(') {
+    const [result, i] = analisarExpressao(tokens, index + 1);
+    // Saltar o ')'
+    return [result, i + 1];
+  }
+
+  return [0, index];
 }
 
 /** Calcula todos os componentes de uma esquadria */
@@ -97,7 +188,8 @@ export function calcularComponentes(
 /** Algoritmo First Fit Decreasing para otimização de barras */
 export function otimizarBarras(
   cortes: ResultadoCorte[],
-  comprimentoBarra: number = 6000
+  comprimentoBarra: number = 6000,
+  kerfMm?: number
 ): ResultadoOtimizacao {
   // Expand cuts into individual pieces
   const pecas: { comprimento: number; codigo: string; posicao: string }[] = [];
@@ -115,33 +207,33 @@ export function otimizarBarras(
   pecas.sort((a, b) => b.comprimento - a.comprimento);
 
   const barras: BarraOtimizada[] = [];
-
-  const KERF = 3; // mm — perda de lâmina de serra por corte
+  const KERF = kerfMm ?? getKerf();
 
   for (const peca of pecas) {
     if (peca.comprimento <= 0 || peca.comprimento > comprimentoBarra) continue;
 
-    // Find first bar that fits (accounting for kerf per cut)
+    // Find first bar that fits
+    // Kerf model: each piece consumes its length + 1 kerf (the cut that separates it)
     let placed = false;
     for (const barra of barras) {
-      const kerfConsumido = barra.cortes.length * KERF;
-      const usado = barra.cortes.reduce((s, c) => s + c.comprimento, 0);
-      // New piece needs its length + 1 kerf (cut to separate it)
-      if (usado + kerfConsumido + peca.comprimento + KERF <= comprimentoBarra) {
+      const usado = barra.cortes.reduce((s, c) => s + c.comprimento + KERF, 0);
+      if (usado + peca.comprimento + KERF <= comprimentoBarra) {
         barra.cortes.push(peca);
-        barra.sobra_mm = comprimentoBarra - usado - kerfConsumido - peca.comprimento - KERF;
-        barra.aproveitamento_pct = Math.round(((usado + kerfConsumido + peca.comprimento + KERF) / comprimentoBarra) * 100);
+        const novoUsado = usado + peca.comprimento + KERF;
+        barra.sobra_mm = comprimentoBarra - novoUsado;
+        barra.aproveitamento_pct = Math.round((novoUsado / comprimentoBarra) * 100);
         placed = true;
         break;
       }
     }
 
     if (!placed) {
+      const usadoNova = peca.comprimento + KERF;
       barras.push({
         barra_mm: comprimentoBarra,
         cortes: [peca],
-        sobra_mm: comprimentoBarra - peca.comprimento - KERF,
-        aproveitamento_pct: Math.round(((peca.comprimento + KERF) / comprimentoBarra) * 100),
+        sobra_mm: comprimentoBarra - usadoNova,
+        aproveitamento_pct: Math.round((usadoNova / comprimentoBarra) * 100),
       });
     }
   }
@@ -203,42 +295,35 @@ export function otimizarBarrasPorPerfil(
 }
 
 /**
- * Calcula dimensões de vidro por folha conforme tipologia
+ * Calcula dimensões de vidro por folha conforme tipologia.
+ * Folgas are loaded from FormulaEngine config (configurable per manufacturer line).
  */
 export function calcularVidros(
   tipo: string,
   largura: number,
   altura: number,
-  folhas: number
+  folhas: number,
+  linhaKey?: string
 ): ItemVidro[] {
   const t = (tipo || '').toLowerCase();
   const nf = Math.max(1, folhas || 2);
+  const folga: FolgaConfig = getFolgaConfig(tipo, linhaKey);
 
-  if (t === 'correr' || t === 'correr_2f') {
-    const vidL = Math.max(1, Math.round(largura / 2 - 70));
-    const vidA = Math.max(1, Math.round(altura - 90));
+  if (t === 'correr' || t === 'correr_2f' || t === 'correr_4f') {
+    const f = t === 'correr_4f' ? 4 : nf;
+    const vidL = Math.max(1, Math.round(largura / f - folga.folga_vidro_largura));
+    const vidA = Math.max(1, Math.round(altura - folga.folga_vidro_altura));
     return [{
-      descricao: 'Vidro folha correr (2F)',
+      descricao: `Vidro folha correr (${f}F)`,
       largura_mm: vidL,
       altura_mm: vidA,
-      quantidade: 2,
-      area_m2: Math.round((vidL * vidA * 2) / 1_000_000 * 100) / 100,
-    }];
-  }
-  if (t === 'correr_4f') {
-    const vidL = Math.max(1, Math.round(largura / 4 - 60));
-    const vidA = Math.max(1, Math.round(altura - 90));
-    return [{
-      descricao: 'Vidro folha correr (4F)',
-      largura_mm: vidL,
-      altura_mm: vidA,
-      quantidade: 4,
-      area_m2: Math.round((vidL * vidA * 4) / 1_000_000 * 100) / 100,
+      quantidade: f,
+      area_m2: Math.round((vidL * vidA * f) / 1_000_000 * 100) / 100,
     }];
   }
   if (t === 'fixo') {
-    const vidL = Math.max(1, Math.round(largura - 50));
-    const vidA = Math.max(1, Math.round(altura - 50));
+    const vidL = Math.max(1, Math.round(largura - folga.folga_vidro_largura));
+    const vidA = Math.max(1, Math.round(altura - folga.folga_vidro_altura));
     return [{
       descricao: 'Vidro fixo',
       largura_mm: vidL,
@@ -248,8 +333,8 @@ export function calcularVidros(
     }];
   }
   if (t === 'basculante') {
-    const vidL = Math.max(1, Math.round(largura - 40));
-    const vidA = Math.max(1, Math.round(altura - 40));
+    const vidL = Math.max(1, Math.round(largura - folga.folga_vidro_largura));
+    const vidA = Math.max(1, Math.round(altura - folga.folga_vidro_altura));
     return [{
       descricao: 'Vidro basculante',
       largura_mm: vidL,
@@ -259,20 +344,20 @@ export function calcularVidros(
     }];
   }
   if (t === 'maxim-ar' || t === 'maximar') {
-    const numFolhas = Math.max(1, Math.floor(altura / 300));
-    const vidL = Math.max(1, Math.round(largura - 30));
-    const vidA = Math.max(1, Math.round((altura - 40) / numFolhas - 20));
+    const numFolhasCalc = Math.max(1, Math.floor(altura / 300));
+    const vidL = Math.max(1, Math.round(largura - folga.folga_vidro_largura));
+    const vidA = Math.max(1, Math.round((altura - folga.folga_vidro_altura) / numFolhasCalc - 20));
     return [{
-      descricao: `Vidro maxim-ar (${numFolhas}F)`,
+      descricao: `Vidro maxim-ar (${numFolhasCalc}F)`,
       largura_mm: vidL,
       altura_mm: vidA,
-      quantidade: numFolhas,
-      area_m2: Math.round((vidL * vidA * numFolhas) / 1_000_000 * 100) / 100,
+      quantidade: numFolhasCalc,
+      area_m2: Math.round((vidL * vidA * numFolhasCalc) / 1_000_000 * 100) / 100,
     }];
   }
   if (t === 'porta' || t.includes('porta')) {
-    const vidL = Math.max(1, Math.round(largura / nf - 70));
-    const vidA = Math.max(1, Math.round(altura - 100));
+    const vidL = Math.max(1, Math.round(largura / nf - folga.folga_vidro_largura));
+    const vidA = Math.max(1, Math.round(altura - folga.folga_vidro_altura));
     return [{
       descricao: `Vidro porta (${nf}F)`,
       largura_mm: vidL,
@@ -282,8 +367,8 @@ export function calcularVidros(
     }];
   }
   // Genérico
-  const vidL = Math.max(1, Math.round(largura / nf - 60));
-  const vidA = Math.max(1, Math.round(altura - 80));
+  const vidL = Math.max(1, Math.round(largura / nf - folga.folga_vidro_largura));
+  const vidA = Math.max(1, Math.round(altura - folga.folga_vidro_altura));
   return [{
     descricao: `Vidro (${nf}F)`,
     largura_mm: vidL,
@@ -336,10 +421,10 @@ export function calcularFerragens(
     ];
   }
   if (t === 'maxim-ar' || t === 'maximar') {
-    const numFolhas = Math.max(1, Math.floor(altura / 300));
+    const numFolhasHw = Math.max(1, Math.floor(altura / 300));
     return [
-      { nome: 'Barra de articulação (varão)', quantidade: numFolhas, unidade: 'un' },
-      { nome: 'Gancho de fixação', quantidade: numFolhas * 2, unidade: 'un' },
+      { nome: 'Barra de articulação (varão)', quantidade: numFolhasHw, unidade: 'un' },
+      { nome: 'Gancho de fixação', quantidade: numFolhasHw * 2, unidade: 'un' },
       { nome: 'Fecho maxim-ar', quantidade: 1, unidade: 'un' },
       { nome: 'Parafusos e buchas', quantidade: 1, unidade: 'kit' },
     ];

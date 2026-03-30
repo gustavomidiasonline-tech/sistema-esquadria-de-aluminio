@@ -1,5 +1,7 @@
 // BOM = Bill of Materials — calcula materiais necessarios para esquadrias
 
+import { avaliarFormulaMetros } from '@/lib/formula-engine';
+
 export interface ModeloComponente {
   id: string;
   modelo_id: string;
@@ -29,16 +31,7 @@ export interface BOMResult {
 
 export class BOMService {
   static evaluateFormula(formula: string, largura: number, altura: number): number {
-    const l = largura / 1000;
-    const a = altura / 1000;
-    try {
-      const expr = formula
-        .replace(/largura/g, String(l))
-        .replace(/altura/g, String(a));
-      return Function(`"use strict"; return (${expr})`)() as number;
-    } catch {
-      return 0;
-    }
+    return avaliarFormulaMetros(formula, largura, altura);
   }
 
   static getComponentesPadrao(categoria: string): ModeloComponente[] {

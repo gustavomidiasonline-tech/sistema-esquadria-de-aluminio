@@ -4,6 +4,8 @@
  * para minimizar desperdício de barras de alumínio
  */
 
+import { getKerf } from '@/lib/formula-engine';
+
 export interface PecaCorte {
   id: string;
   descricao: string;
@@ -52,7 +54,7 @@ export interface RelatorioCorte {
   }>;
 }
 
-const KERF = 3; // mm — espessura do disco de corte (perda por corte)
+const KERF = getKerf(); // mm — espessura do disco de corte (from FormulaEngine config)
 
 export const CuttingService = {
   /**
@@ -147,7 +149,8 @@ export const CuttingService = {
 // --- Algoritmos internos ---
 
 /**
- * First Fit Decreasing: coloca cada peça na primeira barra que couber
+ * First Fit Decreasing: coloca cada peça na primeira barra que couber.
+ * Kerf model: each piece consumes (comprimento + KERF) on the bar.
  */
 function aplicarFirstFit(
   pecas: Array<{ id: string; descricao: string; comprimento: number }>,
@@ -157,13 +160,13 @@ function aplicarFirstFit(
 
   for (const peca of pecas) {
     let alocado = false;
+    const pecaComKerf = peca.comprimento + KERF;
 
     for (const barra of barras) {
-      const espacoDisponivel = barra.sobra - KERF;
-      if (espacoDisponivel >= peca.comprimento) {
-        const posicao = barra.comprimentoTotal - barra.sobra + KERF;
+      if (barra.sobra >= pecaComKerf) {
+        const posicao = barra.comprimentoTotal - barra.sobra;
         barra.cortes.push({ pecaId: peca.id, descricao: peca.descricao, comprimento: peca.comprimento, posicaoInicio: posicao });
-        barra.sobra -= peca.comprimento + KERF;
+        barra.sobra -= pecaComKerf;
         barra.aproveitamento = calcularAproveitamentoBarra(barra);
         alocado = true;
         break;
@@ -175,7 +178,7 @@ function aplicarFirstFit(
         numero: barras.length + 1,
         comprimentoTotal: comprimentoBarra,
         cortes: [{ pecaId: peca.id, descricao: peca.descricao, comprimento: peca.comprimento, posicaoInicio: 0 }],
-        sobra: comprimentoBarra - peca.comprimento - KERF,
+        sobra: comprimentoBarra - pecaComKerf,
         aproveitamento: 0,
       };
       novaBarra.aproveitamento = calcularAproveitamentoBarra(novaBarra);
@@ -187,7 +190,8 @@ function aplicarFirstFit(
 }
 
 /**
- * Best Fit Decreasing: coloca cada peça na barra com menor sobra que ainda couber
+ * Best Fit Decreasing: coloca cada peça na barra com menor sobra que ainda couber.
+ * Kerf model: each piece consumes (comprimento + KERF) on the bar.
  */
 function aplicarBestFit(
   pecas: Array<{ id: string; descricao: string; comprimento: number }>,
@@ -198,11 +202,11 @@ function aplicarBestFit(
   for (const peca of pecas) {
     let melhorBarra: Barra | null = null;
     let melhorSobra = Infinity;
+    const pecaComKerf = peca.comprimento + KERF;
 
     for (const barra of barras) {
-      const espacoDisponivel = barra.sobra - KERF;
-      if (espacoDisponivel >= peca.comprimento) {
-        const sobraResultante = espacoDisponivel - peca.comprimento;
+      if (barra.sobra >= pecaComKerf) {
+        const sobraResultante = barra.sobra - pecaComKerf;
         if (sobraResultante < melhorSobra) {
           melhorSobra = sobraResultante;
           melhorBarra = barra;
@@ -211,16 +215,16 @@ function aplicarBestFit(
     }
 
     if (melhorBarra) {
-      const posicao = melhorBarra.comprimentoTotal - melhorBarra.sobra + KERF;
+      const posicao = melhorBarra.comprimentoTotal - melhorBarra.sobra;
       melhorBarra.cortes.push({ pecaId: peca.id, descricao: peca.descricao, comprimento: peca.comprimento, posicaoInicio: posicao });
-      melhorBarra.sobra -= peca.comprimento + KERF;
+      melhorBarra.sobra -= pecaComKerf;
       melhorBarra.aproveitamento = calcularAproveitamentoBarra(melhorBarra);
     } else {
       const novaBarra: Barra = {
         numero: barras.length + 1,
         comprimentoTotal: comprimentoBarra,
         cortes: [{ pecaId: peca.id, descricao: peca.descricao, comprimento: peca.comprimento, posicaoInicio: 0 }],
-        sobra: comprimentoBarra - peca.comprimento - KERF,
+        sobra: comprimentoBarra - pecaComKerf,
         aproveitamento: 0,
       };
       novaBarra.aproveitamento = calcularAproveitamentoBarra(novaBarra);

@@ -129,7 +129,7 @@ export const FEATURE_MIN_PLAN = {} as Record<FeatureKey, PlanType>;
 });
 
 export function useSubscription() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const { data: subscription, isLoading } = useQuery({
     queryKey: ["user_subscription", user?.id],
@@ -146,17 +146,10 @@ export function useSubscription() {
     enabled: !!user,
   });
 
-  // Super Admin override: se há um super_admin ativo no sistema local, libera plano avançado
+  // Super Admin: se o usuário tem cargo super_admin, libera plano avançado
   const hasSuperAdmin = useMemo(() => {
-    try {
-      const stored = localStorage.getItem('alumy_admins');
-      if (!stored) return false;
-      const admins = JSON.parse(stored) as Array<{ cargo: string; status: string }>;
-      return admins.some((a) => a.cargo === 'super_admin' && a.status === 'ativo');
-    } catch {
-      return false;
-    }
-  }, []);
+    return profile?.cargo === 'super_admin';
+  }, [profile?.cargo]);
 
   const currentPlan: PlanType = hasSuperAdmin
     ? "avancado"
