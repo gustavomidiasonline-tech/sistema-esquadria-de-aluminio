@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Check, Save, ChevronDown, MessageSquare } from "lucide-react";
+import { Check, Save, ChevronDown, SkipForward, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -28,11 +28,22 @@ interface StepItemProps {
   index: number;
   totalSteps: number;
   onUpdate: () => void;
+  onStageComplete?: () => void;
+  isNextStage?: boolean;
 }
 
-export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdate }: StepItemProps) {
+export function StepItem({
+  stage,
+  progress,
+  pedidoId,
+  index,
+  totalSteps,
+  onUpdate,
+  onStageComplete,
+  isNextStage,
+}: StepItemProps) {
   const { user } = useAuth();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(isNextStage ?? false);
   const [localData, setLocalData] = useState<Record<string, unknown>>(progress?.data || {});
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -44,21 +55,28 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
     setHasChanges(false);
   }, [progress]);
 
+  // Auto-expand next stage when previous completes
+  useEffect(() => {
+    if (isNextStage && !isCompleted) {
+      setExpanded(true);
+    }
+  }, [isNextStage, isCompleted]);
+
   const updateField = useCallback((key: string, value: unknown) => {
-    setLocalData(prev => ({ ...prev, [key]: value }));
+    setLocalData((prev) => ({ ...prev, [key]: value }));
     setHasChanges(true);
   }, []);
 
   const handleSave = async (markComplete = false) => {
     setSaving(true);
     try {
-      const newStatus = markComplete ? "concluido" : (progress?.status || "pendente");
+      const newStatus = markComplete ? "concluido" : progress?.status || "pendente";
       const payload = {
         pedido_id: pedidoId,
         stage_id: stage.id,
         status: newStatus,
         data: localData,
-        completed_at: markComplete ? new Date().toISOString() : (progress?.completed_at || null),
+        completed_at: markComplete ? new Date().toISOString() : progress?.completed_at || null,
         completed_by: markComplete ? user?.id : null,
         updated_at: new Date().toISOString(),
       };
@@ -70,12 +88,36 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
       }
 
       setHasChanges(false);
+
+      if (markComplete) {
+        toast.success(`✅ "${stage.name}" concluída com sucesso!`, {
+          description: "Próxima etapa desbloqueada →",
+          duration: 3000,
+        });
+        onStageComplete?.();
+        setExpanded(false);
+      } else {
+        toast.success("💾 Dados salvos com sucesso!", {
+          duration: 2000,
+        });
+      }
+
       onUpdate();
-      toast.success(markComplete ? `"${stage.name}" concluída!` : "Dados salvos!");
-    } catch {
-      toast.error("Erro ao salvar");
+    } catch (error) {
+      toast.error("❌ Erro ao salvar");
+      console.error(error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    if (
+      confirm(
+        `Tem certeza que deseja pular "${stage.name}"? Esta ação pode afetar o fluxo do pedido.`
+      )
+    ) {
+      await handleSave(true);
     }
   };
 
@@ -83,17 +125,22 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
     setSaving(true);
     try {
       if (progress?.id) {
-        await supabase.from("order_progress").update({
-          status: "pendente",
-          completed_at: null,
-          completed_by: null,
-          updated_at: new Date().toISOString(),
-        }).eq("id", progress.id);
+        await supabase
+          .from("order_progress")
+          .update({
+            status: "pendente",
+            completed_at: null,
+            completed_by: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", progress.id);
         onUpdate();
         toast.success("Etapa reaberta");
+        setExpanded(true);
       }
-    } catch {
+    } catch (error) {
       toast.error("Erro ao reabrir");
+      console.error(error);
     } finally {
       setSaving(false);
     }
@@ -106,7 +153,9 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs font-medium text-muted-foreground">Largura (mm)</Label>
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Largura (mm)
+                </Label>
                 <Input
                   type="number"
                   placeholder="2000"
@@ -117,7 +166,9 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
                 />
               </div>
               <div>
-                <Label className="text-xs font-medium text-muted-foreground">Altura (mm)</Label>
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Altura (mm)
+                </Label>
                 <Input
                   type="number"
                   placeholder="1000"
@@ -129,7 +180,9 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
               </div>
             </div>
             <div>
-              <Label className="text-xs font-medium text-muted-foreground">Anotações</Label>
+              <Label className="text-xs font-medium text-muted-foreground">
+                Anotações
+              </Label>
               <Textarea
                 placeholder="Observações sobre as medidas..."
                 value={localData.anotacoes || ""}
@@ -156,14 +209,16 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
                   <span className="text-sm font-medium text-foreground">{item}</span>
                   {localData[key] && (
                     <span className="ml-auto text-[10px] font-medium text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                      Confirmado
+                      ✓ Confirmado
                     </span>
                   )}
                 </div>
               );
             })}
             <div>
-              <Label className="text-xs font-medium text-muted-foreground">Observações</Label>
+              <Label className="text-xs font-medium text-muted-foreground">
+                Observações
+              </Label>
               <Textarea
                 placeholder="Detalhes sobre materiais..."
                 value={localData.observacoes || ""}
@@ -180,7 +235,9 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs font-medium text-muted-foreground">Data Prevista</Label>
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Data Prevista
+                </Label>
                 <Input
                   type="date"
                   value={localData.data_prevista || ""}
@@ -190,7 +247,9 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
                 />
               </div>
               <div>
-                <Label className="text-xs font-medium text-muted-foreground">Data Realizada</Label>
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Data Realizada
+                </Label>
                 <Input
                   type="date"
                   value={localData.data_realizada || ""}
@@ -201,7 +260,9 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
               </div>
             </div>
             <div>
-              <Label className="text-xs font-medium text-muted-foreground">Observações</Label>
+              <Label className="text-xs font-medium text-muted-foreground">
+                Observações
+              </Label>
               <Textarea
                 placeholder="Notas sobre a execução..."
                 value={localData.observacoes || ""}
@@ -220,7 +281,9 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
               <p className="text-sm text-muted-foreground">Upload de fotos (em breve)</p>
             </div>
             <div>
-              <Label className="text-xs font-medium text-muted-foreground">Observações</Label>
+              <Label className="text-xs font-medium text-muted-foreground">
+                Observações
+              </Label>
               <Textarea
                 placeholder="Descrição das fotos..."
                 value={localData.observacoes || ""}
@@ -236,7 +299,9 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
       default:
         return (
           <div>
-            <Label className="text-xs font-medium text-muted-foreground">Relatório / Observações</Label>
+            <Label className="text-xs font-medium text-muted-foreground">
+              Relatório / Observações
+            </Label>
             <Textarea
               placeholder="Descreva o resultado desta etapa..."
               value={localData.texto || ""}
@@ -251,108 +316,170 @@ export function StepItem({ stage, progress, pedidoId, index, totalSteps, onUpdat
 
   return (
     <div
+      data-step-index={index}
       className={cn(
-        "rounded-xl border transition-all duration-300",
+        "rounded-lg border transition-all duration-800",
         isCompleted
-          ? "border-emerald-500/40 bg-emerald-500/5"
-          : "border-border bg-card"
+          ? "border-emerald-500/50 bg-emerald-500/5 shadow-sm"
+          : expanded
+            ? "border-primary/50 bg-card shadow-lg"
+            : isNextStage
+              ? "border-blue-500/50 bg-blue-500/2 hover:border-blue-500/70"
+              : "border-border bg-card opacity-60 hover:opacity-75"
       )}
     >
       {/* Accordion Header */}
       <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-4 p-4 text-left"
+        onClick={() => !isCompleted && setExpanded(!expanded)}
+        disabled={isCompleted || (!expanded && !isNextStage)}
+        className={cn(
+          "w-full flex items-center gap-4 p-4 text-left transition-all duration-300",
+          isCompleted
+            ? "cursor-default"
+            : (!expanded && !isNextStage)
+              ? "cursor-not-allowed"
+              : "hover:bg-muted/20 cursor-pointer"
+        )}
       >
-        {/* Step circle */}
+        {/* Step circle with animation */}
         <div
           className={cn(
-            "h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-all border-2",
+            "h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-all border-2 font-semibold text-sm",
             isCompleted
-              ? "bg-emerald-500 border-emerald-500 text-white"
-              : "border-primary/30 bg-primary/5 text-primary"
+              ? "bg-emerald-500 border-emerald-500 text-white shadow-md"
+              : "border-primary/50 bg-primary/10 text-primary"
           )}
         >
           {isCompleted ? (
-            <Check className="h-5 w-5" />
+            <Check className="h-5 w-5 animate-bounce" />
           ) : (
-            <span className="text-sm font-bold">{index + 1}</span>
+            <span>{index + 1}</span>
           )}
         </div>
 
-        {/* Title */}
+        {/* Title & Status */}
         <div className="flex-1 min-w-0">
-          <p className={cn(
-            "text-sm font-semibold",
-            isCompleted ? "text-emerald-400 dark:text-emerald-400" : "text-foreground"
-          )}>
-            {stage.name}
-          </p>
-          <p className="text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <p
+              className={cn(
+                "text-sm font-semibold",
+                isCompleted
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-foreground"
+              )}
+            >
+              {stage.name}
+            </p>
+            {isNextStage && !isCompleted && (
+              <span className="text-[10px] font-bold bg-gradient-to-r from-blue-500/30 to-cyan-500/30 text-blue-600 dark:text-blue-300 px-2.5 py-1 rounded-full border border-blue-500/50 animate-pulse shadow-sm">
+                ⭐ PRÓXIMO
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
             {isCompleted
-              ? `Concluída em ${progress?.completed_at ? new Date(progress.completed_at).toLocaleDateString("pt-BR") : "—"}`
-              : "Pendente"
-            }
+              ? `✓ Concluída em ${
+                  progress?.completed_at
+                    ? new Date(progress.completed_at).toLocaleDateString(
+                        "pt-BR"
+                      )
+                    : "—"
+                }`
+              : "Aguardando..."}
           </p>
         </div>
 
         {/* Status badge */}
-        <span className={cn(
-          "text-[10px] font-semibold px-2.5 py-1 rounded-full shrink-0",
-          isCompleted
-            ? "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400"
-            : "bg-amber-500/15 text-amber-400 dark:text-amber-400"
-        )}>
-          {isCompleted ? "Concluído" : "Pendente"}
+        <span
+          className={cn(
+            "text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap",
+            isCompleted
+              ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-400"
+              : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+          )}
+        >
+          {isCompleted ? "✓ Concluído" : "⏳ Pendente"}
         </span>
 
-        <ChevronDown className={cn(
-          "h-4 w-4 text-muted-foreground transition-transform shrink-0",
-          expanded && "rotate-180"
-        )} />
+        {!isCompleted && (
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-muted-foreground transition-transform shrink-0",
+              expanded && "rotate-180"
+            )}
+          />
+        )}
       </button>
 
       {/* Accordion Content */}
-      {expanded && (
-        <div className="px-4 pb-4 pt-0 border-t border-border/50">
+      {expanded && !isCompleted && (
+        <div className="px-4 pb-4 pt-0 border-t border-primary/20 animate-in fade-in slide-in-from-top-2 duration-500">
           <div className="pt-4 space-y-4">
             {renderFields()}
 
             {/* Action buttons */}
-            <div className="flex items-center gap-2 pt-2">
-              {!isCompleted ? (
-                <>
-                  {hasChanges && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleSave(false)}
-                      disabled={saving}
-                      className="gap-2"
-                    >
-                      <Save className="h-3.5 w-3.5" /> Salvar Rascunho
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={() => handleSave(true)}
-                    disabled={saving}
-                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    <Check className="h-3.5 w-3.5" /> Concluir Etapa
-                  </Button>
-                </>
-              ) : (
+            <div className="flex flex-wrap items-center gap-2 pt-4">
+              {hasChanges && (
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={handleReopen}
+                  onClick={() => handleSave(false)}
                   disabled={saving}
+                  className="gap-2"
                 >
-                  Reabrir Etapa
+                  <Save className="h-3.5 w-3.5" /> Salvar Rascunho
+                </Button>
+              )}
+
+              <Button
+                size="sm"
+                onClick={() => handleSave(true)}
+                disabled={saving}
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white flex-1 min-w-[140px]"
+              >
+                <Check className="h-3.5 w-3.5" /> Concluir Etapa
+              </Button>
+
+              {index < totalSteps - 1 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleSkip}
+                  disabled={saving}
+                  className="gap-2 text-muted-foreground hover:text-foreground"
+                  title="Marca como concluída e passa para próxima"
+                >
+                  <SkipForward className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
+
+            {hasChanges && (
+              <div className="flex items-center gap-2 text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded p-2">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                Você tem alterações não salvas
+              </div>
+            )}
           </div>
+        </div>
+      )}
+
+      {/* Completed state */}
+      {isCompleted && (
+        <div className="px-4 py-3 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
+            <Check className="h-4 w-4" />
+            Etapa concluída com sucesso
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleReopen}
+            disabled={saving}
+            className="text-[10px] h-auto py-1 px-2"
+          >
+            Reabrir
+          </Button>
         </div>
       )}
     </div>
