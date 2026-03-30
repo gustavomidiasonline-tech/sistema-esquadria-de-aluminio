@@ -218,30 +218,38 @@ export function WorkflowDetail({ pedido, onBack }: WorkflowDetailProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {stages.map((stage, idx) => (
-            <StepItem
-              key={stage.id}
-              stage={stage}
-              progress={getProgressForStage(stage.id)}
-              pedidoId={pedido.id}
-              index={idx}
-              totalSteps={totalSteps}
-              onUpdate={loadData}
-              isNextStage={idx === nextIncompleteIndex}
-              onStageComplete={() => {
-                // Auto-scroll para próxima etapa após animação
-                setTimeout(() => {
-                  const nextElement = document.querySelector(
-                    `[data-step-index="${idx + 1}"]`
-                  );
-                  nextElement?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }, 800);
-              }}
-            />
-          ))}
+          {stages.map((stage, idx) => {
+            // Get data from previous stage for auto-detection
+            const previousStage = idx > 0 ? stages[idx - 1] : null;
+            const previousProgress = previousStage ? getProgressForStage(previousStage.id) : null;
+            const previousStageData = previousProgress?.data;
+
+            return (
+              <StepItem
+                key={stage.id}
+                stage={stage}
+                progress={getProgressForStage(stage.id)}
+                pedidoId={pedido.id}
+                index={idx}
+                totalSteps={totalSteps}
+                onUpdate={loadData}
+                isNextStage={idx === nextIncompleteIndex}
+                previousStageData={previousStageData}
+                onStageComplete={() => {
+                  // Auto-scroll para próxima etapa após animação
+                  setTimeout(() => {
+                    const nextElement = document.querySelector(
+                      `[data-step-index="${idx + 1}"]`
+                    );
+                    nextElement?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                  }, 800);
+                }}
+              />
+            );
+          })}
         </div>
       )}
 

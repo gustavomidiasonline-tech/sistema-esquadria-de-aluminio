@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { useAutoMateriais } from "@/hooks/useAutoMateriais";
 
 interface StepItemProps {
   stage: {
@@ -30,6 +31,7 @@ interface StepItemProps {
   onUpdate: () => void;
   onStageComplete?: () => void;
   isNextStage?: boolean;
+  previousStageData?: Record<string, unknown>; // Dados da etapa anterior (para auto-detect)
 }
 
 export function StepItem({
@@ -41,6 +43,7 @@ export function StepItem({
   onUpdate,
   onStageComplete,
   isNextStage,
+  previousStageData,
 }: StepItemProps) {
   const { user } = useAuth();
   const [expanded, setExpanded] = useState(isNextStage ?? false);
@@ -49,6 +52,9 @@ export function StepItem({
   const [saving, setSaving] = useState(false);
 
   const isCompleted = progress?.status === "concluido";
+
+  // Auto-detect materiais quando etapa de checklist_materiais é carregada
+  const autoMateriais = useAutoMateriais(pedidoId, previousStageData);
 
   useEffect(() => {
     setLocalData(progress?.data || {});
@@ -61,6 +67,28 @@ export function StepItem({
       setExpanded(true);
     }
   }, [isNextStage, isCompleted]);
+
+  // Auto-populate materiais when detected and etapa is checklist_materiais
+  useEffect(() => {
+    if (
+      stage.field_type === "checklist_materiais" &&
+      autoMateriais &&
+      !progress?.data?.acessorios && // Only auto-populate if not already filled
+      !progress?.data?.aluminios &&
+      !progress?.data?.vidros
+    ) {
+      setLocalData((prev) => ({
+        ...prev,
+        acessorios: autoMateriais.acessorios,
+        aluminios: autoMateriais.aluminios,
+        vidros: autoMateriais.vidros,
+      }));
+      // Mark as having changes so user sees it was auto-populated
+      if (autoMateriais.acessorios || autoMateriais.aluminios || autoMateriais.vidros) {
+        setHasChanges(true);
+      }
+    }
+  }, [autoMateriais, stage.field_type, progress?.data]);
 
   const updateField = useCallback((key: string, value: unknown) => {
     setLocalData((prev) => ({ ...prev, [key]: value }));
