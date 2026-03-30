@@ -20,7 +20,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
-    <div className="flex min-h-dvh w-full relative overflow-hidden">
+    <div className="flex h-screen w-screen relative overflow-hidden">
       {/* Ambient light orbs — responsive sizing with clamp() */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         {/* Bottom-left warm glow (red/orange) - hidden on mobile */}
@@ -52,10 +52,12 @@ export function AppLayout({ children }: AppLayoutProps) {
         />
       )}
 
-      <div className="flex-1 flex flex-col min-w-0 relative z-10">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10 w-full">
         <AppHeader onToggleSidebar={handleToggleSidebar} isMobile={isMobile} />
-        <main className="flex-1 px-4 py-4 sm:px-6 sm:py-6">
-          {children}
+        <main className="flex-1 overflow-auto w-full">
+          <div className="h-full w-full px-4 py-4 sm:px-6 sm:py-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>

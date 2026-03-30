@@ -106,7 +106,7 @@ const Index = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6 max-w-7xl w-full">
+      <div className="space-y-6 w-full h-full">
         {/* Header */}
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">
