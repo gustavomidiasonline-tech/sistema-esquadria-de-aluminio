@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { ShieldCheck } from "lucide-react";
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -86,8 +87,8 @@ const Login = () => {
         <div className="w-full max-w-md mx-4">
           <div className="glass-card-premium p-8">
             <div className="flex flex-col items-center mb-8">
-              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-lg font-bold text-white mb-3">
-                EA
+              <div className="h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-3">
+                <ShieldCheck className="h-8 w-8 text-primary" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">Sistema Esquadria</h1>
               <p className="text-sm text-muted-foreground">Gestão de Esquadrias de Alumínio</p>
@@ -130,8 +131,8 @@ const Login = () => {
         <div className="glass-card-premium p-8">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-lg font-bold text-white mb-3">
-              EA
+            <div className="h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-3">
+              <ShieldCheck className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">Sistema Esquadria</h1>
             <p className="text-sm text-muted-foreground">Gestão de Esquadrias de Alumínio</p>

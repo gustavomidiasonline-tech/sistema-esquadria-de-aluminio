@@ -4,6 +4,8 @@ import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
 import { parseISO, format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 
+import { BackButton } from "@/components/ui/BackButton";
+
 const FluxoCaixa = () => {
   const { data: pagamentos = [], isLoading } = useSupabaseQuery("pagamentos", {
     orderBy: { column: "data_pagamento", ascending: false },
@@ -24,9 +26,12 @@ const FluxoCaixa = () => {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-7xl">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Fluxo de Caixa</h1>
-          <p className="text-sm text-muted-foreground">Acompanhamento de entradas e saídas reais</p>
+        <div className="flex items-center gap-4">
+          <BackButton to="/financeiro" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Fluxo de Caixa</h1>
+            <p className="text-sm text-muted-foreground">Acompanhamento de entradas e saídas reais</p>
+          </div>
         </div>
 
         {isLoading ? (

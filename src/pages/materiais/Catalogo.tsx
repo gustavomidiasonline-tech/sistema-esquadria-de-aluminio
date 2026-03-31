@@ -9,6 +9,7 @@ import { CleanupCatalogButton } from '@/components/catalog/CleanupCatalogButton'
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Package, Layers, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { BackButton } from '@/components/ui/BackButton';
 
 interface PerfilCatalogo {
   id: string;
@@ -38,7 +39,6 @@ export default function Catalogo() {
   const { data: perfis = [], isLoading: loadingPerfis } = useQuery<PerfilCatalogo[]>({
     queryKey: ['perfis_catalogo'],
     queryFn: async () => {
-      // RLS já filtra por empresa, não precisa de .eq()
       const { data, error } = await supabase
         .from('perfis_catalogo')
         .select('id, codigo, nome, tipo, peso_kg_m, espessura_mm, company_id')
@@ -51,7 +51,6 @@ export default function Catalogo() {
   const { data: modelos = [], isLoading: loadingModelos } = useQuery<WindowModel[]>({
     queryKey: ['window_models'],
     queryFn: async () => {
-      // RLS já filtra por empresa, não precisa de .eq()
       const { data, error } = await supabase
         .from('window_models')
         .select('id, codigo, nome, tipo, descricao, num_folhas')
@@ -83,11 +82,14 @@ export default function Catalogo() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Catálogo de Fabricantes</h1>
-            <p className="text-sm text-muted-foreground">
-              Perfis e modelos importados de catálogos — usados nos cálculos automaticamente
-            </p>
+          <div className="flex items-center gap-4">
+            <BackButton to="/materiais" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Catálogo de Fabricantes</h1>
+              <p className="text-sm text-muted-foreground">
+                Perfis e modelos importados de catálogos — usados nos cálculos automaticamente
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             <CleanupCatalogButton onSuccess={() => queryClient.invalidateQueries({ queryKey: ['perfis_catalogo', 'window_models'] })} />

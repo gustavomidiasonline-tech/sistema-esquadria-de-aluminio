@@ -8,6 +8,7 @@ export interface Product {
   name: string;
   description: string | null;
   image_url: string | null;
+  rule_count?: number;
 }
 
 export interface CatalogProfile {
@@ -39,7 +40,6 @@ export function useConfiguracaoModelos() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [prodName, setProdName] = useState('');
   const [prodDesc, setProdDesc] = useState('');
-  const [prodImage, setProdImage] = useState('');
   const [ruleDialog, setRuleDialog] = useState(false);
   const [editingRule, setEditingRule] = useState<CutRule | null>(null);
   const [ruleProfileId, setRuleProfileId] = useState('');
@@ -57,24 +57,114 @@ export function useConfiguracaoModelos() {
 
   const loadProducts = async () => {
     setLoading(true);
-    const { data } = await supabase.from('mt_products').select('*').order('name');
-    setProducts((data as Product[]) || []);
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id;
+    
+    // Get company_id for filtering
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('user_id', userId || '')
+      .single();
+
+    const company_id = profile?.company_id;
+    
+    const query = supabase.from('mt_products').select('*');
+    if (company_id) query.eq('company_id', company_id);
+    
+    const { data } = await query.order('name');
+    const prods = (data as Product[]) || [];
+
+    // Load rule counts for all products
+    if (prods.length > 0) {
+      const { data: rules } = await supabase
+        .from('cut_rules')
+        .select('product_id');
+      if (rules) {
+        const counts: Record<string, number> = {};
+        for (const r of rules) {
+          counts[r.product_id] = (counts[r.product_id] || 0) + 1;
+        }
+        for (const p of prods) {
+          p.rule_count = counts[p.id] || 0;
+        }
+      }
+    }
+
+    setProducts(prods);
     setLoading(false);
   };
 
   const loadProfiles = async () => {
-    const { data } = await supabase.from('catalog_profiles').select('*').order('code');
-    setProfiles((data as CatalogProfile[]) || []);
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id;
+    
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('user_id', userId || '')
+      .single();
+
+    const company_id = profileData?.company_id;
+
+    // --- Strategy: try catalog_profiles first (which cut_rules FK points to),
+    // then fall back to perfis_catalogo if empty ---
+    let profiles: CatalogProfile[] = [];
+
+    if (company_id) {
+      const { data: catalogData, error: catError } = await supabase
+        .from('catalog_profiles')
+        .select('id, code, description')
+        .eq('company_id', company_id)
+        .order('code');
+      if (!catError) profiles = (catalogData || []) as CatalogProfile[];
+    }
+
+    // Fallback: if catalog_profiles is empty, load from perfis_catalogo
+    // NOTE: select only the real column names (codigo, nome) — NO aliases
+    // to avoid PostgREST encoding them as invalid column names
+    if (profiles.length === 0) {
+      const { data: perfisCatData, error: pcError } = await supabase
+        .from('perfis_catalogo')
+        .select('id, codigo, nome')
+        .eq('company_id', company_id || '')
+        .order('codigo');
+
+      if (!pcError) {
+        profiles = (perfisCatData || []).map((p: { id: string; codigo: string; nome: string }) => ({
+          id: p.id,
+          code: p.codigo,
+          description: p.nome,
+        }));
+      }
+    }
+
+    setProfiles(profiles);
   };
 
   const loadCutRules = async (productId: string) => {
     setLoadingRules(true);
-    const { data } = await supabase
+    // Use the cut_rules_profile_id_fkey hint to avoid PostgREST resolving
+    // against the wrong related table (perfis_catalogo vs catalog_profiles)
+    const { data, error } = await supabase
       .from('cut_rules')
-      .select('*, profile:catalog_profiles(id, code, description)')
+      .select('*, profile:cut_rules_profile_id_fkey(id, code, description)')
       .eq('product_id', productId)
       .order('created_at');
-    setCutRules((data as CutRule[]) || []);
+
+    if (error) {
+      console.error('Error loading cut rules (with FK hint):', error);
+      // Fallback: simple select without join, profile resolved client-side later
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('cut_rules')
+        .select('*')
+        .eq('product_id', productId)
+        .order('created_at');
+      if (fallbackError) console.error('Error loading cut rules (fallback):', fallbackError);
+      setCutRules((fallbackData as CutRule[]) || []);
+    } else {
+      setCutRules((data as CutRule[]) || []);
+    }
     setLoadingRules(false);
   };
 
@@ -82,7 +172,6 @@ export function useConfiguracaoModelos() {
     setEditingProduct(null);
     setProdName('');
     setProdDesc('');
-    setProdImage('');
     setProductDialog(true);
   };
 
@@ -90,32 +179,55 @@ export function useConfiguracaoModelos() {
     setEditingProduct(p);
     setProdName(p.name);
     setProdDesc(p.description || '');
-    setProdImage(p.image_url || '');
     setProductDialog(true);
   };
 
   const saveProduct = async () => {
     if (!prodName.trim()) { toast.error('Nome obrigatório'); return; }
-    const payload = { name: prodName.trim(), description: prodDesc || null, image_url: prodImage || null };
-    try {
-      if (editingProduct) {
-        await supabase.from('mt_products').update(payload).eq('id', editingProduct.id);
-        toast.success('Produto atualizado!');
-      } else {
-        const user = await supabase.auth.getUser();
-        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.data.user?.id || '').single();
-        await supabase.from('mt_products').insert({ ...payload, company_id: profile?.company_id });
-        toast.success('Produto criado!');
-      }
+    const payload = { name: prodName.trim(), description: prodDesc || null, image_url: null };
+
+    if (editingProduct) {
+      const { error } = await supabase.from('mt_products').update(payload).eq('id', editingProduct.id);
+      if (error) { toast.error('Erro ao atualizar: ' + error.message); return; }
+      toast.success('Modelo atualizado!');
       setProductDialog(false);
       loadProducts();
-    } catch { /* error handled */ }
+    } else {
+      const user = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.data.user?.id || '')
+        .single();
+
+      if (!profile?.company_id) {
+        toast.error('Empresa não encontrada. Verifique seu perfil.');
+        return;
+      }
+
+      const { data: newProduct, error } = await supabase
+        .from('mt_products')
+        .insert({ ...payload, company_id: profile.company_id })
+        .select()
+        .single();
+
+      if (error) {
+        toast.error('Erro ao criar modelo: ' + error.message);
+        return;
+      }
+
+      toast.success('Modelo criado! Agora adicione as regras de corte.');
+      setProductDialog(false);
+      await loadProducts();
+      setSelectedProduct({ ...newProduct as Product, rule_count: 0 });
+      loadCutRules(newProduct.id);
+    }
   };
 
   const deleteProduct = async (id: string) => {
     try {
       await supabase.from('mt_products').delete().eq('id', id);
-      toast.success('Produto removido');
+      toast.success('Modelo removido');
       loadProducts();
       if (selectedProduct?.id === id) setSelectedProduct(null);
     } catch { /* error handled */ }
@@ -182,7 +294,7 @@ export function useConfiguracaoModelos() {
   return {
     products, profiles, search, setSearch, loading,
     selectedProduct, setSelectedProduct, cutRules, loadingRules, loadCutRules,
-    productDialog, setProductDialog, editingProduct, prodName, setProdName, prodDesc, setProdDesc, prodImage, setProdImage,
+    productDialog, setProductDialog, editingProduct, prodName, setProdName, prodDesc, setProdDesc,
     openNewProduct, openEditProduct, saveProduct, deleteProduct,
     ruleDialog, setRuleDialog, editingRule, ruleProfileId, setRuleProfileId, ruleFormula, setRuleFormula, ruleQty, setRuleQty, ruleAngle, setRuleAngle, ruleAxis, setRuleAxis,
     openNewRule, openEditRule, saveRule, deleteRule,

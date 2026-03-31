@@ -29,32 +29,48 @@ CREATE INDEX IF NOT EXISTS idx_folgas_config_linha ON public.folgas_config(linha
 ALTER TABLE public.folgas_config ENABLE ROW LEVEL SECURITY;
 
 -- 2. RLS policies
+DROP POLICY IF EXISTS "company_folgas_select" ON public.folgas_config;
 CREATE POLICY "company_folgas_select" ON public.folgas_config
   FOR SELECT TO authenticated
   USING (company_id = get_user_company_id());
 
+DROP POLICY IF EXISTS "company_folgas_insert" ON public.folgas_config;
 CREATE POLICY "company_folgas_insert" ON public.folgas_config
   FOR INSERT TO authenticated
   WITH CHECK (company_id = get_user_company_id());
 
+DROP POLICY IF EXISTS "company_folgas_update" ON public.folgas_config;
 CREATE POLICY "company_folgas_update" ON public.folgas_config
   FOR UPDATE TO authenticated
   USING (company_id = get_user_company_id());
 
+DROP POLICY IF EXISTS "company_folgas_delete" ON public.folgas_config;
 CREATE POLICY "company_folgas_delete" ON public.folgas_config
   FOR DELETE TO authenticated
   USING (company_id = get_user_company_id());
 
 -- 3. Updated_at trigger
+DROP TRIGGER IF EXISTS update_folgas_config_updated_at ON public.folgas_config;
 CREATE TRIGGER update_folgas_config_updated_at
   BEFORE UPDATE ON public.folgas_config
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 4. Validation constraints
-ALTER TABLE public.folgas_config
-  ADD CONSTRAINT chk_folga_trilho CHECK (folga_trilho >= 0 AND folga_trilho <= 50),
-  ADD CONSTRAINT chk_folga_marco CHECK (folga_marco >= 0 AND folga_marco <= 50),
-  ADD CONSTRAINT chk_folga_vidro_l CHECK (folga_vidro_largura >= 0 AND folga_vidro_largura <= 200),
-  ADD CONSTRAINT chk_folga_vidro_a CHECK (folga_vidro_altura >= 0 AND folga_vidro_altura <= 200),
-  ADD CONSTRAINT chk_folga_sobreposicao CHECK (folga_sobreposicao >= 0 AND folga_sobreposicao <= 100),
-  ADD CONSTRAINT chk_kerf CHECK (kerf >= 0 AND kerf <= 10);
+-- 4. Validation constraints (idempotent via DO block)
+DO $$ BEGIN
+  ALTER TABLE public.folgas_config ADD CONSTRAINT chk_folga_trilho CHECK (folga_trilho >= 0 AND folga_trilho <= 50);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE public.folgas_config ADD CONSTRAINT chk_folga_marco CHECK (folga_marco >= 0 AND folga_marco <= 50);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE public.folgas_config ADD CONSTRAINT chk_folga_vidro_l CHECK (folga_vidro_largura >= 0 AND folga_vidro_largura <= 200);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE public.folgas_config ADD CONSTRAINT chk_folga_vidro_a CHECK (folga_vidro_altura >= 0 AND folga_vidro_altura <= 200);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE public.folgas_config ADD CONSTRAINT chk_folga_sobreposicao CHECK (folga_sobreposicao >= 0 AND folga_sobreposicao <= 100);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE public.folgas_config ADD CONSTRAINT chk_kerf CHECK (kerf >= 0 AND kerf <= 10);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { WorkflowCard } from "@/components/workflow/WorkflowCard";
 import { WorkflowDetail } from "@/components/workflow/WorkflowDetail";
+import { BackButton } from "@/components/ui/BackButton";
 
 interface PedidoWithCliente {
   id: string;
@@ -90,11 +91,14 @@ const Workflow = () => {
     <AppLayout>
       <div className="max-w-7xl space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Workflow de Pedidos</h1>
-          <p className="text-sm text-muted-foreground">
-            Acompanhe o progresso de cada pedido pelas etapas de produção
-          </p>
+        <div className="flex items-center gap-4">
+          <BackButton to="/pedidos" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Workflow de Pedidos</h1>
+            <p className="text-sm text-muted-foreground">
+              Acompanhe o progresso de cada pedido pelas etapas de produção
+            </p>
+          </div>
         </div>
 
         {/* Filters */}

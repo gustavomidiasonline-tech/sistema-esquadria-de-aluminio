@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { Plus, ArrowUpRight, ArrowDownLeft, Search, DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
+import { BackButton } from "@/components/ui/BackButton";
+
 type PagamentoRow = Tables<"pagamentos">;
 
 export default function Pagamentos() {
@@ -78,9 +80,12 @@ export default function Pagamentos() {
     <AppLayout>
       <div className="p-4 md:p-6 space-y-6 max-w-7xl">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Pagamentos</h1>
-            <p className="text-sm text-muted-foreground">Registro de entradas e saídas</p>
+          <div className="flex items-center gap-4">
+            <BackButton to="/financeiro" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Pagamentos</h1>
+              <p className="text-sm text-muted-foreground">Registro de entradas e saídas</p>
+            </div>
           </div>
           <Button onClick={() => setDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Novo Pagamento</Button>
         </div>

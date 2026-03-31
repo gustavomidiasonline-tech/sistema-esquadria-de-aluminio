@@ -10,9 +10,12 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/ui/BackButton";
 
 export default function ImportarDados() {
+  const { profile } = useAuth();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -95,26 +98,31 @@ export default function ImportarDados() {
 
     setLoading(true);
     try {
+      const qty = Math.round(extractedData.quantidade || 1);
       const { error } = await supabase.from("orcamento_itens").insert({
         orcamento_id: selectedOrcamentoId,
+        company_id: profile?.company_id,
         descricao: `Importado de arquivo (${extractedData.source.toUpperCase()})`,
         largura: Math.round(extractedData.largura),
         altura: Math.round(extractedData.altura),
-        quantidade: extractedData.quantidade || 1,
+        quantidade: qty,
         valor_unitario: 0,
-        observacoes: `Dados extraídos com ${Math.round(extractedData.confidence * 100)}% de confiança`,
+        valor_total: 0,
       });
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       await queryClient.invalidateQueries({ queryKey: ["bom-itens", selectedOrcamentoId] });
+      await queryClient.invalidateQueries({ queryKey: ["orcamento_itens"] });
       toast.success("Item adicionado ao orçamento com sucesso!");
 
       // Reset
       setExtractedData(null);
       setSelectedOrcamentoId("");
     } catch (err) {
-      toast.error(`Erro ao salvar: ${err instanceof Error ? err.message : "Desconhecido"}`);
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      console.error("Erro ao salvar item no orçamento:", err);
+      toast.error(`Erro ao salvar: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -132,11 +140,14 @@ export default function ImportarDados() {
     <AppLayout>
       <div className="space-y-6 max-w-4xl">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Importar Dados</h1>
-          <p className="text-sm text-muted-foreground">
-            Carregue arquivos PDF ou CSV para extrair dimensões e adicionar itens aos orçamentos
-          </p>
+        <div className="flex items-center gap-4">
+          <BackButton to="/materiais" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Importar Dados</h1>
+            <p className="text-sm text-muted-foreground">
+              Carregue arquivos PDF ou CSV para extrair dimensões e adicionar itens aos orçamentos
+            </p>
+          </div>
         </div>
 
         {/* Upload Area */}
@@ -164,14 +175,14 @@ export default function ImportarDados() {
                   <div className="animate-spin">
                     <FileJson className="h-8 w-8 text-blue-500" />
                   </div>
-                  <span className="text-sm text-white/60">Processando arquivo...</span>
+                  <span className="text-sm text-foreground/70 font-medium">Processando arquivo...</span>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <Upload className="h-8 w-8 mx-auto text-white/40" />
-                  <p className="text-sm font-medium text-white/70">Arraste o arquivo aqui</p>
-                  <p className="text-xs text-white/50">ou clique para selecionar</p>
-                  <p className="text-xs text-white/40 mt-2">PDF ou CSV (máx. 10MB)</p>
+                <div className="space-y-3">
+                  <Upload className="h-10 w-10 mx-auto text-primary/60" />
+                  <p className="text-sm font-bold text-foreground/80 tracking-tight">Arraste o arquivo aqui</p>
+                  <p className="text-xs text-muted-foreground">ou clique para selecionar</p>
+                  <p className="text-[10px] uppercase font-bold text-primary/40 mt-3 letter-spacing-widest">PDF ou CSV (máx. 10MB)</p>
                 </div>
               )}
             </label>
@@ -196,8 +207,8 @@ export default function ImportarDados() {
               {/* Confidence */}
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-white/60">Confiança</span>
-                  <span className={`font-medium ${confidenceColor}`}>
+                  <span className="text-muted-foreground font-medium uppercase tracking-wider text-[10px]">Confiança</span>
+                  <span className={`font-bold ${confidenceColor}`}>
                     {Math.round(extractedData.confidence * 100)}%
                   </span>
                 </div>
@@ -207,28 +218,28 @@ export default function ImportarDados() {
               {/* Extracted Values Grid */}
               <div className="grid grid-cols-3 gap-3">
                 {extractedData.largura && (
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-white/60">Largura</p>
-                    <p className="text-sm font-semibold text-white/90">{extractedData.largura.toFixed(1)}</p>
-                    <Badge variant="secondary" className="text-[10px] w-full text-center">
+                  <div className="space-y-1 text-center bg-primary/5 p-2 rounded-lg border border-primary/10">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Largura</p>
+                    <p className="text-lg font-black text-foreground">{extractedData.largura.toFixed(1)}</p>
+                    <Badge variant="secondary" className="text-[10px] w-full text-center bg-primary/10 hover:bg-primary/20 text-primary border-none">
                       mm
                     </Badge>
                   </div>
                 )}
                 {extractedData.altura && (
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-white/60">Altura</p>
-                    <p className="text-sm font-semibold text-white/90">{extractedData.altura.toFixed(1)}</p>
-                    <Badge variant="secondary" className="text-[10px] w-full text-center">
+                  <div className="space-y-1 text-center bg-primary/5 p-2 rounded-lg border border-primary/10">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Altura</p>
+                    <p className="text-lg font-black text-foreground">{extractedData.altura.toFixed(1)}</p>
+                    <Badge variant="secondary" className="text-[10px] w-full text-center bg-primary/10 hover:bg-primary/20 text-primary border-none">
                       mm
                     </Badge>
                   </div>
                 )}
                 {extractedData.quantidade && (
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-white/60">Quantidade</p>
-                    <p className="text-sm font-semibold text-white/90">{extractedData.quantidade.toFixed(0)}</p>
-                    <Badge variant="secondary" className="text-[10px] w-full text-center">
+                  <div className="space-y-1 text-center bg-primary/5 p-2 rounded-lg border border-primary/10">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Qtd</p>
+                    <p className="text-lg font-black text-foreground">{extractedData.quantidade.toFixed(0)}</p>
+                    <Badge variant="secondary" className="text-[10px] w-full text-center bg-primary/10 hover:bg-primary/20 text-primary border-none">
                       un
                     </Badge>
                   </div>
@@ -278,11 +289,14 @@ export default function ImportarDados() {
           )}
 
           {/* Info */}
-          <div className="text-xs text-white/50 space-y-1">
-            <p>
-              <strong>Dica:</strong> Nomeia suas colunas no CSV como "largura", "altura", "quantidade" para melhor extração.
+          <div className="text-[10px] text-muted-foreground space-y-1 bg-muted/30 p-3 rounded-lg border border-border/50">
+            <p className="font-semibold text-foreground/70 mb-1 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" /> Dica de Extração
             </p>
-            <p>Exemplo: Largura: 1500 | Altura: 1200 | Quantidade: 2</p>
+            <p>
+              Nomeie suas colunas no CSV como "largura", "altura", "quantidade" para melhor extração automática.
+            </p>
+            <p className="opacity-80 italic">Exemplo: Largura: 1500 | Altura: 1200 | Quantidade: 2</p>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
-import { ClipboardList, Package, Layers, Wrench, Search, ArrowLeft, Printer } from "lucide-react";
+import { ClipboardList, Package, Layers, Wrench, Search, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { exportMateriaisPDF } from "@/lib/pdf-export";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/ui/BackButton";
 
 const categoriaBadge: Record<string, string> = {
   aluminio: "bg-amber-100 text-amber-300 border-amber-200",
@@ -111,7 +112,7 @@ const BOM = () => {
 
   const handleGoToOrcamento = () => {
     const id = manualId.trim();
-    if (id) navigate(`/bom?orcamento_id=${id}`);
+    if (id) navigate(`/materiais/lista?orcamento_id=${id}`);
   };
 
   // No orcamento_id — show selection
@@ -119,9 +120,12 @@ const BOM = () => {
     return (
       <AppLayout>
         <div className="space-y-6 max-w-4xl">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Lista de Materiais (BOM)</h1>
-            <p className="text-sm text-muted-foreground">Selecione um orcamento para gerar a lista de materiais</p>
+          <div className="flex items-center gap-4">
+            <BackButton to="/materiais" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Lista de Materiais (BOM)</h1>
+              <p className="text-sm text-muted-foreground">Selecione um orcamento para gerar a lista de materiais</p>
+            </div>
           </div>
 
           <div className="glass-card-premium p-6 space-y-4">
@@ -152,7 +156,7 @@ const BOM = () => {
                 orcamentosList.map((orc) => (
                   <button
                     key={orc.id}
-                    onClick={() => navigate(`/bom?orcamento_id=${orc.id}`)}
+                    onClick={() => navigate(`/materiais/lista?orcamento_id=${orc.id}`)}
                     className="flex items-center justify-between px-5 py-4 w-full text-left hover:bg-muted/50 transition-colors"
                   >
                     <div>
@@ -187,9 +191,7 @@ const BOM = () => {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/bom")}>
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
+              <BackButton to="/materiais" />
               <h1 className="text-2xl font-bold text-foreground">
                 BOM - Orcamento #{orcamento?.numero ?? "..."}
               </h1>

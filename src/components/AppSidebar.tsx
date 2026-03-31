@@ -50,25 +50,14 @@ const mainItemsPrimary = [
   { title: "Redes Sociais", url: "/redes-sociais", icon: Radio },
 ];
 
-const pedidosItems = [
-  { title: "Pedidos", url: "/pedidos", icon: ListChecks },
-  { title: "Workflow", url: "/workflow", icon: GitBranch },
-];
-
-const materiaisItems = [
-  { title: "Lista de Materiais", url: "/bom", icon: ClipboardList },
-  { title: "Catálogo", url: "/catalogo", icon: Package },
-  { title: "Importar Dados", url: "/importar-dados", icon: Upload },
-];
+// Sub-items removed as they are now navigated from the module's overview page
 
 const mainItemsSecondary = [
   { title: "Plano de corte", url: "/plano-de-corte", icon: Scissors },
   { title: "Esquadrias", url: "/esquadrias", icon: Wrench },
   { title: "Config. Modelos", url: "/configuracao-modelos", icon: Settings },
   { title: "Agenda", url: "/agenda", icon: Calendar },
-  { title: "Produtos", url: "/produtos", icon: Package },
   { title: "Estoque", url: "/estoque", icon: Warehouse },
-  { title: "Preço dos itens", url: "/precos", icon: DollarSign },
   { title: "Fornecedores", url: "/fornecedores", icon: Truck },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "Mapa", url: "/mapa", icon: MapPin },
@@ -101,15 +90,7 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const [pedidosOpen, setPedidosOpen] = useState(
-    location.pathname.startsWith("/pedidos") || location.pathname.startsWith("/workflow")
-  );
-  const [materiaisOpen, setMateriaisOpen] = useState(
-    location.pathname.startsWith("/bom") || location.pathname.startsWith("/importar-dados")
-  );
-  const [financeiroOpen, setFinanceiroOpen] = useState(
-    location.pathname.startsWith("/financeiro")
-  );
+  // No longer needed collapsible states for these modules
   const { hasFeature, getMinPlan, currentPlan } = useSubscription();
 
   const isActive = (path: string) =>
@@ -206,14 +187,14 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
   return (
     <aside className={sidebarClassName} role="navigation" aria-label="Menu principal">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-xs font-bold text-white">
-          EA
+    <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
+        <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <ShieldCheck className="h-5 w-5 text-primary" />
         </div>
         {!isSidebarCollapsed && (
           <div>
             <h1 className="text-base font-bold text-sidebar-foreground">Esquadria Al.</h1>
-            <p className="text-[10px] text-sidebar-muted">Sistema de Gestão</p>
+            <p className="text-[10px] text-sidebar-muted font-medium uppercase tracking-wider opacity-60">Sistema de Gestão</p>
           </div>
         )}
       </div>
@@ -232,95 +213,42 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
         {mainItemsPrimary.map((item) => renderNavItem(item))}
 
         {/* Pedidos Section */}
-        {isSidebarCollapsed ? (
-          isLocked("/pedidos") ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => handleNavigateTo("/planos")}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30 w-full"
-                >
-                  <ListChecks className="h-[18px] w-[18px] shrink-0" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p className="text-xs">Disponível no plano Essencial</p>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <NavLink to="/pedidos" className={linkClass("/pedidos")} activeClassName="" onClick={handleNavigate}>
-              <ListChecks className="h-[18px] w-[18px] shrink-0" />
-            </NavLink>
-          )
-        ) : (
-          <>
-            <button
-              onClick={() => {
-                if (isLocked("/pedidos")) { handleNavigateTo("/planos"); return; }
-                setPedidosOpen(!pedidosOpen);
-              }}
-              aria-expanded={pedidosOpen}
-              aria-label="Pedidos"
-              className={cn(
-                "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                isLocked("/pedidos")
-                  ? "opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}
-            >
-              <div className="flex items-center gap-3">
+        {isLocked("/pedidos") ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => handleNavigateTo("/planos")}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30 w-full"
+              >
                 <ListChecks className="h-[18px] w-[18px] shrink-0" />
-                <span>Pedidos</span>
-              </div>
-              {isLocked("/pedidos") ? (
-                <Lock className="h-3.5 w-3.5 text-sidebar-muted/60" />
-              ) : (
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${pedidosOpen ? "rotate-180" : ""}`} />
-              )}
-            </button>
-            {pedidosOpen && !isLocked("/pedidos") && (
-              <div className="ml-3 pl-3 border-l border-sidebar-border space-y-0.5">
-                {pedidosItems.map((item) => renderNavItem(item, true))}
-              </div>
-            )}
-          </>
+                {!isSidebarCollapsed && (
+                  <>
+                    <span className="flex-1 text-left">Pedidos</span>
+                    <Lock className="h-3.5 w-3.5 text-sidebar-muted/60" />
+                  </>
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p className="text-xs">Disponível no plano Essencial</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <NavLink to="/pedidos" className={linkClass("/pedidos")} activeClassName="" onClick={handleNavigate}>
+            <ListChecks className="h-[18px] w-[18px] shrink-0" />
+            {!isSidebarCollapsed && <span>Pedidos</span>}
+          </NavLink>
         )}
 
         {mainItemsSecondary.map((item) => renderNavItem(item))}
 
-        {/* Materiais Section */}
-        {isSidebarCollapsed ? (
-          <NavLink to="/bom" className={linkClass("/bom")} activeClassName="" onClick={handleNavigate}>
-            <ClipboardList className="h-[18px] w-[18px] shrink-0" />
-          </NavLink>
-        ) : (
-          <>
-            <button
-              onClick={() => {
-                setMateriaisOpen(!materiaisOpen);
-              }}
-              aria-expanded={materiaisOpen}
-              aria-label="Materiais"
-              className={cn(
-                "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <ClipboardList className="h-[18px] w-[18px] shrink-0" />
-                <span>Materiais</span>
-              </div>
-              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${materiaisOpen ? "rotate-180" : ""}`} />
-            </button>
-            {materiaisOpen && (
-              <div className="ml-3 pl-3 border-l border-sidebar-border space-y-0.5">
-                {materiaisItems.map((item) => renderNavItem(item, true))}
-              </div>
-            )}
-          </>
-        )}
+        {/* Materiais - Single link */}
+        <NavLink to="/materiais" className={linkClass("/materiais")} activeClassName="" onClick={handleNavigate}>
+          <ClipboardList className="h-[18px] w-[18px] shrink-0" />
+          {!isSidebarCollapsed && <span>Materiais</span>}
+        </NavLink>
 
-        {/* Financeiro Section */}
+        {/* Financeiro - Single link, no sub-items */}
         <div className="pt-5 pb-2">
           {!isSidebarCollapsed && (
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted/60">
@@ -329,53 +257,26 @@ export function AppSidebar({ isMobile, mobileOpen, onMobileClose }: AppSidebarPr
           )}
         </div>
 
-        {isSidebarCollapsed ? (
-          isLocked("/financeiro") ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => handleNavigateTo("/planos")} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30 w-full">
-                  <Wallet className="h-[18px] w-[18px] shrink-0" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right"><p className="text-xs">Disponível no plano Essencial</p></TooltipContent>
-            </Tooltip>
-          ) : (
-            <NavLink to="/financeiro" className={linkClass("/financeiro")} activeClassName="" onClick={handleNavigate}>
-              <Wallet className="h-[18px] w-[18px] shrink-0" />
-            </NavLink>
-          )
-        ) : (
-          <>
-            <button
-              onClick={() => {
-                if (isLocked("/financeiro")) { handleNavigateTo("/planos"); return; }
-                setFinanceiroOpen(!financeiroOpen);
-              }}
-              aria-expanded={financeiroOpen}
-              aria-label="Financeiro"
-              className={cn(
-                "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                isLocked("/financeiro")
-                  ? "opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}
-            >
-              <div className="flex items-center gap-3">
+        {isLocked("/financeiro") ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={() => handleNavigateTo("/planos")} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium opacity-40 text-sidebar-foreground/40 hover:bg-sidebar-accent/30 w-full">
                 <Wallet className="h-[18px] w-[18px] shrink-0" />
-                <span>Financeiro</span>
-              </div>
-              {isLocked("/financeiro") ? (
-                <Lock className="h-3.5 w-3.5 text-sidebar-muted/60" />
-              ) : (
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${financeiroOpen ? "rotate-180" : ""}`} />
-              )}
-            </button>
-            {financeiroOpen && !isLocked("/financeiro") && (
-              <div className="ml-3 pl-3 border-l border-sidebar-border space-y-0.5">
-                {financeiroItems.map((item) => renderNavItem(item, true))}
-              </div>
-            )}
-          </>
+                {!isSidebarCollapsed && (
+                  <>
+                    <span className="flex-1 text-left">Financeiro</span>
+                    <Lock className="h-3.5 w-3.5 text-sidebar-muted/60" />
+                  </>
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right"><p className="text-xs">Disponível no plano Essencial</p></TooltipContent>
+          </Tooltip>
+        ) : (
+          <NavLink to="/financeiro" className={linkClass("/financeiro")} activeClassName="" onClick={handleNavigate}>
+            <Wallet className="h-[18px] w-[18px] shrink-0" />
+            {!isSidebarCollapsed && <span>Financeiro</span>}
+          </NavLink>
         )}
 
         {/* Gestão Section */}

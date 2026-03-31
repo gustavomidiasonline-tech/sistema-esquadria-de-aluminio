@@ -10,17 +10,9 @@ const getPDFJS = async () => {
   if (!PDFJS) {
     try {
       PDFJS = await import('pdfjs-dist');
-
-      try {
-        // Try to load worker from node_modules (works in dev with Vite)
-        const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs');
-        const blob = new Blob([workerModule.default || ''], { type: 'application/javascript' });
-        PDFJS.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
-      } catch {
-        // Fallback: use CDN worker
-        PDFJS.GlobalWorkerOptions.workerSrc =
-          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      }
+      // Load worker URL securely via Vite to guarantee version matching
+      const workerUrl = await import('pdfjs-dist/build/pdf.worker.mjs?url');
+      PDFJS.GlobalWorkerOptions.workerSrc = workerUrl.default;
     } catch (error) {
       console.error('Falha ao carregar PDF.js:', error);
       throw new Error(`Não foi possível carregar PDF.js: ${error instanceof Error ? error.message : 'Desconhecido'}`);

@@ -9,6 +9,7 @@ import { Calculator, Package, Ruler, Weight, DollarSign, TrendingUp, Layers, Zap
 import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
 import { usePricingConfig, VIDRO_TYPES, type CostBreakdown } from "@/hooks/usePricingConfig";
 import { perfisAluminio } from "@/data/perfis-aluminio";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 interface ProdutoRecord {
@@ -73,8 +74,12 @@ export interface ConfiguredItem {
 const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
 export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfiguratorProps) {
-  const { data: produtos = [] } = useSupabaseQuery("produtos");
-  const { data: perfisDB = [] } = useSupabaseQuery("perfis_aluminio");
+  const { profile } = useAuth();
+  const { data: legacyProdutos = [] } = useSupabaseQuery("produtos");
+  const { data: windowModels = [] } = useSupabaseQuery("window_models");
+  const { data: windowParts = [] } = useSupabaseQuery("window_parts");
+  const { data: legacyPerfis = [] } = useSupabaseQuery("perfis_aluminio");
+  const { data: perfisCatalogo = [] } = useSupabaseQuery("perfis_catalogo");
   const { config, calculateCost } = usePricingConfig();
 
   const [produtoId, setProdutoId] = useState("");
@@ -88,6 +93,46 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
   useEffect(() => {
     setMarkup(config.markup_padrao);
   }, [config.markup_padrao]);
+
+  const produtos = useMemo(() => {
+    const legacy = (legacyProdutos as any[] || []).map(p => ({
+      ...p,
+      source: 'legacy'
+    }));
+    
+    const mt = (windowModels as any[] || []).map(m => ({
+      id: m.id,
+      nome: m.nome,
+      tipo: m.tipo,
+      ativo: m.ativo,
+      largura_padrao: Number(m.largura_min || 1200),
+      altura_padrao: Number(m.altura_min || 1000),
+      folhas: m.num_folhas || 2,
+      source: 'mt'
+    }));
+
+    return [...legacy, ...mt];
+  }, [legacyProdutos, windowModels]);
+
+  const perfisDB = useMemo(() => {
+    const legacy = (legacyPerfis as any[] || []).map(p => ({
+      ...p,
+      source: 'legacy'
+    }));
+
+    const mt = (perfisCatalogo as any[] || []).map(p => ({
+      id: p.id,
+      produto_id: '', // MT products link via window_parts, which we'll handle below
+      codigo: p.codigo,
+      descricao: p.nome || p.codigo,
+      medida: 0,
+      quantidade: 1,
+      peso_metro: Number(p.peso_kg_m) || 0.5,
+      source: 'mt'
+    }));
+
+    return [...legacy, ...mt];
+  }, [legacyPerfis, perfisCatalogo]);
 
   const selectedProd = (produtos as ProdutoRecord[]).find((p) => p.id === produtoId);
 
@@ -103,8 +148,39 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
   // Get profiles for this product from DB
   const productPerfis = useMemo(() => {
     if (!produtoId) return [];
-    return (perfisDB as PerfilDBRecord[]).filter((p) => p.produto_id === produtoId);
-  }, [produtoId, perfisDB]);
+    const prod = selectedProd as any;
+    
+    // For legacy products, find by produto_id
+    if (prod?.source === 'legacy') {
+      return (perfisDB as PerfilDBRecord[]).filter((p) => p.produto_id === produtoId);
+    }
+
+    // For MT products, find via window_parts
+    if (prod?.source === 'mt') {
+      // Find parts for this model
+      const parts = (windowParts as any[]).filter(p => p.window_model_id === produtoId);
+      
+      // Map parts to the PerfilDBRecord interface
+      return parts.map(part => {
+        // Find the actual profile in perfisCatalogo or legacyPerfis
+        const profile = (perfisDB as any[]).find(p => p.id === part.perfil_aluminio_id || p.id === part.perfil_id);
+        
+        return {
+          id: part.id,
+          produto_id: produtoId,
+          codigo: profile?.codigo || part.posicao,
+          descricao: profile?.descricao || part.posicao,
+          posicao: part.posicao,
+          medida: 0, // Formulas would go here, but using base logic for now
+          quantidade: Number(part.quantidade_formula) || 1,
+          peso_metro: Number(profile?.peso_metro) || Number(profile?.peso_kg_m) || 0.5,
+          formula_comprimento: part.formula_comprimento,
+        };
+      });
+    }
+
+    return [];
+  }, [produtoId, perfisDB, windowParts, selectedProd]);
 
   // If no DB profiles, try to match from local data
   const matchedLocalPerfis = useMemo(() => {
@@ -130,27 +206,47 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
     if (!larg || !alt) return [];
 
     if (productPerfis.length > 0) {
-      // Use DB profiles - recalculate proportionally
-      const prod = selectedProd;
+      // Use DB profiles - recalculate proportionally or use formulas
+      const prod = selectedProd as any;
       const baseLarg = prod?.largura_padrao || larg;
       const baseAlt = prod?.altura_padrao || alt;
       const ratioL = larg / baseLarg;
       const ratioA = alt / baseAlt;
 
-      return productPerfis.map((p) => {
-        const pos = (p.posicao || "").toLowerCase();
+      return productPerfis.map((p: any) => {
         let newMedida = p.medida;
-        if (pos.includes("largura") || pos.includes("superior") || pos.includes("inferior") || pos.includes("travessa")) {
-          newMedida = Math.round(p.medida * ratioL);
-        } else if (pos.includes("altura") || pos.includes("lateral") || pos.includes("montante")) {
-          newMedida = Math.round(p.medida * ratioA);
+        let newQty = p.quantidade;
+
+        // NEW: If we have a formula, use it!
+        if (prod?.source === 'mt' && p.formula_comprimento) {
+          try {
+            const expr = p.formula_comprimento.toLowerCase()
+              .replace(/largura/g, String(larg))
+              .replace(/altura/g, String(alt))
+              .replace(/num_folhas/g, String(prod.folhas || 2));
+            
+            // Safer math-only evaluation
+            // eslint-disable-next-line no-new-func
+            newMedida = Math.round(new Function(`return ${expr}`)());
+          } catch (e) {
+            console.error("Erro na fórmula:", p.formula_comprimento, e);
+          }
+        } else {
+          // Legacy/Fallback heuristic
+          const pos = (p.posicao || "").toLowerCase();
+          if (pos.includes("largura") || pos.includes("superior") || pos.includes("inferior") || pos.includes("travessa")) {
+            newMedida = Math.round(p.medida * ratioL);
+          } else if (pos.includes("altura") || pos.includes("lateral") || pos.includes("montante")) {
+            newMedida = Math.round(p.medida * ratioA);
+          }
         }
+
         return {
           codigo: p.codigo,
           descricao: p.descricao || p.codigo,
           posicao: p.posicao,
           comprimento_mm: newMedida,
-          quantidade: p.quantidade,
+          quantidade: newQty,
           peso_metro: Number(p.peso_metro) || 0.5,
         };
       });
@@ -229,7 +325,9 @@ export function ItemConfigurator({ open, onOpenChange, onConfirm }: ItemConfigur
     setDescricaoCustom("");
   };
 
-  const activeProducts = (produtos as ProdutoRecord[]).filter((p) => p.ativo !== false);
+  const activeProducts = useMemo(() => {
+    return (produtos as ProdutoRecord[]).filter((p) => p.ativo !== false);
+  }, [produtos]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

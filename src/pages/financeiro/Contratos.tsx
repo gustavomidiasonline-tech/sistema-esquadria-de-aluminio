@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import { DataTable, type ColumnDef } from "@/components/tables";
+import { BackButton } from "@/components/ui/BackButton";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -269,9 +270,12 @@ const Contratos = () => {
       <div className="p-4 md:p-6 space-y-6 max-w-7xl">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Contratos</h1>
-            <p className="text-sm text-muted-foreground">Gestao de contratos e vigencias</p>
+          <div className="flex items-center gap-4">
+            <BackButton to="/financeiro" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Contratos</h1>
+              <p className="text-sm text-muted-foreground">Gestao de contratos e vigencias</p>
+            </div>
           </div>
           <Button className="gap-2" onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4" /> Novo contrato

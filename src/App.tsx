@@ -7,16 +7,14 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { FeatureGate } from "@/components/FeatureGate";
 import { PipelineInitializer } from "@/components/PipelineInitializer";
+import { GlobalLoader } from "@/components/ui/global-loader";
 import Estoque from "./pages/Estoque";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import Index from "./pages/Index";
 import Clientes from "./pages/Clientes";
 import Orcamentos from "./pages/Orcamentos";
-import Pedidos from "./pages/Pedidos";
-import Produtos from "./pages/Produtos";
 import PlanoDeCorte from "./pages/PlanoDeCorte";
-import Precos from "./pages/Precos";
 import Relatorios from "./pages/Relatorios";
 import Mapa from "./pages/Mapa";
 import NotFound from "./pages/NotFound";
@@ -36,11 +34,14 @@ import Documentos from "./pages/financeiro/Documentos";
 import FluxoCaixa from "./pages/financeiro/FluxoCaixa";
 import Pagamentos from "./pages/financeiro/Pagamentos";
 import Planos from "./pages/Planos";
-import Workflow from "./pages/Workflow";
+import PedidosVisaoGeral from "./pages/pedidos/PedidosVisaoGeral";
+import PedidosLista from "./pages/pedidos/PedidosLista";
+import Workflow from "./pages/pedidos/Workflow";
 import ConfiguracaoModelos from "./pages/ConfiguracaoModelos";
-import BOM from "./pages/BOM";
-import ImportarDados from "./pages/ImportarDados";
-import Catalogo from "./pages/Catalogo";
+import MateriaisVisaoGeral from "./pages/materiais/MateriaisVisaoGeral";
+import BOM from "./pages/materiais/BOM";
+import ImportarDados from "./pages/materiais/ImportarDados";
+import Catalogo from "./pages/materiais/Catalogo";
 import RedesSociais from "./pages/RedesSociais";
 import Debug from "./pages/Debug";
 
@@ -51,6 +52,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <GlobalLoader />
       <BrowserRouter>
         <AuthProvider>
           <PipelineInitializer />
@@ -61,11 +63,11 @@ const App = () => (
             <Route path="/clientes" element={<ProtectedRoute><FeatureGate feature="clientes"><Clientes /></FeatureGate></ProtectedRoute>} />
             <Route path="/orcamentos" element={<ProtectedRoute><FeatureGate feature="orcamentos"><Orcamentos /></FeatureGate></ProtectedRoute>} />
             <Route path="/servicos" element={<ProtectedRoute><FeatureGate feature="servicos"><Servicos /></FeatureGate></ProtectedRoute>} />
-            <Route path="/pedidos" element={<ProtectedRoute><FeatureGate feature="pedidos"><Pedidos /></FeatureGate></ProtectedRoute>} />
+            <Route path="/pedidos" element={<ProtectedRoute><FeatureGate feature="pedidos"><PedidosVisaoGeral /></FeatureGate></ProtectedRoute>} />
+            <Route path="/pedidos/lista" element={<ProtectedRoute><FeatureGate feature="pedidos"><PedidosLista /></FeatureGate></ProtectedRoute>} />
+            <Route path="/pedidos/workflow" element={<ProtectedRoute><FeatureGate feature="pedidos"><Workflow /></FeatureGate></ProtectedRoute>} />
             <Route path="/plano-de-corte" element={<ProtectedRoute><FeatureGate feature="plano_corte"><PlanoDeCorte /></FeatureGate></ProtectedRoute>} />
             <Route path="/agenda" element={<ProtectedRoute><FeatureGate feature="agenda"><Agenda /></FeatureGate></ProtectedRoute>} />
-            <Route path="/produtos" element={<ProtectedRoute><FeatureGate feature="produtos"><Produtos /></FeatureGate></ProtectedRoute>} />
-            <Route path="/precos" element={<ProtectedRoute><FeatureGate feature="precos"><Precos /></FeatureGate></ProtectedRoute>} />
             <Route path="/fornecedores" element={<ProtectedRoute><FeatureGate feature="fornecedores"><Fornecedores /></FeatureGate></ProtectedRoute>} />
             <Route path="/relatorios" element={<ProtectedRoute><FeatureGate feature="relatorios"><Relatorios /></FeatureGate></ProtectedRoute>} />
             <Route path="/mapa" element={<ProtectedRoute><FeatureGate feature="mapa"><Mapa /></FeatureGate></ProtectedRoute>} />
@@ -73,12 +75,12 @@ const App = () => (
             <Route path="/funcionarios" element={<ProtectedRoute><Funcionarios /></ProtectedRoute>} />
             <Route path="/esquadrias" element={<ProtectedRoute><FeatureGate feature="esquadrias"><EsquadriasModule /></FeatureGate></ProtectedRoute>} />
             <Route path="/planos" element={<ProtectedRoute><Planos /></ProtectedRoute>} />
-            <Route path="/workflow" element={<ProtectedRoute><FeatureGate feature="pedidos"><Workflow /></FeatureGate></ProtectedRoute>} />
             <Route path="/configuracao-modelos" element={<ProtectedRoute><ConfiguracaoModelos /></ProtectedRoute>} />
             <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
-            <Route path="/bom" element={<ProtectedRoute><BOM /></ProtectedRoute>} />
-            <Route path="/importar-dados" element={<ProtectedRoute><ImportarDados /></ProtectedRoute>} />
-            <Route path="/catalogo" element={<ProtectedRoute><Catalogo /></ProtectedRoute>} />
+            <Route path="/materiais" element={<ProtectedRoute><MateriaisVisaoGeral /></ProtectedRoute>} />
+            <Route path="/materiais/lista" element={<ProtectedRoute><BOM /></ProtectedRoute>} />
+            <Route path="/materiais/importar-dados" element={<ProtectedRoute><ImportarDados /></ProtectedRoute>} />
+            <Route path="/materiais/catalogo" element={<ProtectedRoute><Catalogo /></ProtectedRoute>} />
             <Route path="/redes-sociais" element={<ProtectedRoute><RedesSociais /></ProtectedRoute>} />
             <Route path="/debug" element={<ProtectedRoute><Debug /></ProtectedRoute>} />
             {/* Financeiro */}

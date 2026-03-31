@@ -7,23 +7,54 @@ import type { Database } from "@/integrations/supabase/types";
 type Tables = Database["public"]["Tables"];
 type TableName = keyof Tables & string;
 
-export function useSupabaseQuery<T extends TableName>(
-  table: T,
+// Tables that require company_id RLS filtering to avoid 403
+const RLS_COMPANY_TABLES: Partial<Record<TableName, boolean>> = {
+  orcamento_itens: true,
+  orcamentos: true,
+  clientes: true,
+  pedidos: true,
+  pedido_itens: true,
+  perfis_catalogo: true,
+  perfis_aluminio: true,
+  produtos: true,
+  inventory_items: true,
+  contas_receber: true,
+  contas_pagar: true,
+  pagamentos: true,
+};
+
+export function useSupabaseQuery<T>(
+  table: TableName,
   options?: {
     select?: string;
     orderBy?: { column: string; ascending?: boolean };
-    filters?: { column: string; value: unknown }[];
+    filters?: { column: string; operator?: string; value: unknown }[];
     enabled?: boolean;
+    skipCompanyFilter?: boolean;
   }
 ) {
+  const { profile } = useAuth();
+
   return useQuery({
-    queryKey: [table, options?.filters],
+    queryKey: [table, options?.filters, profile?.company_id],
     queryFn: async () => {
-      let query = supabase.from(table).select(options?.select || "*");
+      let query = supabase.from(table as any).select(options?.select || "*");
+
+      // Auto-inject company_id filter for RLS-protected tables
+      const needsCompany = RLS_COMPANY_TABLES[table] && !options?.skipCompanyFilter;
+      if (needsCompany && profile?.company_id) {
+        query = query.eq("company_id", profile.company_id);
+      }
 
       if (options?.filters) {
         for (const f of options.filters) {
-          query = query.eq(f.column, f.value as string);
+          const op = f.operator || "eq";
+          if (op === "eq") query = query.eq(f.column, f.value as string);
+          else if (op === "neq") query = (query as any).neq(f.column, f.value as string);
+          else if (op === "in") query = (query as any).in(f.column, f.value as string[]);
+          else if (op === "gte") query = (query as any).gte(f.column, f.value as string);
+          else if (op === "lte") query = (query as any).lte(f.column, f.value as string);
+          else query = query.eq(f.column, f.value as string);
         }
       }
 
@@ -37,9 +68,9 @@ export function useSupabaseQuery<T extends TableName>(
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Tables[T]["Row"][];
+      return data as T;
     },
-    enabled: options?.enabled ?? true,
+    enabled: (options?.enabled ?? true),
   });
 }
 

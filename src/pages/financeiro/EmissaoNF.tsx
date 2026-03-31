@@ -11,6 +11,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
+import { BackButton } from "@/components/ui/BackButton";
+
 const EmissaoNF = () => {
   const { user } = useAuth();
   const { data: clientes = [] } = useSupabaseQuery("clientes");
@@ -22,7 +24,7 @@ const EmissaoNF = () => {
     try {
       await insertMutation.mutateAsync({
         cliente_id: form.cliente_id,
-        tipo: form.tipo,
+        tipo: form.tipo as "nfe" | "nfse" | "nfce",
         valor: Number(form.valor),
         descricao: form.descricao,
         numero: form.numero || null,
@@ -40,9 +42,12 @@ const EmissaoNF = () => {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-3xl">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Emissão de Nota Fiscal</h1>
-          <p className="text-sm text-muted-foreground">Preencha os dados para emitir uma nova NF</p>
+        <div className="flex items-center gap-4">
+          <BackButton to="/financeiro" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Emissão de Nota Fiscal</h1>
+            <p className="text-sm text-muted-foreground">Preencha os dados para emitir uma nova NF</p>
+          </div>
         </div>
 
         <div className="glass-card-premium p-6 space-y-5">

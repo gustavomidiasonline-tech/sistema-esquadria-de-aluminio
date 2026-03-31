@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EsquadriaViewer3D } from "./EsquadriaViewer3D";
+import { EsquadriaPreview3D } from "./EsquadriaPreview3D";
 import { Save, Calculator, Ruler, Weight, BarChart3, Box } from "lucide-react";
 import { toast } from "sonner";
 
@@ -158,44 +159,61 @@ export function ConfiguradorTab() {
         </CardContent>
       </Card>
 
-      {/* Dimensions */}
+      {/* Dimensions + Preview Side-by-Side */}
       {selectedModel && (
-        <Card>
-          <CardHeader><CardTitle className="text-base">2. Defina as Dimensões</CardTitle></CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 max-w-md">
-              <div>
-                <Label className="text-xs text-muted-foreground">Largura (mm)</Label>
-                <Input
-                  type="number"
-                  value={largura}
-                  onChange={(e) => setLargura(Number(e.target.value))}
-                  min={selectedModel.largura_min_mm || 0}
-                  max={selectedModel.largura_max_mm || 10000}
-                />
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Mín: {selectedModel.largura_min_mm} / Máx: {selectedModel.largura_max_mm}
-                </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">2. Defina as Dimensões</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 max-w-md">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Largura (mm)</Label>
+                  <Input
+                    type="number"
+                    value={largura}
+                    onChange={(e) => setLargura(Number(e.target.value))}
+                    min={selectedModel.largura_min_mm || 0}
+                    max={selectedModel.largura_max_mm || 10000}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Mín: {selectedModel.largura_min_mm} / Máx: {selectedModel.largura_max_mm}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Altura (mm)</Label>
+                  <Input
+                    type="number"
+                    value={altura}
+                    onChange={(e) => setAltura(Number(e.target.value))}
+                    min={selectedModel.altura_min_mm || 0}
+                    max={selectedModel.altura_max_mm || 10000}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Mín: {selectedModel.altura_min_mm} / Máx: {selectedModel.altura_max_mm}
+                  </p>
+                </div>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Altura (mm)</Label>
-                <Input
-                  type="number"
-                  value={altura}
-                  onChange={(e) => setAltura(Number(e.target.value))}
-                  min={selectedModel.altura_min_mm || 0}
-                  max={selectedModel.altura_max_mm || 10000}
-                />
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Mín: {selectedModel.altura_min_mm} / Máx: {selectedModel.altura_max_mm}
-                </p>
-              </div>
-            </div>
-            {selectedModel.folhas ? (
-              <Badge className="mt-3" variant="outline">{selectedModel.folhas} folha(s)</Badge>
-            ) : null}
-          </CardContent>
-        </Card>
+              {selectedModel.folhas ? (
+                <Badge className="mt-3" variant="outline">{selectedModel.folhas} folha(s)</Badge>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          {/* SVG Parametric Preview (Alumy-style) */}
+          <EsquadriaPreview3D
+            tipo={selectedModel.tipo || "correr"}
+            largura={largura}
+            altura={altura}
+            folhas={selectedModel.folhas || 2}
+            nome={selectedModel.nome}
+            produtos={modelos?.map((m) => ({ id: m.id, nome: m.nome, tipo: m.tipo || "correr", folhas: m.folhas || 2 }))}
+            produtoIndex={modelos?.findIndex((m) => m.id === selectedModelId) ?? 0}
+            onProdutoChange={(idx) => {
+              const model = modelos?.[idx];
+              if (model) setSelectedModelId(model.id);
+            }}
+          />
+        </div>
       )}
 
       {/* Results */}

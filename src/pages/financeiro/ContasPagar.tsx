@@ -11,6 +11,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
+import { BackButton } from "@/components/ui/BackButton";
+
 const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "outline" }> = {
   pendente: { label: "Pendente", variant: "outline" },
   vencido: { label: "Vencido", variant: "destructive" },
@@ -52,9 +54,12 @@ const ContasPagar = () => {
     <AppLayout>
       <div className="space-y-6 max-w-7xl">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Contas a Pagar</h1>
-            <p className="text-sm text-muted-foreground">{contas.length} contas cadastradas</p>
+          <div className="flex items-center gap-4">
+            <BackButton to="/financeiro" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Contas a Pagar</h1>
+              <p className="text-sm text-muted-foreground">{contas.length} contas cadastradas</p>
+            </div>
           </div>
           <Button className="gap-2" onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4" /> Nova conta

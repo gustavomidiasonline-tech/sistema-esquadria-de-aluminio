@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/AppLayout";
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, DollarSign, CreditCard, Receipt, FilePlus, FileCheck, FileText, Building2, Banknote } from "lucide-react";
 import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ContaReceberRow = Tables<"contas_receber">;
@@ -8,8 +9,21 @@ type ContaPagarRow = Tables<"contas_pagar">;
 type ContaComTipo = (ContaReceberRow | ContaPagarRow) & { tipo: string };
 
 const FinanceiroVisaoGeral = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { data: contasReceber = [] } = useSupabaseQuery("contas_receber");
   const { data: contasPagar = [] } = useSupabaseQuery("contas_pagar");
+
+  const financialSections = [
+    { title: "Contas a Receber", url: "/financeiro/contas-receber", icon: Wallet, description: "Gerenciar contas a receber" },
+    { title: "Contas a Pagar", url: "/financeiro/contas-pagar", icon: CreditCard, description: "Gerenciar contas a pagar" },
+    { title: "Pagamentos", url: "/financeiro/pagamentos", icon: Banknote, description: "Registrar pagamentos" },
+    { title: "Notas Fiscais", url: "/financeiro/notas-fiscais", icon: Receipt, description: "Consultar notas fiscais" },
+    { title: "Emissão de NF", url: "/financeiro/emissao-nf", icon: FilePlus, description: "Emitir novas NFs" },
+    { title: "Contratos", url: "/financeiro/contratos", icon: FileCheck, description: "Gerenciar contratos" },
+    { title: "Documentos", url: "/financeiro/documentos", icon: FileText, description: "Arquivos documentais" },
+    { title: "Fluxo de Caixa", url: "/financeiro/fluxo-caixa", icon: Building2, description: "Análise de fluxo" },
+  ];
 
   const totalReceber = contasReceber.reduce((s: number, c: ContaReceberRow) => s + Number(c.valor || 0), 0);
   const totalPagar = contasPagar.reduce((s: number, c: ContaPagarRow) => s + Number(c.valor || 0), 0);
@@ -26,6 +40,26 @@ const FinanceiroVisaoGeral = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
           <p className="text-sm text-muted-foreground">Visão geral das finanças da empresa</p>
+        </div>
+
+        {/* Navigation Cards */}
+        <div>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Acessar Módulos</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {financialSections.map((section) => (
+              <button
+                key={section.url}
+                onClick={() => navigate(section.url)}
+                className="glass-card-premium p-4 rounded-lg hover:bg-primary/5 transition-all duration-200 text-left group border border-border/50 hover:border-primary/50"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <section.icon className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
+                </div>
+                <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">{section.title}</h3>
+                <p className="text-xs text-muted-foreground mt-1">{section.description}</p>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

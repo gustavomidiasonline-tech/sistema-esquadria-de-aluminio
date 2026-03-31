@@ -1,6 +1,9 @@
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import { applyPlugin } from "jspdf-autotable";
 import type { ItemVidro, ItemFerragem } from "@/lib/calculo-esquadria";
+
+// Apply the autoTable plugin explicitly
+applyPlugin(jsPDF);
 
 // Extend jsPDF type for autotable
 declare module "jspdf" {
@@ -76,76 +79,176 @@ interface CostAccumulator {
 }
 
 const COLORS = {
-  primary: [124, 58, 237] as [number, number, number],     // purple
-  dark: [30, 30, 40] as [number, number, number],
-  muted: [120, 120, 140] as [number, number, number],
-  light: [245, 243, 255] as [number, number, number],
+  primary: [15, 60, 150] as [number, number, number],
+  dark: [40, 40, 45] as [number, number, number],
+  muted: [100, 100, 110] as [number, number, number],
+  light: [248, 250, 252] as [number, number, number],
   white: [255, 255, 255] as [number, number, number],
-  border: [220, 220, 230] as [number, number, number],
+  border: [190, 190, 200] as [number, number, number],
   success: [16, 185, 129] as [number, number, number],
 };
 
 const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
 function addHeader(doc: jsPDF, title: string, subtitle?: string) {
-  // Purple bar
-  doc.setFillColor(...COLORS.primary);
-  doc.rect(0, 0, 210, 28, "F");
-
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(18);
+  // Center Title Logo
+  doc.setTextColor(...COLORS.primary);
+  doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text(title, 14, 14);
-
-  if (subtitle) {
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(subtitle, 14, 21);
-  }
-
-  // Company info
-  doc.setFontSize(8);
-  doc.text("Sistema Esquadria de Alumínio", 196, 10, { align: "right" });
-  doc.text(`Gerado em ${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`, 196, 16, { align: "right" });
+  doc.text("SISTEMA ESQUADRIA", 105, 22, { align: "center" });
 
   doc.setTextColor(...COLORS.dark);
-  return 36;
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  const emitLog = "CNPJ: 00.000.000/0001-00 · Razão Social da Empresa\nAv. da Tecnologia, 1000, Centro, São Paulo - SP\n" + title.toUpperCase();
+  doc.text(emitLog, 105, 28, { align: "center", lineHeightFactor: 1.4 });
+
+  if (subtitle) {
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.text(subtitle, 105, 42, { align: "center" });
+  }
+
+  // Draw separator line
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.line(10, 48, 200, 48);
+
+  return 54;
 }
 
 function addInfoBlock(doc: jsPDF, y: number, items: { label: string; value: string }[], columns = 2) {
-  doc.setFillColor(...COLORS.light);
-  doc.roundedRect(14, y, 182, Math.ceil(items.length / columns) * 12 + 8, 3, 3, "F");
-
-  const colWidth = 182 / columns;
+  const colWidth = 180 / columns;
+  const rowHeight = 8;
+  
   items.forEach((item, i) => {
     const col = i % columns;
     const row = Math.floor(i / columns);
-    const x = 18 + col * colWidth;
-    const iy = y + 10 + row * 12;
+    const x = 14 + col * colWidth;
+    const iy = y + row * rowHeight;
+    
     doc.setFontSize(7);
     doc.setTextColor(...COLORS.muted);
-    doc.setFont("helvetica", "normal");
-    doc.text(item.label.toUpperCase(), x, iy);
-    doc.setFontSize(9);
-    doc.setTextColor(...COLORS.dark);
     doc.setFont("helvetica", "bold");
-    doc.text(item.value, x, iy + 5);
+    doc.text(item.label.toUpperCase() + ":", x, iy);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.dark);
+    doc.setFont("helvetica", "normal");
+    const labelWidth = doc.getTextWidth(item.label.toUpperCase() + ": ") + 1;
+    doc.text(item.value, x + labelWidth, iy);
   });
 
-  return y + Math.ceil(items.length / columns) * 12 + 14;
+  const totalHeight = Math.ceil(items.length / columns) * rowHeight;
+  
+  doc.setDrawColor(...COLORS.border);
+  doc.line(10, y + totalHeight - 2, 200, y + totalHeight - 2);
+
+  return y + totalHeight + 4;
 }
 
 function addFooter(doc: jsPDF) {
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+    // Draw the main bounding box over the entire page layout!
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(10, 10, 190, 277, 2, 2, "S");
+
+    // Add page numbering at the bottom bounds
     doc.setFontSize(7);
     doc.setTextColor(...COLORS.muted);
-    doc.text(`Página ${i} de ${pageCount}`, 105, 290, { align: "center" });
-    doc.setDrawColor(...COLORS.border);
-    doc.line(14, 285, 196, 285);
+    doc.text(`Página ${i} de ${pageCount}`, 105, 282, { align: "center" });
   }
 }
+
+// Function to append a classic NFe QR Code and Totals footer
+function addReceiptFooter(doc: jsPDF, y: number, numItems: number, total: number, orderNumber: string | number, date: string, clientName?: string, obs?: string) {
+  if (y > 230) {
+    doc.addPage();
+    y = 20;
+  }
+  
+  // Totals Section
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.muted);
+  doc.setFont("helvetica", "normal");
+  doc.text("Qtde. total de itens", 14, y);
+  doc.text(String(numItems), 196, y, { align: "right" });
+  
+  y += 5;
+  doc.text("Valor total R$", 14, y);
+  doc.text(fmt(total), 196, y, { align: "right" });
+  
+  y += 6;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...COLORS.dark);
+  doc.text("Valor a Pagar R$", 14, y);
+  doc.text(fmt(total), 196, y, { align: "right" });
+
+  if (obs) {
+    y += 8;
+    doc.setFontSize(7);
+    doc.setTextColor(...COLORS.muted);
+    doc.text("FORMA DE PAGAMENTO / OBS", 14, y);
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.dark);
+    doc.setFont("helvetica", "normal");
+    doc.text(obs, 14, y + 4, { maxWidth: 182 });
+  }
+
+  // Visual Separator
+  y += 12;
+  doc.setDrawColor(...COLORS.border);
+  doc.line(10, y, 200, y);
+
+  // QR Code Area
+  y += 6;
+  doc.setFontSize(7);
+  doc.setTextColor(...COLORS.muted);
+  doc.text("Consulte pela Chave de Acesso em", 105, y, { align: "center" });
+  doc.text("http://www.fazenda.gov.br/consulta", 105, y + 4, { align: "center" });
+  doc.text("0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000", 105, y + 8, { align: "center" });
+  
+  y += 14;
+  
+  // Draw Fake QR Blocks
+  doc.setDrawColor(...COLORS.primary);
+  doc.setLineWidth(0.5);
+  doc.rect(20, y, 26, 26, "S");
+  doc.rect(22, y+2, 5, 5, "F"); doc.rect(39, y+2, 5, 5, "F"); doc.rect(22, y+19, 5, 5, "F");
+  doc.setFillColor(...COLORS.primary);
+  for(let qx=0; qx<8; qx++){
+     for(let qy=0; qy<8; qy++){
+        if(Math.random() > 0.5 && !(qx<3 && qy<3) && !(qx>5 && qy<3) && !(qx<3 && qy>5)){
+           doc.rect(20 + (qx*3) + 1, y + (qy*3) + 1, 2.5, 2.5, "F");
+        }
+     }
+  }
+
+  // Consumer info right next to QR
+  const infoX = 54;
+  doc.setFontSize(7);
+  doc.setTextColor(...COLORS.dark);
+  doc.setFont("helvetica", "bold");
+  doc.text("CONSUMIDOR", infoX, y + 4);
+  doc.setFont("helvetica", "normal");
+  doc.text(`${clientName || 'Consumidor Final Padrão'}`, infoX, y + 8);
+  
+  doc.setFont("helvetica", "bold");
+  doc.text(`NFC-e Nº ${String(orderNumber).padStart(9, "0")} Série 001`, infoX, y + 16);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Data de Emissão: ${new Date(date).toLocaleString("pt-BR")}`, infoX, y + 20);
+  doc.text(`Protocolo de Autorização: 314159265358979`, infoX, y + 24);
+
+  y += 32;
+  doc.setFontSize(7);
+  doc.text("Tributos Totais Incidentes (Lei Federal 12.741/2012): R$ 0,00", 105, y, { align: "center" });
+
+  return y;
+}
+
 
 const VIDRO_LABELS: Record<string, string> = {
   temperado_6mm: "Temperado 6mm",
@@ -205,8 +308,8 @@ export function exportOrcamentoPDF(orcamento: OrcamentoData, itens: OrcamentoIte
       startY: y,
       head: [["Item", "Dimensões", "m² Vidro", "Qtd", "Valor Unit.", "Valor Total"]],
       body: tableBody,
-      theme: "grid",
-      headStyles: { fillColor: COLORS.primary, textColor: COLORS.white, fontSize: 8, fontStyle: "bold", halign: "center" },
+      theme: "plain",
+      headStyles: { fillColor: COLORS.white, textColor: COLORS.dark, fontSize: 8, fontStyle: "bold", halign: "center", lineWidth: { bottom: 0.5 }, lineColor: COLORS.border },
       bodyStyles: { fontSize: 8, textColor: COLORS.dark },
       columnStyles: {
         0: { cellWidth: 55 },
@@ -215,10 +318,9 @@ export function exportOrcamentoPDF(orcamento: OrcamentoData, itens: OrcamentoIte
         4: { halign: "right" },
         5: { halign: "right", fontStyle: "bold" },
       },
-      alternateRowStyles: { fillColor: [250, 248, 255] },
-      margin: { left: 14, right: 14 },
+      margin: { left: 10, right: 10 },
       foot: [["", "", "", "", "TOTAL:", fmt(itens.reduce((s: number, i: OrcamentoItemData) => s + Number(i.valor_total), 0))]],
-      footStyles: { fillColor: COLORS.light, textColor: COLORS.primary, fontSize: 9, fontStyle: "bold", halign: "right" },
+      footStyles: { fillColor: COLORS.white, textColor: COLORS.dark, fontSize: 9, fontStyle: "bold", halign: "right", lineWidth: { top: 0.5 }, lineColor: COLORS.border },
     });
 
     y = doc.lastAutoTable.finalY + 8;
@@ -226,7 +328,6 @@ export function exportOrcamentoPDF(orcamento: OrcamentoData, itens: OrcamentoIte
 
   // ── Cost breakdown table (per item) ──
   if (hasCostData) {
-    // Check page space
     if (y > 220) {
       doc.addPage();
       y = 20;
@@ -254,17 +355,16 @@ export function exportOrcamentoPDF(orcamento: OrcamentoData, itens: OrcamentoIte
       startY: y,
       head: [["Item", "Alumínio", "Vidro", "Ferragem", "Acess.", "M.Obra", "Custo", "Lucro", "Venda"]],
       body: costBody,
-      theme: "grid",
-      headStyles: { fillColor: [50, 50, 65], textColor: COLORS.white, fontSize: 6.5, fontStyle: "bold", halign: "center" },
-      bodyStyles: { fontSize: 6.5, textColor: COLORS.dark, halign: "right" },
+      theme: "plain",
+      headStyles: { fillColor: COLORS.white, textColor: COLORS.muted, fontSize: 6.5, fontStyle: "bold", halign: "center", lineWidth: { bottom: 0.5 }, lineColor: COLORS.border },
+      bodyStyles: { fontSize: 6.5, textColor: COLORS.dark, halign: "right", cellPadding: 2 },
       columnStyles: {
         0: { halign: "left", cellWidth: 30 },
         6: { fontStyle: "bold" },
         7: { textColor: COLORS.success, fontStyle: "bold" },
         8: { textColor: COLORS.primary, fontStyle: "bold" },
       },
-      alternateRowStyles: { fillColor: [250, 248, 255] },
-      margin: { left: 14, right: 14 },
+      margin: { left: 10, right: 10 },
     });
 
     y = doc.lastAutoTable.finalY + 8;
@@ -414,29 +514,29 @@ export function exportPedidoPDF(pedido: PedidoData, itens?: PedidoItemData[]) {
   const statusLabels: Record<string, string> = {
     pendente: "PENDENTE", em_producao: "EM PRODUÇÃO", pronto: "PRONTO", entregue: "ENTREGUE", cancelado: "CANCELADO",
   };
-  let y = addHeader(doc, `PEDIDO #${String(pedido.numero).padStart(3, "0")}`, `Status: ${statusLabels[pedido.status] || pedido.status}`);
+  let y = addHeader(doc, `PEDIDO DE VENDA Nº ${String(pedido.numero).padStart(6, "0")}`, `Situação: ${statusLabels[pedido.status] || pedido.status}`);
 
   const infoItems = [
-    { label: "Cliente", value: pedido.clientes?.nome || "—" },
+    { label: "Cliente", value: pedido.clientes?.nome || "Consumidor Padrão" },
     { label: "Data do Pedido", value: new Date(pedido.created_at).toLocaleDateString("pt-BR") },
     { label: "Previsão Entrega", value: pedido.data_entrega ? new Date(pedido.data_entrega).toLocaleDateString("pt-BR") : "—" },
     { label: "Valor Total", value: fmt(Number(pedido.valor_total) || 0) },
   ];
   if (pedido.vendedor) infoItems.push({ label: "Vendedor", value: pedido.vendedor });
   if (pedido.clientes?.telefone) infoItems.push({ label: "Telefone", value: pedido.clientes.telefone });
-  if (pedido.clientes?.endereco) {
-    let addr = pedido.clientes.endereco;
-    if (pedido.clientes.cidade) addr += `, ${pedido.clientes.cidade}`;
-    if (pedido.clientes.estado) addr += ` - ${pedido.clientes.estado}`;
-    infoItems.push({ label: "Endereço", value: addr });
-  }
+  
+  let enderecoCompleto = pedido.clientes?.endereco || "";
+  if (pedido.clientes?.cidade) enderecoCompleto += `, ${pedido.clientes.cidade}`;
+  if (pedido.clientes?.estado) enderecoCompleto += ` - ${pedido.clientes.estado}`;
+  if (enderecoCompleto) infoItems.push({ label: "Endereço", value: enderecoCompleto });
   if (pedido.endereco_entrega) infoItems.push({ label: "Endereço Entrega", value: pedido.endereco_entrega });
+  
   y = addInfoBlock(doc, y, infoItems);
 
   if (itens && itens.length > 0) {
-    const tableBody = itens.map((i) => [
+    const tableBody = itens.map((i, index) => [
+      String(index + 1).padStart(3, "0"),
       i.descricao,
-      i.largura && i.altura ? `${i.largura}×${i.altura}mm` : "—",
       String(i.quantidade),
       fmt(Number(i.valor_unitario)),
       fmt(Number(i.valor_total)),
@@ -444,34 +544,36 @@ export function exportPedidoPDF(pedido: PedidoData, itens?: PedidoItemData[]) {
 
     doc.autoTable({
       startY: y,
-      head: [["Item", "Dimensões", "Qtd", "Valor Unit.", "Valor Total"]],
+      head: [["Cód.", "Descrição", "Qtde. UN", "VL Unit.", "VL Total"]],
       body: tableBody,
-      theme: "grid",
-      headStyles: { fillColor: COLORS.primary, textColor: COLORS.white, fontSize: 8, fontStyle: "bold", halign: "center" },
+      theme: "plain", // Clean theme, no background coloring
+      headStyles: { fillColor: COLORS.white, textColor: COLORS.dark, fontSize: 8, fontStyle: "bold", halign: "center", lineWidth: { bottom: 0.5 }, lineColor: COLORS.dark },
       bodyStyles: { fontSize: 8, textColor: COLORS.dark },
       columnStyles: {
-        0: { cellWidth: 65 },
-        2: { halign: "center" },
-        3: { halign: "right" },
-        4: { halign: "right", fontStyle: "bold" },
+        0: { cellWidth: 15, halign: "center" },
+        1: { cellWidth: 90 },
+        2: { halign: "center", cellWidth: 20 },
+        3: { halign: "right", cellWidth: 30 },
+        4: { halign: "right", fontStyle: "bold", cellWidth: 35 },
       },
-      alternateRowStyles: { fillColor: [250, 248, 255] },
-      margin: { left: 14, right: 14 },
-      foot: [["", "", "", "TOTAL:", fmt(itens.reduce((s: number, i: PedidoItemData) => s + Number(i.valor_total), 0))]],
-      footStyles: { fillColor: COLORS.light, textColor: COLORS.primary, fontSize: 9, fontStyle: "bold", halign: "right" },
+      margin: { left: 10, right: 10 },
+      // Foot relies on standard table
     });
     y = doc.lastAutoTable.finalY + 8;
   }
 
-  if (pedido.observacoes) {
-    doc.setFontSize(7);
-    doc.setTextColor(...COLORS.muted);
-    doc.text("OBSERVAÇÕES", 14, y);
-    doc.setFontSize(8);
-    doc.setTextColor(...COLORS.dark);
-    doc.setFont("helvetica", "normal");
-    doc.text(pedido.observacoes, 14, y + 5, { maxWidth: 182 });
-  }
+  // Use the new Receipt footer for the Totals, QR Code, and Client information
+  const qtdItens = itens ? itens.reduce((s, i) => s + i.quantidade, 0) : 0;
+  y = addReceiptFooter(
+    doc, 
+    y, 
+    qtdItens, 
+    Number(pedido.valor_total) || 0, 
+    pedido.numero, 
+    pedido.created_at, 
+    pedido.clientes?.nome || "Consumidor Final",
+    pedido.observacoes || ""
+  );
 
   addFooter(doc);
   doc.save(`pedido-${String(pedido.numero).padStart(3, "0")}.pdf`);
@@ -524,9 +626,9 @@ export function exportListaCortePDF(
       startY: y,
       head: [["Código", "Descrição", "Posição", "Medida", "Qtd", "Âng. Esq.", "Âng. Dir.", "Peso"]],
       body: tableBody,
-      theme: "grid",
-      headStyles: { fillColor: COLORS.primary, textColor: COLORS.white, fontSize: 7, fontStyle: "bold", halign: "center" },
-      bodyStyles: { fontSize: 7.5, textColor: COLORS.dark },
+      theme: "plain",
+      headStyles: { fillColor: COLORS.white, textColor: COLORS.dark, fontSize: 7, fontStyle: "bold", halign: "center", lineWidth: { bottom: 0.5 }, lineColor: COLORS.border },
+      bodyStyles: { fontSize: 7.5, textColor: COLORS.dark, cellPadding: 2 },
       columnStyles: {
         0: { fontStyle: "bold", cellWidth: 22 },
         1: { cellWidth: 40 },
@@ -536,8 +638,7 @@ export function exportListaCortePDF(
         6: { halign: "center" },
         7: { halign: "right" },
       },
-      alternateRowStyles: { fillColor: [250, 248, 255] },
-      margin: { left: 14, right: 14 },
+      margin: { left: 10, right: 10 },
     });
 
     y = doc.lastAutoTable.finalY + 8;
@@ -556,11 +657,11 @@ export function exportListaCortePDF(
       startY: y,
       head: [["Descrição", "Largura (mm)", "Altura (mm)", "Qtd", "Área (m²)"]],
       body: vidros.map((v) => [v.descricao, String(v.largura_mm), String(v.altura_mm), String(v.quantidade), `${v.area_m2} m²`]),
-      theme: "grid",
-      headStyles: { fillColor: [16, 185, 129] as [number, number, number], textColor: COLORS.white, fontSize: 7, fontStyle: "bold", halign: "center" },
-      bodyStyles: { fontSize: 7.5, textColor: COLORS.dark },
+      theme: "plain",
+      headStyles: { fillColor: COLORS.white, textColor: [16, 185, 129] as [number, number, number], fontSize: 7, fontStyle: "bold", halign: "center", lineWidth: { bottom: 0.5 }, lineColor: COLORS.border },
+      bodyStyles: { fontSize: 7.5, textColor: COLORS.dark, cellPadding: 2 },
       columnStyles: { 1: { halign: "center" }, 2: { halign: "center" }, 3: { halign: "center" }, 4: { halign: "right", fontStyle: "bold" } },
-      margin: { left: 14, right: 14 },
+      margin: { left: 10, right: 10 },
     });
 
     y = doc.lastAutoTable.finalY + 8;
@@ -588,11 +689,11 @@ export function exportListaCortePDF(
           String(f.quantidade),
           f.unidade,
         ]),
-        theme: "grid",
-        headStyles: { fillColor: [245, 158, 11] as [number, number, number], textColor: COLORS.white, fontSize: 7, fontStyle: "bold", halign: "center" },
-        bodyStyles: { fontSize: 7.5, textColor: COLORS.dark },
+        theme: "plain",
+        headStyles: { fillColor: COLORS.white, textColor: [245, 158, 11] as [number, number, number], fontSize: 7, fontStyle: "bold", halign: "center", lineWidth: { bottom: 0.5 }, lineColor: COLORS.border },
+        bodyStyles: { fontSize: 7.5, textColor: COLORS.dark, cellPadding: 2 },
         columnStyles: { 0: { cellWidth: 110 }, 1: { halign: "center", cellWidth: 20 }, 2: { halign: "center" } },
-        margin: { left: 14, right: 14 },
+        margin: { left: 10, right: 10 },
       });
 
       y = doc.lastAutoTable.finalY + 8;
@@ -614,12 +715,11 @@ export function exportListaCortePDF(
           String(m.quantidade),
           m.unidade,
         ]),
-        theme: "grid",
-        headStyles: { fillColor: COLORS.muted, textColor: COLORS.white, fontSize: 7, fontStyle: "bold", halign: "center" },
-        bodyStyles: { fontSize: 7.5, textColor: COLORS.dark },
+        theme: "plain",
+        headStyles: { fillColor: COLORS.white, textColor: COLORS.muted, fontSize: 7, fontStyle: "bold", halign: "center", lineWidth: { bottom: 0.5 }, lineColor: COLORS.border },
+        bodyStyles: { fontSize: 7.5, textColor: COLORS.dark, cellPadding: 2 },
         columnStyles: { 0: { cellWidth: 110 }, 1: { halign: "center", cellWidth: 20 }, 2: { halign: "center" } },
-        alternateRowStyles: { fillColor: [250, 248, 255] },
-        margin: { left: 14, right: 14 },
+        margin: { left: 10, right: 10 },
       });
 
       y = doc.lastAutoTable.finalY + 8;
@@ -707,16 +807,15 @@ export function exportMateriaisPDF(
             : String(m.quantidade),
         m.unidade,
       ]),
-      theme: "grid",
-      headStyles: { fillColor: cat.color, textColor: COLORS.white, fontSize: 7.5, fontStyle: "bold", halign: "center" },
-      bodyStyles: { fontSize: 7.5, textColor: COLORS.dark },
+      theme: "plain",
+      headStyles: { fillColor: COLORS.white, textColor: cat.color, fontSize: 7.5, fontStyle: "bold", halign: "center", lineWidth: { bottom: 0.5 }, lineColor: COLORS.border },
+      bodyStyles: { fontSize: 7.5, textColor: COLORS.dark, cellPadding: 2 },
       columnStyles: {
         0: { cellWidth: 100 },
         1: { halign: "center", fontStyle: "bold", cellWidth: 35 },
         2: { halign: "center" },
       },
-      alternateRowStyles: { fillColor: [250, 248, 255] },
-      margin: { left: 14, right: 14 },
+      margin: { left: 10, right: 10 },
     });
 
     y = doc.lastAutoTable.finalY + 8;
@@ -759,11 +858,11 @@ export function exportMateriaisPDF(
           typeof m.quantidade === "number" ? (m.unidade === "m2" ? m.quantidade.toFixed(3) : m.quantidade.toFixed(2)) : String(m.quantidade),
           m.unidade,
         ]),
-        theme: "grid",
-        headStyles: { fillColor: [80, 80, 95], textColor: COLORS.white, fontSize: 7, fontStyle: "bold", halign: "center" },
-        bodyStyles: { fontSize: 7, textColor: COLORS.dark },
+        theme: "plain",
+        headStyles: { fillColor: COLORS.white, textColor: [100, 100, 110] as [number, number, number], fontSize: 7, fontStyle: "bold", halign: "center", lineWidth: { bottom: 0.5 }, lineColor: COLORS.border },
+        bodyStyles: { fontSize: 7, textColor: COLORS.dark, cellPadding: 2 },
         columnStyles: { 0: { cellWidth: 80 }, 2: { halign: "center", fontStyle: "bold" }, 3: { halign: "center" } },
-        margin: { left: 14, right: 14 },
+        margin: { left: 10, right: 10 },
       });
 
       y = doc.lastAutoTable.finalY + 6;

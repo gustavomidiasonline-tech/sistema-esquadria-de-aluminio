@@ -15,6 +15,8 @@ import { format, parseISO } from "date-fns";
 import { FileUpload } from "@/components/shared/FileUpload";
 import type { Tables } from "@/integrations/supabase/types";
 
+import { BackButton } from "@/components/ui/BackButton";
+
 type DocumentoWithCliente = Tables<"documentos"> & { clientes: { nome: string } | null };
 
 const Documentos = () => {
@@ -61,9 +63,12 @@ const Documentos = () => {
     <AppLayout>
       <div className="space-y-6 max-w-7xl">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Documentos</h1>
-            <p className="text-sm text-muted-foreground">{documentos.length} documentos</p>
+          <div className="flex items-center gap-4">
+            <BackButton to="/financeiro" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Documentos</h1>
+              <p className="text-sm text-muted-foreground">{documentos.length} documentos</p>
+            </div>
           </div>
           <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" /> Novo documento</Button>
         </div>

@@ -2706,6 +2706,218 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          id: string
+          company_id: string
+          codigo: string
+          nome: string
+          tipo: 'perfil' | 'vidro' | 'ferragem' | 'acessorio' | 'outro'
+          perfil_aluminio_id: string | null
+          glass_type_id: string | null
+          hardware_id: string | null
+          quantidade_disponivel: number
+          quantidade_reservada: number
+          quantidade_minima: number
+          unidade: string
+          localizacao: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          codigo: string
+          nome: string
+          tipo: 'perfil' | 'vidro' | 'ferragem' | 'acessorio' | 'outro'
+          perfil_aluminio_id?: string | null
+          glass_type_id?: string | null
+          hardware_id?: string | null
+          quantidade_disponivel?: number
+          quantidade_reservada?: number
+          quantidade_minima?: number
+          unidade?: string
+          localizacao?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          codigo?: string
+          nome?: string
+          tipo?: 'perfil' | 'vidro' | 'ferragem' | 'acessorio' | 'outro'
+          perfil_aluminio_id?: string | null
+          glass_type_id?: string | null
+          hardware_id?: string | null
+          quantidade_disponivel?: number
+          quantidade_reservada?: number
+          quantidade_minima?: number
+          unidade?: string
+          localizacao?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      cutting_plans: {
+        Row: {
+          id: string
+          company_id: string
+          orcamento_id: string | null
+          numero: string
+          algoritmo: 'FFD' | 'BFD'
+          aproveitamento_medio: number
+          total_barras: number
+          total_pecas: number
+          comprimento_barra_mm: number
+          status: 'pendente' | 'calculando' | 'gerado' | 'pronto' | 'executado'
+          barras_json: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          orcamento_id?: string | null
+          numero: string
+          algoritmo?: 'FFD' | 'BFD'
+          aproveitamento_medio?: number
+          total_barras?: number
+          total_pecas?: number
+          comprimento_barra_mm?: number
+          status?: 'pendente' | 'calculando' | 'gerado' | 'pronto' | 'executado'
+          barras_json?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          orcamento_id?: string | null
+          numero?: string
+          algoritmo?: 'FFD' | 'BFD'
+          aproveitamento_medio?: number
+          total_barras?: number
+          total_pecas?: number
+          comprimento_barra_mm?: number
+          status?: 'pendente' | 'calculando' | 'gerado' | 'pronto' | 'executado'
+          barras_json?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cutting_plans_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          id: string
+          company_id: string
+          production_order_id: string | null
+          numero: string
+          status: 'rascunho' | 'enviado' | 'confirmado' | 'recebido' | 'cancelado'
+          gerado_automaticamente: boolean
+          observacoes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          production_order_id?: string | null
+          numero: string
+          status?: 'rascunho' | 'enviado' | 'confirmado' | 'recebido' | 'cancelado'
+          gerado_automaticamente?: boolean
+          observacoes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          production_order_id?: string | null
+          numero?: string
+          status?: 'rascunho' | 'enviado' | 'confirmado' | 'recebido' | 'cancelado'
+          gerado_automaticamente?: boolean
+          observacoes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      ai_import_jobs: {
+        Row: {
+          id: string
+          company_id: string
+          nome_arquivo: string
+          status: 'pendente' | 'processando' | 'concluido' | 'erro' | 'revisao'
+          perfis_encontrados: number
+          modelos_encontrados: number
+          ai_raw_output: Json | null
+          dados_para_import: Json | null
+          erro_mensagem: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          nome_arquivo: string
+          status?: 'pendente' | 'processando' | 'concluido' | 'erro' | 'revisao'
+          perfis_encontrados?: number
+          modelos_encontrados?: number
+          ai_raw_output?: Json | null
+          dados_para_import?: Json | null
+          erro_mensagem?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          nome_arquivo?: string
+          status?: 'pendente' | 'processando' | 'concluido' | 'erro' | 'revisao'
+          perfis_encontrados?: number
+          modelos_encontrados?: number
+          ai_raw_output?: Json | null
+          dados_para_import?: Json | null
+          erro_mensagem?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_import_jobs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2864,91 +3076,7 @@ export type CompositeTypes<
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
-// ─── Tipos das novas tabelas (pipeline event-driven + AI catalog) ───────────
-
-export interface CuttingPlanRow {
-  id: string;
-  company_id: string;
-  orcamento_id: string | null;
-  numero: string;
-  algoritmo: 'FFD' | 'BFD';
-  aproveitamento_medio: number;
-  total_barras: number;
-  total_pecas: number;
-  comprimento_barra_mm: number;
-  status: 'gerado' | 'aprovado' | 'cancelado';
-  barras_json: Record<string, unknown>[] | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CuttingBarRow {
-  id: string;
-  cutting_plan_id: string;
-  numero_barra: number;
-  comprimento_total_mm: number;
-  sobra_mm: number;
-  aproveitamento_pct: number;
-  cortes: Record<string, unknown>[] | null;
-  created_at: string;
-}
-
-export interface InventoryItemRow {
-  id: string;
-  company_id: string;
-  codigo: string;
-  nome: string;
-  tipo: 'perfil' | 'vidro' | 'ferragem' | 'acessorio' | 'outro';
-  perfil_aluminio_id: string | null;
-  glass_type_id: string | null;
-  hardware_id: string | null;
-  quantidade_disponivel: number;
-  quantidade_reservada: number;
-  quantidade_minima: number;
-  unidade: string;
-  localizacao: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PurchaseOrderRow {
-  id: string;
-  company_id: string;
-  cutting_plan_id: string | null;
-  production_order_id: string | null;
-  numero: string;
-  status: 'rascunho' | 'enviado' | 'confirmado' | 'recebido' | 'cancelado';
-  gerado_automaticamente: boolean;
-  observacoes: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PurchaseOrderItemRow {
-  id: string;
-  purchase_order_id: string;
-  codigo_material: string | null;
-  descricao: string;
-  quantidade: number;
-  unidade: string;
-  preco_unitario: number | null;
-  preco_total: number | null;  // GENERATED ALWAYS AS (quantidade * preco_unitario)
-  created_at: string;
-}
-
-export interface AiImportJobRow {
-  id: string;
-  company_id: string;
-  nome_arquivo: string;
-  status: 'pendente' | 'processando' | 'concluido' | 'erro';
-  total_perfis: number;
-  total_modelos: number;
-  ai_raw_output: Record<string, unknown> | null;
-  dados_para_import: Record<string, unknown> | null;
-  erro: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// ─── Referências de Tipos Consolidadas ──────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
 

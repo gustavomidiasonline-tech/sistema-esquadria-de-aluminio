@@ -1,0 +1,201 @@
+codigo,nome,tipo,quantidade,unidade
+MAT0001,Escova Vedacao,Acessorio,189.0,un
+MAT0002,Vidro Temperado 10mm Fume,Vidro,45.42,m2
+MAT0003,Escova Vedacao,Acessorio,283.0,un
+MAT0004,Silicone Incolor,Acessorio,474.0,un
+MAT0005,Silicone Preto,Acessorio,21.0,un
+MAT0006,Dobradiça 3p,Ferragem,111.0,un
+MAT0007,Puxador Inox 30cm,Ferragem,20.0,un
+MAT0008,Perfil Tubular 40x20,Perfil,63.0,barra
+MAT0009,Dobradiça 4p,Ferragem,106.0,un
+MAT0010,Puxador Inox 30cm,Ferragem,11.0,un
+MAT0011,Trilho Inferior 3m,Perfil,191.0,barra
+MAT0012,Perfil U 20x20 Aluminio,Perfil,276.0,barra
+MAT0013,Trilho Superior 3m,Perfil,246.0,barra
+MAT0014,Vidro Laminado 5+5mm,Vidro,77.38,m2
+MAT0015,Perfil Tubular 60x30,Perfil,148.0,barra
+MAT0016,Silicone Incolor,Acessorio,285.0,un
+MAT0017,Dobradiça 3p,Ferragem,141.0,un
+MAT0018,Fita Dupla Face,Acessorio,312.0,un
+MAT0019,Parafuso Auto Brocante,Acessorio,330.0,un
+MAT0020,Fita Dupla Face,Acessorio,42.0,un
+MAT0021,Trilho Superior 3m,Perfil,129.0,barra
+MAT0022,Vidro Temperado 8mm Incolor,Vidro,25.41,m2
+MAT0023,Vidro Comum 6mm,Vidro,77.25,m2
+MAT0024,Vidro Comum 4mm,Vidro,33.84,m2
+MAT0025,Vidro Temperado 6mm Incolor,Vidro,68.06,m2
+MAT0026,Parafuso Inox,Acessorio,453.0,un
+MAT0027,Perfil H 30x30 Aluminio,Perfil,257.0,barra
+MAT0028,Fechadura Blindex,Ferragem,132.0,un
+MAT0029,Vidro Laminado 4+4mm,Vidro,28.87,m2
+MAT0030,Puxador Inox 30cm,Ferragem,111.0,un
+MAT0031,Vidro Comum 6mm,Vidro,31.11,m2
+MAT0032,Vidro Temperado 6mm Incolor,Vidro,15.36,m2
+MAT0033,Trilho Superior 3m,Perfil,109.0,barra
+MAT0034,Dobradiça 3p,Ferragem,58.0,un
+MAT0035,Silicone Preto,Acessorio,307.0,un
+MAT0036,Bucha 8mm,Acessorio,57.0,un
+MAT0037,Trilho Superior 3m,Perfil,64.0,barra
+MAT0038,Vidro Comum 6mm,Vidro,19.83,m2
+MAT0039,Bucha 8mm,Acessorio,98.0,un
+MAT0040,Fechadura Blindex,Ferragem,13.0,un
+MAT0041,Batente Porta Aluminio,Perfil,101.0,barra
+MAT0042,Perfil H 30x30 Aluminio,Perfil,55.0,barra
+MAT0043,Perfil U 30x30 Aluminio,Perfil,166.0,barra
+MAT0044,Borracha Vedacao,Acessorio,427.0,un
+MAT0045,Dobradiça 3p,Ferragem,133.0,un
+MAT0046,Roldana Dupla,Ferragem,64.0,un
+MAT0047,Perfil U 30x30 Aluminio,Perfil,216.0,barra
+MAT0048,Vidro Comum 6mm,Vidro,17.67,m2
+MAT0049,Roldana Dupla,Ferragem,55.0,un
+MAT0050,Vidro Comum 6mm,Vidro,5.04,m2
+MAT0051,Escova Vedacao,Acessorio,305.0,un
+MAT0052,Vidro Temperado 6mm Incolor,Vidro,25.16,m2
+MAT0053,Perfil U 30x30 Aluminio,Perfil,157.0,barra
+MAT0054,Vidro Refletivo Prata 8mm,Vidro,107.17,m2
+MAT0055,Vidro Laminado 5+5mm,Vidro,35.97,m2
+MAT0056,Silicone Preto,Acessorio,375.0,un
+MAT0057,Roldana Simples,Ferragem,112.0,un
+MAT0058,Dobradiça 3p,Ferragem,94.0,un
+MAT0059,Vidro Comum 6mm,Vidro,30.0,m2
+MAT0060,Trilho Inferior 3m,Perfil,136.0,barra
+MAT0061,Borracha Vedacao,Acessorio,352.0,un
+MAT0062,Vidro Refletivo Prata 8mm,Vidro,48.51,m2
+MAT0063,Fita Dupla Face,Acessorio,81.0,un
+MAT0064,Perfil Tubular 40x20,Perfil,296.0,barra
+MAT0065,Perfil Tubular 40x20,Perfil,252.0,barra
+MAT0066,Parafuso Auto Brocante,Acessorio,114.0,un
+MAT0067,Parafuso Inox,Acessorio,442.0,un
+MAT0068,Bucha 8mm,Acessorio,317.0,un
+MAT0069,Borracha Vedacao,Acessorio,286.0,un
+MAT0070,Perfil U 30x30 Aluminio,Perfil,281.0,barra
+MAT0071,Trilho Superior 3m,Perfil,222.0,barra
+MAT0072,Fita Dupla Face,Acessorio,220.0,un
+MAT0073,Vidro Temperado 8mm Incolor,Vidro,76.81,m2
+MAT0074,Vidro Refletivo Prata 8mm,Vidro,10.54,m2
+MAT0075,Dobradiça 3p,Ferragem,18.0,un
+MAT0076,Vidro Temperado 10mm Fume,Vidro,84.37,m2
+MAT0077,Puxador Inox 30cm,Ferragem,46.0,un
+MAT0078,Trilho Inferior 3m,Perfil,217.0,barra
+MAT0079,Trilho Superior 3m,Perfil,46.0,barra
+MAT0080,Silicone Incolor,Acessorio,183.0,un
+MAT0081,Silicone Preto,Acessorio,254.0,un
+MAT0082,Trilho Inferior 3m,Perfil,108.0,barra
+MAT0083,Roldana Dupla,Ferragem,83.0,un
+MAT0084,Batente Porta Aluminio,Perfil,286.0,barra
+MAT0085,Dobradiça 3p,Ferragem,102.0,un
+MAT0086,Roldana Simples,Ferragem,120.0,un
+MAT0087,Vidro Comum 4mm,Vidro,35.06,m2
+MAT0088,Fita Dupla Face,Acessorio,318.0,un
+MAT0089,Fechadura Blindex,Ferragem,9.0,un
+MAT0090,Trilho Inferior 3m,Perfil,266.0,barra
+MAT0091,Vidro Comum 6mm,Vidro,97.69,m2
+MAT0092,Perfil H 30x30 Aluminio,Perfil,209.0,barra
+MAT0093,Fechadura Porta de Correr,Ferragem,14.0,un
+MAT0094,Perfil U 30x30 Aluminio,Perfil,134.0,barra
+MAT0095,Perfil Tubular 40x20,Perfil,113.0,barra
+MAT0096,Silicone Preto,Acessorio,157.0,un
+MAT0097,Roldana Dupla,Ferragem,99.0,un
+MAT0098,Parafuso Inox,Acessorio,385.0,un
+MAT0099,Bucha 8mm,Acessorio,89.0,un
+MAT0100,Dobradiça 3p,Ferragem,109.0,un
+MAT0101,Dobradiça 3p,Ferragem,145.0,un
+MAT0102,Kit Box Completo,Ferragem,10.0,un
+MAT0103,Vidro Comum 4mm,Vidro,102.5,m2
+MAT0104,Escova Vedacao,Acessorio,417.0,un
+MAT0105,Trilho Inferior 3m,Perfil,217.0,barra
+MAT0106,Perfil H 30x30 Aluminio,Perfil,11.0,barra
+MAT0107,Silicone Incolor,Acessorio,457.0,un
+MAT0108,Dobradiça 3p,Ferragem,47.0,un
+MAT0109,Parafuso Auto Brocante,Acessorio,486.0,un
+MAT0110,Fita Dupla Face,Acessorio,447.0,un
+MAT0111,Vidro Temperado 10mm Fume,Vidro,20.9,m2
+MAT0112,Parafuso Inox,Acessorio,50.0,un
+MAT0113,Batente Porta Aluminio,Perfil,105.0,barra
+MAT0114,Bucha 8mm,Acessorio,435.0,un
+MAT0115,Trilho Superior 3m,Perfil,260.0,barra
+MAT0116,Escova Vedacao,Acessorio,112.0,un
+MAT0117,Fita Dupla Face,Acessorio,362.0,un
+MAT0118,Bucha 8mm,Acessorio,359.0,un
+MAT0119,Vidro Laminado 5+5mm,Vidro,30.89,m2
+MAT0120,Roldana Dupla,Ferragem,41.0,un
+MAT0121,Vidro Laminado 4+4mm,Vidro,45.6,m2
+MAT0122,Fechadura Blindex,Ferragem,46.0,un
+MAT0123,Fechadura Blindex,Ferragem,90.0,un
+MAT0124,Vidro Temperado 8mm Incolor,Vidro,118.43,m2
+MAT0125,Vidro Refletivo Prata 8mm,Vidro,32.0,m2
+MAT0126,Fechadura Porta de Correr,Ferragem,73.0,un
+MAT0127,Trilho Inferior 3m,Perfil,154.0,barra
+MAT0128,Dobradiça 3p,Ferragem,41.0,un
+MAT0129,Trilho Superior 3m,Perfil,122.0,barra
+MAT0130,Perfil U 30x30 Aluminio,Perfil,187.0,barra
+MAT0131,Trilho Superior 3m,Perfil,206.0,barra
+MAT0132,Vidro Comum 6mm,Vidro,86.16,m2
+MAT0133,Borracha Vedacao,Acessorio,84.0,un
+MAT0134,Vidro Refletivo Prata 8mm,Vidro,106.45,m2
+MAT0135,Vidro Comum 4mm,Vidro,35.43,m2
+MAT0136,Perfil U 30x30 Aluminio,Perfil,268.0,barra
+MAT0137,Vidro Refletivo Prata 8mm,Vidro,87.86,m2
+MAT0138,Roldana Dupla,Ferragem,73.0,un
+MAT0139,Vidro Comum 6mm,Vidro,78.78,m2
+MAT0140,Perfil Tubular 40x20,Perfil,265.0,barra
+MAT0141,Vidro Temperado 6mm Incolor,Vidro,12.49,m2
+MAT0142,Parafuso Auto Brocante,Acessorio,485.0,un
+MAT0143,Perfil U 20x20 Aluminio,Perfil,27.0,barra
+MAT0144,Dobradiça 4p,Ferragem,77.0,un
+MAT0145,Perfil U 30x30 Aluminio,Perfil,62.0,barra
+MAT0146,Parafuso Auto Brocante,Acessorio,159.0,un
+MAT0147,Perfil U 20x20 Aluminio,Perfil,33.0,barra
+MAT0148,Vidro Temperado 6mm Incolor,Vidro,62.37,m2
+MAT0149,Kit Box Completo,Ferragem,8.0,un
+MAT0150,Perfil H 30x30 Aluminio,Perfil,105.0,barra
+MAT0151,Perfil Tubular 40x20,Perfil,127.0,barra
+MAT0152,Vidro Temperado 8mm Incolor,Vidro,116.03,m2
+MAT0153,Vidro Comum 4mm,Vidro,17.31,m2
+MAT0154,Vidro Refletivo Prata 8mm,Vidro,15.77,m2
+MAT0155,Trilho Inferior 3m,Perfil,281.0,barra
+MAT0156,Vidro Laminado 4+4mm,Vidro,83.63,m2
+MAT0157,Perfil Tubular 60x30,Perfil,150.0,barra
+MAT0158,Borracha Vedacao,Acessorio,333.0,un
+MAT0159,Vidro Comum 4mm,Vidro,95.99,m2
+MAT0160,Dobradiça 4p,Ferragem,34.0,un
+MAT0161,Bucha 8mm,Acessorio,310.0,un
+MAT0162,Perfil Tubular 40x20,Perfil,224.0,barra
+MAT0163,Roldana Simples,Ferragem,148.0,un
+MAT0164,Vidro Temperado 10mm Fume,Vidro,44.58,m2
+MAT0165,Silicone Incolor,Acessorio,200.0,un
+MAT0166,Dobradiça 4p,Ferragem,91.0,un
+MAT0167,Kit Box Completo,Ferragem,122.0,un
+MAT0168,Silicone Incolor,Acessorio,437.0,un
+MAT0169,Vidro Laminado 5+5mm,Vidro,23.2,m2
+MAT0170,Vidro Comum 4mm,Vidro,95.58,m2
+MAT0171,Vidro Temperado 8mm Incolor,Vidro,41.72,m2
+MAT0172,Kit Box Completo,Ferragem,63.0,un
+MAT0173,Dobradiça 4p,Ferragem,20.0,un
+MAT0174,Vidro Laminado 5+5mm,Vidro,97.66,m2
+MAT0175,Parafuso Auto Brocante,Acessorio,180.0,un
+MAT0176,Vidro Comum 6mm,Vidro,103.22,m2
+MAT0177,Fita Dupla Face,Acessorio,68.0,un
+MAT0178,Batente Porta Aluminio,Perfil,24.0,barra
+MAT0179,Parafuso Auto Brocante,Acessorio,492.0,un
+MAT0180,Silicone Preto,Acessorio,335.0,un
+MAT0181,Fita Dupla Face,Acessorio,49.0,un
+MAT0182,Vidro Refletivo Prata 8mm,Vidro,55.96,m2
+MAT0183,Fechadura Porta de Correr,Ferragem,48.0,un
+MAT0184,Vidro Laminado 5+5mm,Vidro,7.44,m2
+MAT0185,Vidro Comum 6mm,Vidro,40.57,m2
+MAT0186,Trilho Superior 3m,Perfil,237.0,barra
+MAT0187,Silicone Preto,Acessorio,41.0,un
+MAT0188,Silicone Incolor,Acessorio,359.0,un
+MAT0189,Parafuso Auto Brocante,Acessorio,438.0,un
+MAT0190,Vidro Comum 6mm,Vidro,54.71,m2
+MAT0191,Vidro Temperado 8mm Incolor,Vidro,76.65,m2
+MAT0192,Vidro Laminado 5+5mm,Vidro,5.92,m2
+MAT0193,Perfil H 30x30 Aluminio,Perfil,172.0,barra
+MAT0194,Trilho Superior 3m,Perfil,291.0,barra
+MAT0195,Batente Porta Aluminio,Perfil,22.0,barra
+MAT0196,Vidro Temperado 8mm Incolor,Vidro,23.27,m2
+MAT0197,Fechadura Blindex,Ferragem,34.0,un
+MAT0198,Vidro Laminado 5+5mm,Vidro,21.77,m2
+MAT0199,Vidro Temperado 6mm Incolor,Vidro,18.57,m2
+MAT0200,Roldana Simples,Ferragem,82.0,un

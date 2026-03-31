@@ -5,21 +5,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { inventoryError, databaseError, notFoundError } from '@/lib/error-handler';
+import type { Tables } from '@/integrations/supabase/types';
 
-export type InventoryItemTipo = 'perfil' | 'vidro' | 'ferragem' | 'acessorio' | 'outro';
-
-export interface InventoryItem {
-  id: string;
-  company_id: string;
-  codigo: string;
-  nome: string;
-  tipo: InventoryItemTipo;
-  quantidade_disponivel: number;
-  quantidade_reservada: number;
-  quantidade_minima: number;
-  unidade: string;
-  localizacao?: string;
-}
+export type InventoryItem = Tables<'inventory_items'>;
+export type InventoryItemTipo = InventoryItem['tipo'];
 
 export interface InventoryMovement {
   item_id: string;
@@ -68,7 +57,7 @@ export const InventoryService = {
 
     const { data, error } = await query;
     if (error) throw databaseError(`Erro ao listar estoque: ${error.message}`, { service: 'inventory', operation: 'listarItens' });
-    return (data ?? []) as InventoryItem[];
+    return data ?? [];
   },
 
   /**
@@ -80,11 +69,10 @@ export const InventoryService = {
       .select('*')
       .eq('company_id', companyId)
       .eq('codigo', codigo)
-      .single();
+      .maybeSingle();
 
-    if (error?.code === 'PGRST116') return null;
     if (error) throw databaseError(`Erro ao buscar item: ${error.message}`, { service: 'inventory', operation: 'buscarPorCodigo' });
-    return data as InventoryItem;
+    return data;
   },
 
   /**
@@ -92,7 +80,7 @@ export const InventoryService = {
    */
   async salvarItem(
     companyId: string,
-    item: Omit<InventoryItem, 'id' | 'company_id'>
+    item: Omit<InventoryItem, 'id' | 'company_id' | 'created_at' | 'updated_at'>
   ): Promise<InventoryItem> {
     const { data, error } = await supabase
       .from('inventory_items')
@@ -104,7 +92,7 @@ export const InventoryService = {
       .single();
 
     if (error) throw databaseError(`Erro ao salvar item: ${error.message}`, { service: 'inventory', operation: 'salvarItem' });
-    return data as InventoryItem;
+    return data;
   },
 
   /**
@@ -224,20 +212,30 @@ export const InventoryService = {
     companyId: string,
     itens: Array<{ codigo: string; nome: string; tipo: InventoryItemTipo; quantidade: number; unidade: string }>
   ): Promise<void> {
+    if (!companyId) throw new Error("companyId é obrigatório para importar lote");
+    
     for (const item of itens) {
-      const existing = await InventoryService.buscarPorCodigo(companyId, item.codigo);
+      const q = Math.round(Number(item.quantidade) || 0);
+      const codigo = String(item.codigo).trim();
+      
+      const existing = await InventoryService.buscarPorCodigo(companyId, codigo);
       if (existing) {
-        await InventoryService.atualizarQuantidade(companyId, existing.id, item.quantidade);
+        await InventoryService.atualizarQuantidade(companyId, existing.id, q);
       } else {
-        await InventoryService.salvarItem(companyId, {
-          codigo: item.codigo,
-          nome: item.nome,
+        const payload = {
+          codigo: codigo,
+          nome: String(item.nome).trim(),
           tipo: item.tipo,
-          quantidade_disponivel: item.quantidade,
+          quantidade_disponivel: q,
           quantidade_reservada: 0,
           quantidade_minima: 0,
-          unidade: item.unidade,
-        });
+          unidade: String(item.unidade).trim(),
+          company_id: companyId,
+        };
+        const { error: insertError } = await supabase.from('inventory_items').insert(payload);
+        if (insertError) {
+          throw new Error('Erro ao salvar item (' + codigo + '): ' + insertError.message);
+        }
       }
     }
   },

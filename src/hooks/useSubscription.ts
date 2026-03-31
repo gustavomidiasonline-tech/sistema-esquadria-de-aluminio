@@ -139,8 +139,11 @@ export function useSubscription() {
         .from("user_subscriptions")
         .select("*")
         .eq("user_id", user.id)
-        .single();
-      if (error) return null;
+        .maybeSingle();
+      if (error) {
+        console.error("Erro ao buscar assinatura:", error);
+        return null;
+      }
       return data;
     },
     enabled: !!user,

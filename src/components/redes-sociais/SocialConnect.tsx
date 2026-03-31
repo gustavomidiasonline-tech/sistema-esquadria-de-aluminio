@@ -38,9 +38,9 @@ const CHANNELS: ChannelConfig[] = [
 ];
 
 const STATUS_CONFIG = {
-  connected: { label: 'Conectado', color: 'text-[#00ff88] bg-[#00ff88]/10 border-[#00ff88]/30' },
-  disconnected: { label: 'Desconectado', color: 'text-white/50 bg-white/5 border-white/10' },
-  pending: { label: 'Pendente', color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30' },
+  connected: { label: 'Conectado', color: 'text-primary bg-primary/10 border-primary/30' },
+  disconnected: { label: 'Desconectado', color: 'text-muted-foreground bg-secondary border-border' },
+  pending: { label: 'Pendente', color: 'text-amber-600 bg-amber-500/10 border-amber-500/30' },
 };
 
 export function SocialConnect({ onBack }: SocialConnectProps) {
@@ -49,13 +49,13 @@ export function SocialConnect({ onBack }: SocialConnectProps) {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={onBack}
-          className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+          className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h2 className="text-base font-semibold text-white">Conectar Canais</h2>
-          <p className="text-xs text-white/50">Integre suas redes sociais para receber mensagens ao vivo</p>
+          <h2 className="text-base font-bold text-foreground">Conectar Canais</h2>
+          <p className="text-xs text-muted-foreground/60">Integre suas redes sociais para receber mensagens ao vivo</p>
         </div>
       </div>
 
@@ -65,15 +65,15 @@ export function SocialConnect({ onBack }: SocialConnectProps) {
           return (
             <div
               key={ch.channel}
-              className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors"
+              className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-colors shadow-sm"
             >
-              <div className="h-12 w-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+              <div className="h-12 w-12 rounded-xl bg-secondary border border-border flex items-center justify-center shrink-0">
                 <ChannelIcon channel={ch.channel} size={28} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-semibold text-white">{ch.name}</span>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${status.color}`}>
+                  <span className="text-sm font-bold text-foreground">{ch.name}</span>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${status.color}`}>
                     {ch.status === 'connected' ? (
                       <CheckCircle2 className="h-2.5 w-2.5" />
                     ) : (
@@ -82,12 +82,12 @@ export function SocialConnect({ onBack }: SocialConnectProps) {
                     {status.label}
                   </span>
                 </div>
-                <p className="text-xs text-white/50">{ch.description}</p>
+                <p className="text-xs text-muted-foreground/70">{ch.description}</p>
                 {ch.accountName && (
-                  <p className="text-[11px] text-[#00ff88] mt-1 font-medium">{ch.accountName}</p>
+                  <p className="text-[11px] text-primary mt-1 font-bold">{ch.accountName}</p>
                 )}
               </div>
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/15 hover:border-white/30 text-white/60 hover:text-white text-xs font-medium transition-all whitespace-nowrap">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-secondary hover:bg-secondary/80 text-foreground/70 hover:text-foreground text-xs font-bold transition-all whitespace-nowrap shadow-sm">
                 {ch.status === 'connected' ? 'Configurar' : 'Conectar'}
                 <ExternalLink className="h-3 w-3" />
               </button>
@@ -96,12 +96,12 @@ export function SocialConnect({ onBack }: SocialConnectProps) {
         })}
       </div>
 
-      <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+      <div className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/20">
         <div className="flex items-start gap-3">
-          <AlertCircle className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+          <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-semibold text-blue-400 mb-1">Integração via API Oficial</p>
-            <p className="text-[11px] text-white/50 leading-relaxed">
+            <p className="text-xs font-bold text-primary mb-1 uppercase tracking-tight">Integração via API Oficial</p>
+            <p className="text-[11px] text-muted-foreground/70 leading-relaxed uppercase font-medium">
               As integrações utilizam as APIs oficiais de cada plataforma (Meta Business API para WhatsApp, Instagram e Facebook).
               Configure suas credenciais no painel de configurações para ativar as integrações ao vivo.
             </p>

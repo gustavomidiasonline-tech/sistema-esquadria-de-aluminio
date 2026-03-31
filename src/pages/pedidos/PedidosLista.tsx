@@ -16,6 +16,7 @@ import { differenceInDays, parseISO, format, isAfter, isBefore } from "date-fns"
 import { cn } from "@/lib/utils";
 import { TrendingUp, CheckCircle2, XCircle, Package, Truck } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
+import { BackButton } from "@/components/ui/BackButton";
 
 type Pedido = Tables<"pedidos">;
 type PedidoWithCliente = Pedido & {
@@ -38,7 +39,7 @@ const nextStatus: Record<string, string | null> = {
   cancelado: null,
 };
 
-const Pedidos = () => {
+const PedidosLista = () => {
   const { user } = useAuth();
   const { data: pedidos = [], isLoading } = useSupabaseQuery("pedidos", {
     select: "*, clientes(nome, endereco, telefone, cidade, estado, cep)",
@@ -73,7 +74,10 @@ const Pedidos = () => {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      await updateMutation.mutateAsync({ id, values: { status: newStatus } });
+      await updateMutation.mutateAsync({ 
+        id, 
+        values: { status: newStatus as "pendente" | "cancelado" | "em_producao" | "pronto" | "entregue" } 
+      });
       toast.success("Status atualizado!");
     } catch { /* handled by mutation */ }
   };
@@ -127,9 +131,12 @@ const Pedidos = () => {
     <AppLayout>
       <div className="space-y-4 max-w-[1400px] w-full">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Pedidos</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">{pedidos.length} pedidos</p>
+          <div className="flex items-center gap-4">
+            <BackButton to="/pedidos" />
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Lista de Pedidos</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">{pedidos.length} pedidos</p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center glass-card-premium rounded-lg p-0.5">
@@ -428,4 +435,4 @@ const Pedidos = () => {
   );
 };
 
-export default Pedidos;
+export default PedidosLista;

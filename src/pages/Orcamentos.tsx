@@ -1,6 +1,7 @@
 import { AppLayout } from '@/components/AppLayout';
 import { Plus } from 'lucide-react';
 import { exportOrcamentoPDF } from '@/lib/pdf-export';
+import { getErrorMessage } from '@/lib/error-utils';
 import { Button } from '@/components/ui/button';
 import { useSupabaseQuery, useSupabaseInsert, useSupabaseUpdate } from '@/hooks/useSupabaseQuery';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,17 +56,22 @@ const Orcamentos = () => {
     if (!itemForm.descricao || !itemForm.valor_unitario) { toast.error('Preencha descrição e valor'); return; }
     const qty = Number(itemForm.quantidade) || 1;
     const unit = Number(itemForm.valor_unitario) || 0;
+    const companyId = profile?.company_id;
+    if (!companyId) { toast.error('Empresa não encontrada. Faça login novamente.'); return; }
     try {
       const { error } = await supabase.from('orcamento_itens').insert({
         orcamento_id: itemOrcId, descricao: itemForm.descricao, quantidade: qty,
         valor_unitario: unit, valor_total: qty * unit,
         largura: Number(itemForm.largura) || null, altura: Number(itemForm.altura) || null,
         produto_id: itemForm.produto_id || null,
+        company_id: companyId,
       });
       if (error) throw error;
       await recalcTotal(itemOrcId, undefined, qty * unit);
       invalidate(); toast.success('Item adicionado!'); closeAddItem();
-    } catch (e: unknown) { toast.error('Erro: ' + (e instanceof Error ? e.message : String(e))); }
+    } catch (e: unknown) {
+      toast.error('Erro: ' + getErrorMessage(e));
+    }
   };
 
   const handleDeleteItem = async (itemId: string) => {
@@ -85,13 +91,21 @@ const Orcamentos = () => {
 
   const handleSmartAdd = async (item: ConfiguredItem) => {
     if (!configOrcId) return;
+    const companyId = profile?.company_id;
+    if (!companyId) { toast.error('Empresa não encontrada. Faça login novamente.'); return; }
     try {
-      const { error } = await supabase.from('orcamento_itens').insert({ orcamento_id: configOrcId, ...item } as never);
+      const { error } = await supabase.from('orcamento_itens').insert({
+        orcamento_id: configOrcId,
+        company_id: companyId,
+        ...item,
+      } as never);
       if (error) throw error;
       await recalcTotal(configOrcId, undefined, item.valor_total);
       invalidate(); toast.success('Item calculado e adicionado ao orçamento!');
       setConfigDialogOpen(false);
-    } catch (e: unknown) { toast.error('Erro: ' + (e instanceof Error ? e.message : String(e))); }
+    } catch (e: unknown) {
+      toast.error('Erro: ' + getErrorMessage(e));
+    }
   };
 
   const handleGerarOP = async (orcId: string) => {
@@ -106,7 +120,7 @@ const Orcamentos = () => {
   const handleCreateCliente = async (nome: string): Promise<string> => {
     const { data, error } = await supabase
       .from('clientes')
-      .insert({ nome, created_by: user?.id })
+      .insert({ nome, created_by: user?.id, company_id: profile?.company_id })
       .select('id')
       .single();
     if (error) throw new Error(`Erro ao criar cliente: ${error.message}`);

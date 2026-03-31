@@ -82,12 +82,12 @@ export function OrcamentoFormDialog({ open, onOpenChange, clientes, isPending, o
     const result = orcamentoSchema.safeParse(form);
     if (!result.success) {
       const fieldErrors: typeof errors = {};
-      result.error.errors.forEach((e) => {
+      result.error.issues.forEach((e) => {
         const field = e.path[0] as keyof OrcamentoFormValues;
         fieldErrors[field] = e.message;
       });
       setErrors(fieldErrors);
-      toast.error(result.error.errors[0].message);
+      toast.error(result.error.issues[0].message);
       return;
     }
     setErrors({});

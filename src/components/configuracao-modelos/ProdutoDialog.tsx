@@ -12,39 +12,52 @@ interface ProdutoDialogProps {
   onNameChange: (v: string) => void;
   description: string;
   onDescriptionChange: (v: string) => void;
-  imageUrl: string;
-  onImageUrlChange: (v: string) => void;
   onSave: () => void;
 }
 
 export function ProdutoDialog({
   open, onOpenChange, isNew, name, onNameChange,
-  description, onDescriptionChange, imageUrl, onImageUrlChange, onSave,
+  description, onDescriptionChange, onSave,
 }: ProdutoDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isNew ? 'Novo Produto' : 'Editar Produto'}</DialogTitle>
-          <DialogDescription>Defina o modelo de esquadria.</DialogDescription>
+          <DialogTitle>{isNew ? 'Novo Modelo de Esquadria' : 'Editar Modelo'}</DialogTitle>
+          <DialogDescription>
+            {isNew
+              ? 'Cadastre o modelo. Na sequência, defina as regras de corte.'
+              : 'Edite as informações do modelo.'
+            }
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3 py-2">
+        <div className="space-y-4 py-2">
           <div>
-            <Label>Nome <span className="text-destructive">*</span></Label>
-            <Input value={name} onChange={(e) => onNameChange(e.target.value)} className="mt-1" placeholder="Ex: Janela 2 Folhas de Vidro" />
+            <Label>Nome do Modelo <span className="text-destructive">*</span></Label>
+            <Input
+              value={name}
+              onChange={(e) => onNameChange(e.target.value)}
+              className="mt-1"
+              placeholder="Ex: Janela 2F Correr, Porta Pivotante..."
+              autoFocus
+            />
           </div>
           <div>
             <Label>Descrição</Label>
-            <Textarea value={description} onChange={(e) => onDescriptionChange(e.target.value)} className="mt-1" placeholder="Descrição do modelo..." />
-          </div>
-          <div>
-            <Label>URL da Imagem</Label>
-            <Input value={imageUrl} onChange={(e) => onImageUrlChange(e.target.value)} className="mt-1" placeholder="https://..." />
+            <Textarea
+              value={description}
+              onChange={(e) => onDescriptionChange(e.target.value)}
+              className="mt-1"
+              placeholder="Tipo de esquadria, materiais, observações..."
+              rows={3}
+            />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={onSave}>{isNew ? 'Criar' : 'Salvar'}</Button>
+          <Button onClick={onSave} disabled={!name.trim()}>
+            {isNew ? 'Criar e Configurar' : 'Salvar'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

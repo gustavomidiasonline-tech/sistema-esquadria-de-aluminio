@@ -90,14 +90,14 @@ export function SocialInbox() {
       {/* Top bar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-pink-500/30 to-blue-500/30 border border-white/20 flex items-center justify-center">
-            <Radio className="h-5 w-5 text-white" />
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary/20 to-blue-500/20 border border-border flex items-center justify-center">
+            <Radio className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white">Redes Sociais</h1>
+            <h1 className="text-lg font-bold text-foreground">Redes Sociais</h1>
             <div className="flex items-center gap-1.5">
               {loadingContacts ? (
-                <Loader2 className="h-3 w-3 text-white/40 animate-spin" />
+                <Loader2 className="h-3 w-3 text-muted-foreground/40 animate-spin" />
               ) : (
                 <div
                   className={cn(
@@ -117,10 +117,10 @@ export function SocialInbox() {
         <div className="flex items-center gap-2">
           <StatPill label="WhatsApp" count={stats.whatsapp} color="bg-green-500/20 text-green-400 border-green-500/30" />
           <StatPill label="Instagram" count={stats.instagram} color="bg-pink-500/20 text-pink-400 border-pink-500/30" />
-          <StatPill label="Facebook" count={stats.facebook} color="bg-blue-500/20 text-blue-400 border-blue-500/30" />
+          <StatPill label="Facebook" count={stats.facebook} color="bg-blue-500/10 text-blue-600 border-blue-500/20" />
           <button
             onClick={() => setActiveView(activeView === 'connect' ? 'inbox' : 'connect')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/8 hover:bg-white/12 border border-white/10 text-white/70 hover:text-white text-xs font-medium transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 border border-border text-foreground/70 hover:text-foreground text-xs font-medium transition-all"
           >
             <Wifi className="h-3.5 w-3.5" />
             Conectar Canais
@@ -130,7 +130,7 @@ export function SocialInbox() {
 
       {/* Main panel */}
       <div
-        className="flex-1 rounded-2xl overflow-hidden border border-white/10 bg-white/[0.03] backdrop-blur-sm"
+        className="flex-1 rounded-2xl overflow-hidden border border-border bg-card/40 backdrop-blur-md shadow-sm"
         style={{
           display: 'grid',
           gridTemplateColumns: activeView === 'connect' ? '1fr' : '320px 1fr',
@@ -157,7 +157,7 @@ export function SocialInbox() {
             {/* Chat panel */}
             <div
               className={cn(
-                'h-full border-l border-white/10',
+                'h-full border-l border-border',
                 activeView === 'inbox' ? 'hidden md:block' : 'block'
               )}
             >

@@ -17,14 +17,9 @@ let PDFJS: typeof PDFJSType | null = null;
 const getPDFJS = async () => {
   if (!PDFJS) {
     PDFJS = await import('pdfjs-dist');
-    try {
-      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs');
-      const blob = new Blob([workerModule.default || ''], { type: 'application/javascript' });
-      PDFJS.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
-    } catch {
-      PDFJS.GlobalWorkerOptions.workerSrc =
-        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    }
+    // Load worker URL securely via Vite to guarantee version matching
+    const workerUrl = await import('pdfjs-dist/build/pdf.worker.mjs?url');
+    PDFJS.GlobalWorkerOptions.workerSrc = workerUrl.default;
   }
   return PDFJS;
 };
